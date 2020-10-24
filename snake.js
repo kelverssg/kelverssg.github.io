@@ -101,7 +101,10 @@ document.addEventListener('keydown', function(e) {
         snake.dy = grid;
         snake.dx = 0;
     }
-    else if (e.which == 32) paused = !paused;
+    else if (e.which == 32) {
+        paused = !paused;
+        document.querySelector('.pause').innerHTML = paused ? 'Play' : 'Pause';
+    }
 });
 
 function left() {
@@ -128,6 +131,10 @@ function down() {
         snake.dx = 0;
     }  
 };
+function pause() {
+    paused = !paused;
+    document.querySelector('.pause').innerHTML = paused ? 'Play' : 'Pause';
+}
 
 
 requestAnimationFrame(gameLoop);
