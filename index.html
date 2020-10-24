@@ -22,22 +22,28 @@
         </style>
     </head>
     <body>
-    <p>
-        <h1 style="color:white">Current Score: </h1>
-        <h1 class="scoreboard" style="color:white">0</h1>
-    </p>
-    <p>
-        <h1 style="color:white">High Score: </h1>
-        <h1 class="hi" style="color:white">0</h1>
-    </p> 
-    <canvas width="400" height="400" id="game"></canvas>
-    <p>
-        <button onclick="up()">↑</button>
-        <button onclick="down()">↓</button>
-        <button onclick="left()">←</button>
-        <button onclick="right()">→</button>
-    </p>
+    <table>
+        <tr>
+            <h1 style="color:white">Current Score: </h1>
+            <h1 class="scoreboard" style="color:white">0</h1>        
+        </tr>
+        <tr>
+            <h1 style="color:white">High Score: </h1>
+            <h1 class="hi" style="color:white">0</h1>
+        </tr>
+        <tr>
+            <canvas width="400" height="400" id="game"></canvas>
+        </tr>
+        <tr>
+            <button onclick="up()">↑</button>
+            <button onclick="down()">↓</button>
+            <button onclick="left()">←</button>
+            <button onclick="right()">→</button>
+            <button onclick="pause()" class="pause">Pause</button>
+        </tr>
+    </table>
+        
 
-    <script src="snake.js"></script>
+        <script src="snake.js"></script>
     </body>
 </html>
