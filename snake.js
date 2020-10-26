@@ -26,6 +26,7 @@ var apple = {x: 320, y: 320};
 const getRandomInt = (mn, mx) => Math.floor(Math.random() * (mx - mn)) + mn;
 
 function gameLoop() {
+    
     requestAnimationFrame(gameLoop);
     if (++count < 4) return;
     if (paused) cancelAnimationFrame();
