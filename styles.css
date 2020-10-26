@@ -1,0 +1,30 @@
+.grid-container {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-gap: 10px;
+    background-color: black;
+    grid-template-columns: repeat(2, 2fr);
+  }
+  
+.grid-container > div {
+background-color: black;
+text-align: center;
+padding: 20px 0;
+font-size: 30px;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+canvas {
+    border: 1px solid white;
+}
