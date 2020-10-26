@@ -24,6 +24,12 @@ font-size: 30px;
     font-size: 30px;
   }
 
+  @media screen and (max-width : 1920px){
+    .div-only-mobile{
+     display:none;
+     }
+   }
+
 html, body {
     height: 100%;
     margin: 0;
