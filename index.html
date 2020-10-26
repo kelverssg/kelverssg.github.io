@@ -2,47 +2,33 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="styles.css">
         <title>Welcome to the Snake Game!</title>
-        <style>
-            html, body {
-                height: 100%;
-                margin: 0;
-            }
-
-            body {
-                background: black;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            canvas {
-                border: 1px solid white;
-            }
-        </style>
     </head>
     <body>
-    <table>
-        <tr>
+    <div class="grid-container">
+        <div>
             <h1 style="color:white">Current Score: </h1>
             <h1 class="scoreboard" style="color:white">0</h1>        
-        </tr>
-        <tr>
+        </div>
+        <div>
             <h1 style="color:white">High Score: </h1>
             <h1 class="hi" style="color:white">0</h1>
-        </tr>
-        <tr>
+        </div>
+        <div>
             <canvas width="400" height="400" id="game"></canvas>
-        </tr>
-        <tr>
+        </div>
+    
+    </div>
+    <div>
+        <div>
             <button onclick="up()">↑</button>
             <button onclick="down()">↓</button>
             <button onclick="left()">←</button>
             <button onclick="right()">→</button>
             <button onclick="pause()" class="pause">Pause</button>
-        </tr>
-    </table>
-        
+        </div>
+    </div>
 
         <script src="snake.js"></script>
     </body>
