@@ -29,14 +29,7 @@ function gameLoop() {
     
     requestAnimationFrame(gameLoop);
     if (++count < 4) return;
-    while (paused) {
-        document.addEventListener('keydown', function(e) {
-            if (e.which == 32) {
-                paused = !paused;
-                document.querySelector('.pause').innerHTML = paused ? 'Play' : 'Pause';
-            }
-        });
-    }
+    if (paused) throwError(); // throw an error to force a pause
     count = 0;
     context.clearRect(0, 0, canvas.width, canvas.height);
 
