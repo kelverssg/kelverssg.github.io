@@ -7,18 +7,16 @@ var context = canvas.getContext('2d');
 var grid = 16;
 var count = 0;
 
-function resetSnake() {
-    var snake = {
+resetSnake = {        
         x: 160,
         y: 160,
         dx: grid, // moves one grid length per frame
         dy: 0,
         cells: [], // keep track of all grids occupied by snake
         maxCells: 4, // length of snake, grows when eating apple
-    };
-    return snake;
-}
-var snake = resetSnake();
+ }
+              
+var snake = resetSnake;
 var score = 0;
 var hiscore = 0;
 var apple = {x: 320, y: 320};
@@ -73,7 +71,7 @@ function gameLoop() {
             if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
                 scoreDisplayElem.innerHTML = ' 0';
                 score = 0;
-                snake = resetSnake();
+                snake = resetSnake;
                 apple.x = getRandomInt(0, 25) * grid;
                 apple.y = getRandomInt(0, 25) * grid;
             }
