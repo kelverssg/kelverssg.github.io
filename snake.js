@@ -35,7 +35,7 @@ function gameLoop() {
                 paused = !paused;
                 document.querySelector('.pause').innerHTML = paused ? 'Play' : 'Pause';
             }
-        }
+        });
     }
     count = 0;
     context.clearRect(0, 0, canvas.width, canvas.height);
