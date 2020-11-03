@@ -27,7 +27,7 @@ function gameLoop() {
     
     requestAnimationFrame(gameLoop);
     if (++count < 4) return;
-    if (paused) cancelAnimationFrame(gameLoop);
+    if (paused) throwError();
 
     count = 0;
     context.clearRect(0, 0, canvas.width, canvas.height);
