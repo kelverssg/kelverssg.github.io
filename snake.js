@@ -27,9 +27,8 @@ const getRandomInt = (mn, mx) => Math.floor(Math.random() * (mx - mn)) + mn;
 
 function gameLoop() {
     
-    requestAnimationFrame(gameLoop);
+    if (!paused) requestAnimationFrame(gameLoop);
     if (++count < 4) return;
-    if (paused) throwError();
 
     count = 0;
     context.clearRect(0, 0, canvas.width, canvas.height);
