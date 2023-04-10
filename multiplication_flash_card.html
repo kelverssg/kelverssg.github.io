@@ -2,13 +2,13 @@
    <body>
       <button onclick = "show_something()">Click</button>
 
-      <p id = "show"></p>
+      <p id = "show"><font size ="+3"></font></p>
       
-      <p id = "ans"></p>
+      <p id = "ans"><font size ="+3"></font></p>
 
       <script>
-         function gen(min, max) {
-            return Math.floor(min + Math.random()*(max - min + 1));
+         function gen(mn, mx) {
+            return Math.floor(mn + Math.random()*(mx - mn + 1));
           }
 
           function show_something() {
