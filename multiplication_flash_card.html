@@ -24,8 +24,7 @@
       <button onclick = "show_something()" class="block">Refresh Flash Card</button>
 
       <p id = "show">"You can do it!"</p>
-      <p></p>
-      <p></p>
+      <p> id = "inspiration"></p>
       <p id = "ans"></p>
 
       <script>
@@ -39,8 +38,24 @@
             var b = gen(1, 12);
             var ans = a * b + '';
             var str = a + ' x ' + b;
+
+            const inspiration = [
+              "'The journey of a thousand miles begins with a single step.'",
+              "'The only thing we have to fear is fear itself.'",
+              "'The quieter you become, the more you are able to hear.'",
+              "'The only true wisdom is in knowing you know nothing.'",
+              "'Do not dwell in the past, do not dream of the future, concentrate the mind on the present moment.'",
+              "'You miss 100% of the shots you don't take.'",
+              "'The best time to plant a tree was 20 years ago. The second best time is now.'",
+              "'The only limit to our realization of tomorrow will be our doubts of today.'",
+              "'A jug fills drop by drop.'",
+              "'Believe you can and you're halfway there.'",
+              "'The key to immortality is first living a life worth remembering.'",
+              "'Success is not final, failure is not fatal: It is the courage to continue that counts.'"
+            ];
             document.getElementById("show").innerHTML = str;
             document.getElementById("ans").innerHTML = ans;
+            document.getElementById("inspiration").innerHTML = inspiration[a];
           }
       </script>
    </body>
