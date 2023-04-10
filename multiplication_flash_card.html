@@ -3,6 +3,8 @@
       <button onclick = "show_something()">Click</button>
 
       <p id = "show"></p>
+      
+      <p id = "ans"></p>
 
       <script>
          function gen(min, max) {
@@ -10,11 +12,13 @@
           }
 
           function show_something() {
+            var str = '';
             var a = gen(1, 12);
             var b = gen(1, 12);
-            var ans = a * b;
-            var str = a + ' x ' + b + ' = ' + ans;
+            var ans = a * b + '';
+            var str = a + ' x ' + b;
             document.getElementById("show").innerHTML = str;
+            document.getElementById("ans").innerHTML = ans;
           }
       </script>
    </body>
