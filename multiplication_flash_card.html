@@ -57,7 +57,8 @@
           }
 
          function reveal_text() {
-            document.getElementById("ans").style.color = '#black';
+            var button = document.getElementById("ans");
+            if (button.style.color !== 'black') button.style.color = 'black';
          }
          
          function show_something() {
