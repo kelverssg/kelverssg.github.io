@@ -1,0 +1,25 @@
+<html>
+   <body>
+      <button onclick = "show_something()">Click</button>
+
+      <p id = "show"></p>
+
+      <script>
+         function gen(min, max) {
+            return Math.floor(min + Math.random()*(max - min + 1));
+          }
+
+          function show_something() {
+            var a = gen(1, 12);
+            var b = gen(1, 12);
+            var ans = a * b;
+            var str = a + ' x ' + b + ' = ' + ans;
+            document.getElementById("show").innerHTML = str;
+          }
+      </script>
+   </body>
+</html>
+
+
+
+
