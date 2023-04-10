@@ -35,10 +35,6 @@
             color: black;
             transition: opacity 0.3s ease-in;
          }
-         
-         .revealed {
-            color: black;
-         }
 
       </style>
    </head>
@@ -58,7 +54,7 @@
 
          function reveal_text() {
             var button = document.getElementById("ans");
-            if (button.style.color !== 'black') button.style.color = 'black';
+            button.style.color = 'black';
          }
          
          function show_something() {
