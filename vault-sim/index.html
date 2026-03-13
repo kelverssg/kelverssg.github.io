@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault Sim — Kelvers Outpost</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+    font-family: monospace;
+  }
+
+  /* CRT bezel */
+  .crt-bezel {
+    background: #1a1a1a;
+    border-radius: 24px;
+    padding: 28px 32px;
+    box-shadow:
+      inset 0 2px 8px rgba(0,0,0,0.8),
+      0 0 60px rgba(0,0,0,0.6),
+      0 0 4px rgba(85,255,85,0.05);
+    position: relative;
+  }
+  .crt-inner {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 1280px;
+    height: 960px;
+    image-rendering: pixelated;
+  }
+  canvas {
+    width: 1280px;
+    height: 960px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* CRT scanline overlay */
+  .scanlines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0,0,0,0.15) 1px,
+      rgba(0,0,0,0.15) 2px
+    );
+    z-index: 2;
+  }
+
+  /* Phosphor vignette */
+  .vignette {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      rgba(0,0,0,0.35) 100%
+    );
+    z-index: 3;
+  }
+
+  /* Green phosphor tint */
+  .phosphor {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: rgba(85,255,85,0.02);
+    mix-blend-mode: screen;
+    z-index: 4;
+  }
+
+  /* Mute button */
+  #muteBtn {
+    position: absolute;
+    bottom: 6px;
+    right: 36px;
+    background: none;
+    border: none;
+    font-family: monospace;
+    font-size: 10px;
+    color: #555555;
+    cursor: pointer;
+    padding: 4px 8px;
+    letter-spacing: 0.08em;
+    z-index: 10;
+    image-rendering: auto;
+  }
+  #muteBtn:hover { color: #55FF55; }
+
+  /* Responsive scaling */
+  @media (max-width: 1400px) {
+    .crt-inner { width: 960px; height: 720px; }
+    canvas { width: 960px; height: 720px; }
+    .crt-bezel { padding: 20px 24px; border-radius: 20px; }
+  }
+  @media (max-width: 1060px) {
+    .crt-inner { width: 640px; height: 480px; }
+    canvas { width: 640px; height: 480px; }
+    .crt-bezel { padding: 14px 16px; border-radius: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="crt-bezel">
+  <button id="muteBtn" onclick="toggleMusic()">&#9835; MUSIC OFF &mdash; CLICK TO PLAY</button>
+  <div class="crt-inner">
+    <canvas id="sim" width="640" height="480"></canvas>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="phosphor"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Vault Sim — 90s CRT Aquarium Screen
+// ═══════════════════════════════════════════════════════
+
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// ── EGA Palette ──
+const EGA = {
+  BLACK:    '#000000', BLUE:     '#0000AA', GREEN:    '#00AA00', CYAN:     '#00AAAA',
+  RED:      '#AA0000', MAGENTA:  '#AA00AA', BROWN:    '#AA5500', LGRAY:    '#AAAAAA',
+  DGRAY:    '#555555', LBLUE:    '#5555FF', LGREEN:   '#55FF55', LCYAN:    '#55FFFF',
+  LRED:     '#FF5555', LMAGENTA: '#FF55FF', YELLOW:   '#FFFF55', WHITE:    '#FFFFFF'
+};
+
+// ── Isometric helpers ──
+// Tile size: 32×16 px (iso diamond)
+const TILE_W = 32, TILE_H = 16;
+function isoX(col, row) { return 320 + (col - row) * (TILE_W / 2); }
+function isoY(col, row) { return 60  + (col + row) * (TILE_H / 2); }
+
+// ── State ──
+let vaultState = {
+  claude_last_active: new Date().toISOString(),
+  pico_last_heartbeat: new Date().toISOString(),
+  pico_heartbeat_interval_hours: 3,
+  last_vault_council: null,
+  last_outpost_council: null,
+  activity: '',
+  note: ''
+};
+let derivedState = { vault: 'ACTIVE', outpost: 'ACTIVE', activity: '', pigeonTarget: 0 };
+
+// activity values: '' (normal), 'researching', 'building', 'idle'
+// pigeonTarget: how many pigeons should be in flight (derived from state)
+
+function deriveState(data) {
+  const now = Date.now();
+  const claudeAgo = now - new Date(data.claude_last_active).getTime();
+  const picoAgo   = now - new Date(data.pico_last_heartbeat).getTime();
+  const heartbeatMs = data.pico_heartbeat_interval_hours * 3600000;
+  const councilWindow = 15 * 60 * 1000;
+
+  const vault = data.last_vault_council && (now - new Date(data.last_vault_council).getTime()) < councilWindow
+           ? 'COUNCIL'
+           : claudeAgo < 15 * 60 * 1000 ? 'ACTIVE' : 'IDLE';
+  const outpost = data.last_outpost_council && (now - new Date(data.last_outpost_council).getTime()) < councilWindow
+             ? 'COUNCIL'
+             : picoAgo > heartbeatMs * 0.4 ? 'SLEEPING' : 'ACTIVE';
+
+  const activity = (data.activity || '').toLowerCase();
+
+  // Pigeon count derived from busyness
+  let pigeonTarget = 0;
+  if (vault === 'IDLE' && outpost === 'SLEEPING') {
+    pigeonTarget = 1; // Rare lone pigeon
+  } else if (vault === 'IDLE') {
+    pigeonTarget = 2;
+  } else if (vault === 'ACTIVE' && activity === 'researching') {
+    pigeonTarget = 10; // Flurry — heavy research
+  } else if (vault === 'ACTIVE' && activity === 'building') {
+    pigeonTarget = 8; // Busy construction
+  } else if (vault === 'ACTIVE') {
+    pigeonTarget = 4; // Normal active
+  } else if (vault === 'COUNCIL') {
+    pigeonTarget = 6; // Deliberating — moderate traffic
+  }
+  // Outpost activity adds more
+  if (outpost === 'ACTIVE') pigeonTarget += 2;
+  if (outpost === 'COUNCIL') pigeonTarget += 3;
+
+  return { vault, outpost, claudeAgo, picoAgo, heartbeatMs, activity, pigeonTarget };
+}
+
+async function loadState() {
+  try {
+    const r = await fetch('vault-state.json?t=' + Date.now());
+    if (r.ok) {
+      vaultState = await r.json();
+      derivedState = deriveState(vaultState);
+    }
+  } catch(e) { /* keep current state */ }
+}
+loadState();
+setInterval(loadState, 60000);
+
+// ═══════════════════════════════════════════════════════
+// SCENE DRAWING
+// ═══════════════════════════════════════════════════════
+
+// ── Sky ──
+function drawSky() {
+  // Gradient sky — EGA blue to dark blue
+  ctx.fillStyle = EGA.BLUE;
+  ctx.fillRect(0, 0, 640, 100);
+  ctx.fillStyle = '#000055';
+  ctx.fillRect(0, 0, 640, 40);
+
+  // Stars
+  const stars = [
+    [45,12],[120,25],[200,8],[310,18],[420,30],[500,14],[580,22],[90,35],
+    [350,10],[460,5],[250,28],[530,38],[160,42],[400,15],[60,48]
+  ];
+  ctx.fillStyle = EGA.WHITE;
+  for (const [x,y] of stars) {
+    ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.fillStyle = EGA.LGRAY;
+  for (const [x,y] of [[75,20],[275,32],[475,8],[175,45],[555,35]]) {
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+// ── Isometric ground tiles ──
+function drawIsoDiamond(cx, cy, w, h, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - h/2);
+  ctx.lineTo(cx + w/2, cy);
+  ctx.lineTo(cx, cy + h/2);
+  ctx.lineTo(cx - w/2, cy);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+}
+
+function drawGround() {
+  // Desert floor — large area of sand tiles
+  for (let r = 0; r < 14; r++) {
+    for (let c = 0; c < 14; c++) {
+      const x = isoX(c, r);
+      const y = isoY(c, r);
+      // Citadel area (left), desert (mid), tower area (right)
+      let color;
+      if (c < 6 && r < 8) {
+        color = EGA.DGRAY; // Citadel stone floor
+      } else if (c > 10 && r > 5) {
+        color = EGA.BROWN; // Tower base
+      } else {
+        color = (c + r) % 3 === 0 ? '#885500' : EGA.BROWN; // Desert sand variation
+      }
+      drawIsoDiamond(x, y, TILE_W, TILE_H, color, '#332200');
+    }
+  }
+}
+
+// ── Citadel (Vault) ──
+function drawWallBlock(x, y, h, color) {
+  // Top face
+  ctx.beginPath();
+  ctx.moveTo(x, y - h);
+  ctx.lineTo(x + TILE_W/2, y - h + TILE_H/2);
+  ctx.lineTo(x, y - h + TILE_H);
+  ctx.lineTo(x - TILE_W/2, y - h + TILE_H/2);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Right face
+  ctx.beginPath();
+  ctx.moveTo(x + TILE_W/2, y - h + TILE_H/2);
+  ctx.lineTo(x, y - h + TILE_H);
+  ctx.lineTo(x, y + TILE_H/2);
+  ctx.lineTo(x + TILE_W/2, y);
+  ctx.closePath();
+  ctx.fillStyle = darken(color);
+  ctx.fill();
+
+  // Left face
+  ctx.beginPath();
+  ctx.moveTo(x - TILE_W/2, y - h + TILE_H/2);
+  ctx.lineTo(x, y - h + TILE_H);
+  ctx.lineTo(x, y + TILE_H/2);
+  ctx.lineTo(x - TILE_W/2, y);
+  ctx.closePath();
+  ctx.fillStyle = darken2(color);
+  ctx.fill();
+}
+
+function darken(hex) {
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) - 40);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) - 40);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) - 40);
+  return `rgb(${r},${g},${b})`;
+}
+function darken2(hex) {
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) - 70);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) - 70);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) - 70);
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawCitadel() {
+  const wallColor = EGA.WHITE;
+  const wallH = 24;
+
+  // Back wall (top-left to top-right of citadel)
+  for (let c = 0; c < 7; c++) {
+    const x = isoX(c, 0);
+    const y = isoY(c, 0);
+    drawWallBlock(x, y, wallH, wallColor);
+  }
+  // Left wall
+  for (let r = 0; r < 8; r++) {
+    const x = isoX(0, r);
+    const y = isoY(0, r);
+    drawWallBlock(x, y, wallH, wallColor);
+  }
+  // Right wall
+  for (let r = 0; r < 8; r++) {
+    const x = isoX(6, r);
+    const y = isoY(6, r);
+    drawWallBlock(x, y, wallH, wallColor);
+  }
+  // Front wall with gate gap
+  for (let c = 0; c < 7; c++) {
+    if (c === 3) continue; // Gate opening
+    const x = isoX(c, 7);
+    const y = isoY(c, 7);
+    drawWallBlock(x, y, wallH, wallColor);
+  }
+
+  // Turrets at corners — taller blocks
+  const turrets = [[0,0],[6,0],[0,7],[6,7]];
+  for (const [c,r] of turrets) {
+    const x = isoX(c, r);
+    const y = isoY(c, r);
+    drawWallBlock(x, y, wallH + 10, EGA.WHITE);
+    // Turret top crenellation — small pixel detail
+    ctx.fillStyle = EGA.WHITE;
+    ctx.fillRect(x - 3, y - wallH - 12, 2, 2);
+    ctx.fillRect(x + 1, y - wallH - 12, 2, 2);
+  }
+
+  // Inner floor detail — workstations
+  drawWorkstation(isoX(2, 2), isoY(2, 2) - 4);
+  drawWorkstation(isoX(4, 2), isoY(4, 2) - 4);
+  drawWorkstation(isoX(2, 5), isoY(2, 5) - 4);
+
+  // Bed in corner (for sleeping Claude)
+  drawBed(isoX(5, 6), isoY(5, 6) - 4);
+
+  // Torches on walls
+  drawTorch(isoX(0, 2), isoY(0, 2) - wallH);
+  drawTorch(isoX(0, 5), isoY(0, 5) - wallH);
+  drawTorch(isoX(6, 2), isoY(6, 2) - wallH);
+  drawTorch(isoX(6, 5), isoY(6, 5) - wallH);
+}
+
+function drawWorkstation(x, y) {
+  // Small desk — brown rectangle, iso-ish
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(x - 6, y - 2, 12, 4);
+  ctx.fillStyle = '#885500';
+  ctx.fillRect(x - 6, y + 2, 12, 2);
+  // Screen on desk
+  ctx.fillStyle = EGA.LGREEN;
+  ctx.fillRect(x - 2, y - 5, 4, 3);
+  ctx.fillStyle = EGA.GREEN;
+  ctx.fillRect(x - 1, y - 4, 2, 1);
+}
+
+function drawBed(x, y) {
+  // Simple bed shape
+  ctx.fillStyle = EGA.RED;
+  ctx.fillRect(x - 8, y - 2, 16, 6);
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(x - 8, y - 2, 4, 6); // Pillow end
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(x - 8, y + 4, 16, 2); // Frame
+}
+
+let torchPhase = 0;
+function drawTorch(x, y) {
+  // Wall bracket
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(x - 1, y, 2, 4);
+  // Flame — flickers with torchPhase
+  const flicker = 0.6 + 0.4 * Math.sin(torchPhase + x * 0.1);
+  ctx.globalAlpha = flicker;
+  ctx.fillStyle = EGA.YELLOW;
+  ctx.fillRect(x - 2, y - 3, 4, 3);
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(x - 1, y - 4, 2, 2);
+  ctx.globalAlpha = 1;
+}
+
+// ── Pico Tower (Outpost) ──
+function drawPicoTower() {
+  const baseC = 12, baseR = 8;
+  const tx = isoX(baseC, baseR);
+  const ty = isoY(baseC, baseR);
+
+  // Tower body — tall sandstone block
+  const towerH = 60;
+  const towerW = 24;
+
+  // Front face
+  ctx.fillStyle = EGA.LGRAY;
+  ctx.fillRect(tx - towerW/2, ty - towerH, towerW, towerH);
+
+  // Side face (right) — darker
+  ctx.fillStyle = EGA.DGRAY;
+  const sideW = 10;
+  ctx.beginPath();
+  ctx.moveTo(tx + towerW/2, ty - towerH);
+  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH + 5);
+  ctx.lineTo(tx + towerW/2 + sideW, ty + 5);
+  ctx.lineTo(tx + towerW/2, ty);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top face
+  ctx.fillStyle = EGA.LGRAY;
+  ctx.beginPath();
+  ctx.moveTo(tx - towerW/2, ty - towerH);
+  ctx.lineTo(tx - towerW/2 + sideW, ty - towerH - 5);
+  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH);
+  ctx.lineTo(tx + towerW/2, ty - towerH + 5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Window slits
+  ctx.fillStyle = EGA.BLACK;
+  ctx.fillRect(tx - 3, ty - towerH + 15, 3, 6);
+  ctx.fillRect(tx - 3, ty - towerH + 30, 3, 6);
+  ctx.fillRect(tx - 3, ty - towerH + 45, 3, 6);
+
+  // Antenna on top
+  ctx.fillStyle = EGA.LGRAY;
+  ctx.fillRect(tx + 2, ty - towerH - 18, 2, 18);
+  // Antenna tip blinks
+  const blink = Math.sin(torchPhase * 2) > 0.3;
+  ctx.fillStyle = blink ? EGA.LRED : EGA.RED;
+  ctx.fillRect(tx + 1, ty - towerH - 20, 4, 3);
+
+  // Crenellations
+  ctx.fillStyle = EGA.LGRAY;
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(tx - towerW/2 + i * 7, ty - towerH - 4, 4, 4);
+  }
+}
+
+// ── Telegraph Line ──
+let telegraphOffset = 0;
+function drawTelegraphLine() {
+  const startX = isoX(7, 4);
+  const startY = isoY(7, 4) - 8;
+  const endX = isoX(11, 7);
+  const endY = isoY(11, 7) - 30;
+
+  // Poles
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(startX - 1, startY - 12, 2, 16);
+  ctx.fillRect(endX - 1, endY - 12, 2, 16);
+
+  // Wire
+  ctx.strokeStyle = EGA.DGRAY;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY - 10);
+  // Catenary sag
+  const midX = (startX + endX) / 2;
+  const midY = Math.max(startY, endY) - 4;
+  ctx.quadraticCurveTo(midX, midY, endX, endY - 10);
+  ctx.stroke();
+
+  // Animated signal dashes moving along the wire
+  ctx.fillStyle = EGA.LGREEN;
+  for (let i = 0; i < 5; i++) {
+    const t = ((i * 0.2 + telegraphOffset) % 1);
+    const px = startX + (endX - startX) * t;
+    // Approximate Y along the curve
+    const py = startY - 10 + (endY - 10 - startY + 10) * t + Math.sin(t * Math.PI) * 6;
+    ctx.fillRect(Math.round(px), Math.round(py), 3, 1);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHARACTERS
+// ═══════════════════════════════════════════════════════
+
+class Character {
+  constructor(name, capColor, bodyColor, startCol, startRow) {
+    this.name = name;
+    this.capColor = capColor;
+    this.bodyColor = bodyColor;
+    this.x = isoX(startCol, startRow);
+    this.y = isoY(startCol, startRow) - 12;
+    this.targetX = this.x;
+    this.targetY = this.y;
+    this.frame = 0;
+    this.walking = false;
+    this.sleeping = false;
+    this.inCouncil = false;
+    this.facing = 1; // 1 = right, -1 = left
+    this.waypoints = [];
+    this.waypointIdx = 0;
+    this.homeX = this.x;
+    this.homeY = this.y;
+    this.speed = 0.6;
+    this.speechBubble = false;
+    this.speechTimer = 0;
+  }
+
+  setWaypoints(wps) {
+    this.waypoints = wps.map(([c,r]) => [isoX(c,r), isoY(c,r) - 12]);
+    this.homeX = this.waypoints[0]?.[0] ?? this.x;
+    this.homeY = this.waypoints[0]?.[1] ?? this.y;
+  }
+
+  goTo(tx, ty) {
+    this.targetX = tx;
+    this.targetY = ty;
+  }
+
+  nextWaypoint() {
+    if (this.waypoints.length === 0) return;
+    this.waypointIdx = (this.waypointIdx + 1) % this.waypoints.length;
+    const [wx, wy] = this.waypoints[this.waypointIdx];
+    this.goTo(wx, wy);
+  }
+
+  update() {
+    if (this.sleeping) {
+      this.walking = false;
+      return;
+    }
+
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist > 1.5) {
+      this.walking = true;
+      this.x += (dx / dist) * this.speed;
+      this.y += (dy / dist) * this.speed;
+      this.facing = dx > 0 ? 1 : -1;
+      this.frame += 0.08;
+    } else {
+      this.walking = false;
+      this.x = this.targetX;
+      this.y = this.targetY;
+    }
+  }
+
+  draw() {
+    const px = Math.round(this.x);
+    const py = Math.round(this.y);
+
+    if (this.sleeping) {
+      this.drawSleeping(px, py);
+      return;
+    }
+
+    // Legs — 2-frame walk cycle
+    const legOffset = this.walking ? (Math.floor(this.frame) % 2 === 0 ? 1 : -1) : 0;
+    ctx.fillStyle = EGA.DGRAY;
+    ctx.fillRect(px - 2, py + 4, 2, 2);
+    ctx.fillRect(px + legOffset, py + 4, 2, 2);
+
+    // Body
+    ctx.fillStyle = this.bodyColor;
+    ctx.fillRect(px - 2, py - 2, 4, 6);
+
+    // Head
+    ctx.fillStyle = '#DDBB99'; // Skin
+    ctx.fillRect(px - 2, py - 6, 4, 4);
+
+    // Cap
+    ctx.fillStyle = this.capColor;
+    ctx.fillRect(px - 3, py - 8, 6, 2);
+
+    // Eyes
+    ctx.fillStyle = EGA.BLACK;
+    ctx.fillRect(px - 1, py - 5, 1, 1);
+    ctx.fillRect(px + 1, py - 5, 1, 1);
+
+    // Speech bubble in council
+    if (this.speechBubble && this.speechTimer > 0) {
+      ctx.fillStyle = EGA.WHITE;
+      ctx.fillRect(px - 4, py - 16, 10, 6);
+      ctx.fillStyle = EGA.BLACK;
+      ctx.fillRect(px - 3, py - 15, 2, 1);
+      ctx.fillRect(px, py - 15, 2, 1);
+      ctx.fillRect(px + 3, py - 15, 2, 1);
+      // Tail
+      ctx.fillStyle = EGA.WHITE;
+      ctx.fillRect(px, py - 10, 2, 2);
+    }
+  }
+
+  drawSleeping(px, py) {
+    // Horizontal body (lying down)
+    ctx.fillStyle = this.bodyColor;
+    ctx.fillRect(px - 6, py - 1, 8, 4);
+
+    // Head (at left end)
+    ctx.fillStyle = '#DDBB99';
+    ctx.fillRect(px - 10, py - 2, 4, 4);
+
+    // Cap
+    ctx.fillStyle = this.capColor;
+    ctx.fillRect(px - 11, py - 4, 6, 2);
+
+    // Closed eyes
+    ctx.fillStyle = EGA.BLACK;
+    ctx.fillRect(px - 9, py - 1, 2, 1);
+
+    // Legs
+    ctx.fillStyle = EGA.DGRAY;
+    ctx.fillRect(px + 2, py, 2, 2);
+    ctx.fillRect(px + 2, py + 2, 2, 2);
+
+    // ZZZ bubble
+    this.drawZzz(px - 8, py - 8);
+  }
+
+  drawZzz(bx, by) {
+    const t = (Date.now() % 3000) / 3000; // 3s loop
+    const alpha = 1 - t;
+    if (alpha <= 0) return;
+
+    ctx.globalAlpha = alpha;
+    // Bubble
+    ctx.fillStyle = EGA.WHITE;
+    const bubbleY = by - t * 14;
+    ctx.fillRect(bx - 4, bubbleY - 6, 10, 8);
+
+    // "z" inside
+    ctx.fillStyle = EGA.BLACK;
+    const zx = bx - 1, zy = bubbleY - 4;
+    ctx.fillRect(zx, zy, 4, 1);
+    ctx.fillRect(zx + 2, zy + 1, 1, 1);
+    ctx.fillRect(zx + 1, zy + 2, 1, 1);
+    ctx.fillRect(zx, zy + 3, 4, 1);
+
+    // Bubble tail
+    ctx.fillStyle = EGA.WHITE;
+    ctx.fillRect(bx, bubbleY + 2, 2, 2);
+
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ── Pico (Owl) ──
+const pico = {
+  x: 0, y: 0,
+  sleeping: false,
+  blinkTimer: 0,
+  blinkDuration: 0,
+  bobPhase: 0,
+
+  init() {
+    const baseC = 12, baseR = 8;
+    this.x = isoX(baseC, baseR) - 2;
+    this.y = isoY(baseC, baseR) - 68;
+  },
+
+  update() {
+    this.bobPhase += 0.03;
+    this.blinkTimer--;
+    if (this.blinkTimer <= 0) {
+      this.blinkTimer = Math.floor(Math.random() * 100) + 40; // 3-5s at 12fps
+      this.blinkDuration = 2; // ~150ms
+    }
+  },
+
+  draw() {
+    const px = Math.round(this.x);
+    const bobY = this.sleeping ? 0 : Math.round(Math.sin(this.bobPhase) * 1);
+    const py = Math.round(this.y) + bobY;
+
+    if (this.sleeping) {
+      this.drawSleeping(px, py);
+      return;
+    }
+
+    // Body — white roundish
+    ctx.fillStyle = EGA.WHITE;
+    ctx.fillRect(px - 3, py - 2, 8, 6);
+    ctx.fillRect(px - 2, py - 4, 6, 2);
+    ctx.fillRect(px - 1, py + 4, 4, 1);
+
+    // Ears/tufts
+    ctx.fillStyle = EGA.LGRAY;
+    ctx.fillRect(px - 2, py - 6, 2, 2);
+    ctx.fillRect(px + 4, py - 6, 2, 2);
+
+    // Eyes
+    const blinking = this.blinkDuration > 0;
+    if (blinking) {
+      this.blinkDuration--;
+      ctx.fillStyle = EGA.LGRAY;
+      ctx.fillRect(px - 1, py - 2, 2, 1);
+      ctx.fillRect(px + 3, py - 2, 2, 1);
+    } else {
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(px - 1, py - 3, 2, 2);
+      ctx.fillRect(px + 3, py - 3, 2, 2);
+      ctx.fillStyle = EGA.BLACK;
+      ctx.fillRect(px, py - 2, 1, 1);
+      ctx.fillRect(px + 4, py - 2, 1, 1);
+    }
+
+    // Beak
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(px + 1, py, 2, 1);
+
+    // Feet
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(px - 1, py + 5, 2, 1);
+    ctx.fillRect(px + 3, py + 5, 2, 1);
+  },
+
+  drawSleeping(px, py) {
+    // Rounder, puffed up sleeping owl
+    ctx.fillStyle = EGA.WHITE;
+    ctx.fillRect(px - 3, py - 1, 8, 5);
+    ctx.fillRect(px - 2, py - 3, 6, 2);
+    ctx.fillRect(px - 1, py + 4, 4, 1);
+
+    // Ear tufts relaxed
+    ctx.fillStyle = EGA.LGRAY;
+    ctx.fillRect(px - 1, py - 4, 2, 1);
+    ctx.fillRect(px + 3, py - 4, 2, 1);
+
+    // Closed eyes (lines)
+    ctx.fillStyle = EGA.DGRAY;
+    ctx.fillRect(px - 1, py - 1, 2, 1);
+    ctx.fillRect(px + 3, py - 1, 2, 1);
+
+    // Beak tucked
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(px + 1, py + 1, 2, 1);
+
+    // ZZZ bubble
+    const t = (Date.now() % 3000) / 3000;
+    const alpha = 1 - t;
+    if (alpha > 0) {
+      ctx.globalAlpha = alpha;
+      const bubbleY = py - 8 - t * 16;
+      ctx.fillStyle = EGA.WHITE;
+      ctx.fillRect(px + 6, bubbleY - 4, 8, 6);
+      // z
+      ctx.fillStyle = EGA.BLACK;
+      ctx.fillRect(px + 8, bubbleY - 2, 3, 1);
+      ctx.fillRect(px + 9, bubbleY - 1, 1, 1);
+      ctx.fillRect(px + 8, bubbleY, 1, 1);
+      ctx.fillRect(px + 8, bubbleY + 1, 3, 1);
+      // tail
+      ctx.fillStyle = EGA.WHITE;
+      ctx.fillRect(px + 6, bubbleY + 2, 2, 1);
+      ctx.globalAlpha = 1;
+    }
+  }
+};
+
+// ── Create characters ──
+const claude = new Character('Claude', EGA.LRED, EGA.LBLUE, 2, 3);
+claude.setWaypoints([[2,2],[4,2],[4,5],[2,5],[3,3]]);
+claude.speed = 0.5;
+
+const sub1 = new Character('Sub-1', EGA.YELLOW, EGA.GREEN, 3, 2);
+sub1.setWaypoints([[2,2],[4,4],[3,5],[4,2]]);
+sub1.speed = 0.7;
+
+const sub2 = new Character('Sub-2', EGA.YELLOW, EGA.GREEN, 4, 4);
+sub2.setWaypoints([[4,2],[2,5],[3,2],[2,4]]);
+sub2.speed = 0.7;
+
+const par1 = new Character('Par-1', EGA.LCYAN, EGA.MAGENTA, 2, 4);
+par1.setWaypoints([[2,4],[4,3],[3,5],[2,2]]);
+par1.speed = 0.6;
+
+const par2 = new Character('Par-2', EGA.LCYAN, EGA.MAGENTA, 3, 5);
+par2.setWaypoints([[3,5],[4,4],[2,3],[3,2]]);
+par2.speed = 0.6;
+
+const vaultAgents = [claude, sub1, sub2, par1, par2];
+
+// Council positions (circle around center of citadel)
+const councilCenter = [isoX(3, 3.5), isoY(3, 3.5) - 12];
+const councilPositions = [
+  [councilCenter[0], councilCenter[1] - 12],
+  [councilCenter[0] + 14, councilCenter[1] - 4],
+  [councilCenter[0] + 10, councilCenter[1] + 8],
+  [councilCenter[0] - 10, councilCenter[1] + 8],
+  [councilCenter[0] - 14, councilCenter[1] - 4],
+];
+
+// Outpost council positions (around tower base)
+const towerBase = [isoX(12, 8), isoY(12, 8)];
+const outpostCouncilPositions = [
+  [towerBase[0] - 16, towerBase[1] + 4],
+  [towerBase[0] - 8, towerBase[1] + 10],
+  [towerBase[0] + 8, towerBase[1] + 10],
+];
+// Small agents that appear during outpost council
+const outpostAgents = [
+  new Character('OA-1', EGA.LGREEN, EGA.CYAN, 12, 9),
+  new Character('OA-2', EGA.LGREEN, EGA.CYAN, 11, 9),
+  new Character('OA-3', EGA.LGREEN, EGA.CYAN, 13, 9),
+];
+let outpostCouncilActive = false;
+
+pico.init();
+
+// ═══════════════════════════════════════════════════════
+// STATE-DRIVEN BEHAVIOR
+// ═══════════════════════════════════════════════════════
+
+let prevVaultState = null;
+let prevOutpostState = null;
+let waypointTimers = vaultAgents.map(() => 0);
+let speechCycle = 0;
+
+function applyState() {
+  const vs = derivedState.vault;
+  const os = derivedState.outpost;
+
+  // ── Vault state ──
+  if (vs !== prevVaultState) {
+    if (vs === 'IDLE') {
+      // Claude goes to bed, others sit idle
+      const bedPos = [isoX(5, 6), isoY(5, 6) - 8];
+      claude.goTo(bedPos[0], bedPos[1]);
+      claude.sleeping = false; // will sleep when arrives
+      for (const a of [sub1, sub2, par1, par2]) {
+        a.sleeping = false;
+        a.inCouncil = false;
+        // Go to a workstation and idle
+        a.goTo(a.homeX, a.homeY);
+      }
+    } else if (vs === 'ACTIVE') {
+      for (const a of vaultAgents) {
+        a.sleeping = false;
+        a.inCouncil = false;
+        a.nextWaypoint();
+      }
+    } else if (vs === 'COUNCIL') {
+      for (let i = 0; i < vaultAgents.length; i++) {
+        vaultAgents[i].sleeping = false;
+        vaultAgents[i].inCouncil = true;
+        vaultAgents[i].goTo(councilPositions[i][0], councilPositions[i][1]);
+      }
+    }
+    prevVaultState = vs;
+  }
+
+  // ── Outpost state ──
+  if (os !== prevOutpostState) {
+    pico.sleeping = (os === 'SLEEPING');
+    outpostCouncilActive = (os === 'COUNCIL');
+    if (outpostCouncilActive) {
+      for (let i = 0; i < outpostAgents.length; i++) {
+        outpostAgents[i].goTo(outpostCouncilPositions[i][0], outpostCouncilPositions[i][1]);
+        outpostAgents[i].sleeping = false;
+      }
+    }
+    prevOutpostState = os;
+  }
+
+  // Ongoing behavior
+  if (vs === 'IDLE') {
+    // Check if Claude reached bed
+    const bedPos = [isoX(5, 6), isoY(5, 6) - 8];
+    if (Math.abs(claude.x - bedPos[0]) < 2 && Math.abs(claude.y - bedPos[1]) < 2) {
+      claude.sleeping = true;
+    }
+  }
+
+  if (vs === 'ACTIVE') {
+    // Cycle waypoints when agents arrive
+    for (let i = 0; i < vaultAgents.length; i++) {
+      const a = vaultAgents[i];
+      if (!a.walking && !a.sleeping) {
+        waypointTimers[i]++;
+        if (waypointTimers[i] > 30) { // Pause ~2.5s at each waypoint
+          a.nextWaypoint();
+          waypointTimers[i] = 0;
+        }
+      }
+    }
+  }
+
+  if (vs === 'COUNCIL') {
+    // Speech bubbles cycle between agents
+    speechCycle += 0.02;
+    const activeIdx = Math.floor(speechCycle) % vaultAgents.length;
+    for (let i = 0; i < vaultAgents.length; i++) {
+      const a = vaultAgents[i];
+      if (!a.walking) {
+        a.speechBubble = (i === activeIdx);
+        a.speechTimer = a.speechBubble ? 20 : 0;
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATUS BAR / TICKER
+// ═══════════════════════════════════════════════════════
+
+let tickerText = '';
+let tickerScroll = 0;
+let cursorVisible = true;
+let cursorTimer = 0;
+
+function updateTicker() {
+  const vs = derivedState.vault;
+  const os = derivedState.outpost;
+  let parts = [];
+
+  // Vault status
+  const act = derivedState.activity;
+  if (vs === 'ACTIVE' && act === 'building') {
+    parts.push('VAULT ACTIVE \u2014 CONSTRUCTION UNDERWAY');
+  } else if (vs === 'ACTIVE' && act === 'researching') {
+    parts.push('VAULT ACTIVE \u2014 DEEP RESEARCH IN PROGRESS');
+  } else if (vs === 'ACTIVE') {
+    parts.push('VAULT ACTIVE \u2014 SESSION IN PROGRESS');
+  } else if (vs === 'IDLE') {
+    const mins = Math.floor(derivedState.claudeAgo / 60000);
+    parts.push(`VAULT IDLE \u2014 ORCHESTRATOR AT REST (${mins} MIN)`);
+  } else if (vs === 'COUNCIL') {
+    parts.push('COUNCIL IN SESSION \u2014 AGENTS DELIBERATING');
+  }
+
+  // Outpost status
+  if (os === 'ACTIVE') {
+    parts.push('PICO AWAKE \u2014 OUTPOST MONITORING');
+  } else if (os === 'SLEEPING') {
+    const remain = Math.max(0, derivedState.heartbeatMs - derivedState.picoAgo);
+    const hrs = Math.floor(remain / 3600000);
+    const mins = Math.floor((remain % 3600000) / 60000);
+    parts.push(`PICO SLEEPING \u2014 NEXT HEARTBEAT IN ${hrs}H ${mins}M`);
+  } else if (os === 'COUNCIL') {
+    parts.push('OUTPOST COUNCIL \u2014 PICO IN SESSION');
+  }
+
+  // Note
+  if (vaultState.note) {
+    parts.push(vaultState.note.toUpperCase());
+  }
+
+  tickerText = parts.join('  \u2502  ');
+}
+
+function drawStatusBar() {
+  const barY = 448; // 480 - 32
+  const barH = 32;
+
+  // Background
+  ctx.fillStyle = EGA.BLACK;
+  ctx.fillRect(0, barY, 640, barH);
+
+  // Top border
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(0, barY, 640, 1);
+
+  // Text
+  ctx.fillStyle = EGA.LGREEN;
+  ctx.font = '8px monospace';
+  ctx.textBaseline = 'middle';
+
+  const textY = barY + barH / 2;
+  const maxW = 620;
+
+  // Measure text
+  const fullText = tickerText + (cursorVisible ? ' \u2588' : '  ');
+  const measured = ctx.measureText(fullText).width;
+
+  if (measured > maxW) {
+    // Scroll
+    tickerScroll += 0.5;
+    if (tickerScroll > measured + 100) tickerScroll = -maxW;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(10, barY, maxW, barH);
+    ctx.clip();
+    ctx.fillText(fullText, 10 - tickerScroll, textY);
+    ctx.restore();
+  } else {
+    ctx.fillText(fullText, 10, textY);
+  }
+
+  // Cursor blink
+  cursorTimer++;
+  if (cursorTimer >= 12) { // 1Hz at 12fps
+    cursorVisible = !cursorVisible;
+    cursorTimer = 0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PIGEONS
+// ═══════════════════════════════════════════════════════
+
+// Flight routes — named waypoint paths pigeons can take
+const citadelTop = [isoX(3, 0), isoY(3, 0) - 40];
+const towerTop   = [isoX(12, 8), isoY(12, 8) - 80];
+const offLeft    = [-30, 50 + Math.random() * 40];
+const offRight   = [670, 40 + Math.random() * 40];
+const offTop     = [320, -20];
+const skyMidL    = [180, 35];
+const skyMidR    = [460, 30];
+
+function randomRoute() {
+  const routes = [
+    // Citadel ↔ Tower
+    [citadelTop, skyMidL, skyMidR, towerTop],
+    [towerTop, skyMidR, skyMidL, citadelTop],
+    // In from left, circle, exit right
+    [offLeft, skyMidL, citadelTop, skyMidR, offRight],
+    // In from right to tower
+    [offRight, skyMidR, towerTop, skyMidL, offLeft],
+    // High pass across screen
+    [offLeft, [200, 20], [440, 25], offRight],
+    // Loop around citadel
+    [citadelTop, [citadelTop[0]-40, citadelTop[1]+20], [citadelTop[0]+40, citadelTop[1]+15], citadelTop],
+    // Dive from sky to tower and back
+    [offTop, skyMidR, towerTop, skyMidR, offTop],
+    // Citadel gate swoop
+    [[isoX(3,7), isoY(3,7)-30], skyMidL, citadelTop, skyMidR, towerTop],
+  ];
+  return routes[Math.floor(Math.random() * routes.length)];
+}
+
+class Pigeon {
+  constructor() {
+    this.reset();
+  }
+
+  reset() {
+    const route = randomRoute();
+    this.waypoints = route.map(([x,y]) => [x + (Math.random()-0.5)*16, y + (Math.random()-0.5)*10]);
+    this.wpIdx = 0;
+    this.x = this.waypoints[0][0];
+    this.y = this.waypoints[0][1];
+    this.speed = 1.0 + Math.random() * 0.8;
+    this.flapPhase = Math.random() * Math.PI * 2;
+    this.alive = true;
+    this.shade = Math.random() > 0.5 ? EGA.LGRAY : EGA.DGRAY; // Varied pigeon colors
+    if (Math.random() > 0.7) this.shade = EGA.WHITE; // Occasional white dove
+  }
+
+  update() {
+    if (!this.alive) return;
+    if (this.wpIdx >= this.waypoints.length) {
+      this.alive = false;
+      return;
+    }
+
+    const [tx, ty] = this.waypoints[this.wpIdx];
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist < 3) {
+      this.wpIdx++;
+    } else {
+      this.x += (dx / dist) * this.speed;
+      this.y += (dy / dist) * this.speed;
+    }
+
+    this.flapPhase += 0.3;
+  }
+
+  draw() {
+    if (!this.alive) return;
+    const px = Math.round(this.x);
+    const py = Math.round(this.y);
+
+    // Body — 3×2 pixel block
+    ctx.fillStyle = this.shade;
+    ctx.fillRect(px - 1, py, 3, 2);
+
+    // Wings — flapping, ±2px sine
+    const wingY = Math.round(Math.sin(this.flapPhase) * 2);
+    ctx.fillStyle = this.shade;
+    ctx.fillRect(px - 3, py + wingY, 2, 1);     // Left wing
+    ctx.fillRect(px + 2, py + wingY, 2, 1);      // Right wing
+
+    // Head — 1px in travel direction
+    const hdx = this.wpIdx < this.waypoints.length
+      ? this.waypoints[this.wpIdx][0] - this.x : 1;
+    ctx.fillStyle = EGA.DGRAY;
+    ctx.fillRect(px + (hdx > 0 ? 2 : -2), py - 1, 1, 1);
+  }
+}
+
+const MAX_PIGEONS = 16;
+const pigeons = [];
+for (let i = 0; i < MAX_PIGEONS; i++) {
+  const p = new Pigeon();
+  p.alive = false; // Start dormant
+  pigeons.push(p);
+}
+
+let pigeonSpawnTimer = 0;
+function updatePigeons() {
+  const target = derivedState.pigeonTarget || 0;
+  const aliveCount = pigeons.filter(p => p.alive).length;
+
+  // Spawn towards target — stagger spawns
+  pigeonSpawnTimer++;
+  if (aliveCount < target && pigeonSpawnTimer > 8) { // ~every 0.7s
+    pigeonSpawnTimer = 0;
+    const dead = pigeons.find(p => !p.alive);
+    if (dead) dead.reset();
+  }
+
+  for (const p of pigeons) p.update();
+
+  // Recycle dead pigeons naturally — they'll respawn if target demands it
+}
+
+function drawPigeons() {
+  for (const p of pigeons) p.draw();
+}
+
+// ═══════════════════════════════════════════════════════
+// CARAVAN & CONSTRUCTION (building activity)
+// ═══════════════════════════════════════════════════════
+
+// Caravan: camel/donkey sprites walking toward the gate with cargo
+// Construction materials: crates, planks, stone blocks piled near gate
+
+let caravanActive = false;
+let caravanEntities = [];
+
+class CaravanAnimal {
+  constructor(delay) {
+    // Start off-screen right, walk to citadel gate
+    const gateX = isoX(3, 7);
+    const gateY = isoY(3, 7);
+    this.startX = 640 + delay * 50;
+    this.startY = gateY + 12 + (Math.random() - 0.5) * 6;
+    this.x = this.startX;
+    this.y = this.startY;
+    this.targetX = gateX + (Math.random() - 0.5) * 20;
+    this.targetY = gateY + 8 + Math.random() * 8;
+    this.arrived = false;
+    this.speed = 0.3 + Math.random() * 0.15;
+    this.frame = Math.random() * 10;
+    this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
+  }
+
+  update() {
+    if (this.arrived) return;
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 2) {
+      this.arrived = true;
+    } else {
+      this.x += (dx / dist) * this.speed;
+      this.y += (dy / dist) * this.speed;
+      this.frame += 0.06;
+    }
+  }
+
+  draw() {
+    const px = Math.round(this.x);
+    const py = Math.round(this.y);
+    const legOff = Math.floor(this.frame) % 2 === 0 ? 1 : 0;
+
+    if (this.type === 'camel') {
+      // Camel: brown, taller, hump
+      ctx.fillStyle = EGA.BROWN;
+      ctx.fillRect(px - 5, py - 2, 10, 4); // Body
+      ctx.fillRect(px - 1, py - 5, 3, 3);  // Hump
+      ctx.fillStyle = '#885500';
+      ctx.fillRect(px - 7, py - 4, 3, 3);  // Head
+      ctx.fillRect(px - 8, py - 3, 1, 2);  // Nose
+      // Legs
+      ctx.fillStyle = EGA.BROWN;
+      ctx.fillRect(px - 4, py + 2, 1, 2 + legOff);
+      ctx.fillRect(px - 2, py + 2, 1, 2 + (1-legOff));
+      ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
+      ctx.fillRect(px + 4, py + 2, 1, 2 + (1-legOff));
+      // Cargo on back — colorful packs
+      ctx.fillStyle = EGA.RED;
+      ctx.fillRect(px + 1, py - 6, 3, 2);
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(px - 3, py - 5, 3, 2);
+    } else {
+      // Donkey: smaller, grey
+      ctx.fillStyle = EGA.DGRAY;
+      ctx.fillRect(px - 4, py - 1, 8, 3);  // Body
+      ctx.fillStyle = EGA.LGRAY;
+      ctx.fillRect(px - 6, py - 3, 3, 3);  // Head
+      ctx.fillRect(px - 5, py - 5, 1, 2);  // Ear
+      ctx.fillRect(px - 3, py - 5, 1, 2);  // Ear
+      // Legs
+      ctx.fillStyle = EGA.DGRAY;
+      ctx.fillRect(px - 3, py + 2, 1, 2 + legOff);
+      ctx.fillRect(px - 1, py + 2, 1, 2 + (1-legOff));
+      ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
+      ctx.fillRect(px + 3, py + 2, 1, 2 + (1-legOff));
+      // Cargo — planks/crate
+      ctx.fillStyle = EGA.BROWN;
+      ctx.fillRect(px - 2, py - 4, 6, 2);
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(px, py - 5, 2, 1);
+    }
+  }
+}
+
+// Construction materials at the gate
+function drawConstructionSite() {
+  if (!caravanActive) return;
+
+  const gx = isoX(3, 7);
+  const gy = isoY(3, 7);
+
+  // Pile of stone blocks (left of gate)
+  ctx.fillStyle = EGA.LGRAY;
+  ctx.fillRect(gx - 28, gy + 6, 8, 4);
+  ctx.fillRect(gx - 26, gy + 2, 6, 4);
+  ctx.fillRect(gx - 24, gy - 1, 4, 3);
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(gx - 28, gy + 10, 8, 1);
+
+  // Timber planks (right of gate)
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(gx + 18, gy + 4, 12, 2);
+  ctx.fillRect(gx + 19, gy + 6, 12, 2);
+  ctx.fillRect(gx + 20, gy + 8, 12, 2);
+  ctx.fillStyle = '#885500';
+  ctx.fillRect(gx + 18, gy + 2, 12, 2);
+
+  // Crate (near gate)
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(gx + 6, gy + 4, 8, 8);
+  ctx.fillStyle = '#774400';
+  ctx.fillRect(gx + 6, gy + 4, 8, 1);
+  ctx.fillRect(gx + 6, gy + 11, 8, 1);
+  ctx.fillStyle = EGA.YELLOW;
+  // Cross bracing on crate
+  ctx.fillRect(gx + 9, gy + 5, 1, 6);
+  ctx.fillRect(gx + 7, gy + 7, 6, 1);
+
+  // Scaffolding — thin poles near left wall
+  ctx.fillStyle = EGA.BROWN;
+  const sx = isoX(1, 6);
+  const sy = isoY(1, 6);
+  ctx.fillRect(sx + 2, sy - 28, 1, 28);
+  ctx.fillRect(sx + 10, sy - 28, 1, 28);
+  // Cross beams
+  ctx.fillRect(sx + 2, sy - 26, 9, 1);
+  ctx.fillRect(sx + 2, sy - 18, 9, 1);
+  ctx.fillRect(sx + 2, sy - 10, 9, 1);
+  // Plank on top
+  ctx.fillStyle = '#996600';
+  ctx.fillRect(sx, sy - 28, 14, 2);
+
+  // Small flag/banner on scaffolding
+  const flagFlap = Math.sin(torchPhase * 1.5) > 0 ? 0 : 1;
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(sx + 11, sy - 32, 4 + flagFlap, 3);
+}
+
+function initCaravan() {
+  caravanEntities = [];
+  // 3 animals in a line
+  for (let i = 0; i < 3; i++) {
+    caravanEntities.push(new CaravanAnimal(i));
+  }
+}
+
+function updateCaravan() {
+  const shouldBeActive = derivedState.activity === 'building' &&
+    (derivedState.vault === 'ACTIVE' || derivedState.vault === 'COUNCIL');
+
+  if (shouldBeActive && !caravanActive) {
+    caravanActive = true;
+    initCaravan();
+  } else if (!shouldBeActive && caravanActive) {
+    caravanActive = false;
+    caravanEntities = [];
+  }
+
+  if (caravanActive) {
+    for (const c of caravanEntities) c.update();
+
+    // If all arrived, occasionally send a new caravan
+    if (caravanEntities.every(c => c.arrived)) {
+      if (Math.random() < 0.003) { // ~every 25s at 12fps
+        initCaravan();
+      }
+    }
+  }
+}
+
+function drawCaravan() {
+  if (!caravanActive) return;
+  // Sort by Y for depth
+  const sorted = [...caravanEntities].sort((a,b) => a.y - b.y);
+  for (const c of sorted) c.draw();
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════════════
+
+let lastFrame = 0;
+const FRAME_MS = 80; // ~12 fps
+
+function gameLoop(timestamp) {
+  requestAnimationFrame(gameLoop);
+
+  if (timestamp - lastFrame < FRAME_MS) return;
+  lastFrame = timestamp;
+
+  // Update
+  torchPhase += 0.08;
+  telegraphOffset += 0.005;
+
+  applyState();
+  updateTicker();
+  updatePigeons();
+  updateCaravan();
+
+  for (const a of vaultAgents) a.update();
+  if (outpostCouncilActive) {
+    for (const a of outpostAgents) a.update();
+  }
+  pico.update();
+
+  // Draw
+  ctx.clearRect(0, 0, 640, 480);
+
+  drawSky();
+  drawPigeons(); // Pigeons behind the scene (in the sky layer)
+  drawGround();
+  drawTelegraphLine();
+  drawConstructionSite(); // Materials at gate (behind walls)
+  drawCitadel();
+  drawPicoTower();
+  drawCaravan(); // Caravan animals in front of scene
+
+  // Draw characters (sort by Y for depth)
+  const toDraw = [...vaultAgents];
+  if (outpostCouncilActive) toDraw.push(...outpostAgents);
+  toDraw.sort((a, b) => a.y - b.y);
+  for (const a of toDraw) a.draw();
+
+  pico.draw();
+
+  drawStatusBar();
+}
+
+requestAnimationFrame(gameLoop);
+
+// ═══════════════════════════════════════════════════════
+// MUSIC — Procedural Civ/SimCity-style MIDI chiptune
+// ═══════════════════════════════════════════════════════
+
+let audioCtx = null;
+let musicPlaying = false;
+let musicMuted = false;
+let masterGain = null;
+let musicTimeoutIds = [];
+
+// Note frequencies (octave 3-5)
+const NOTE = {
+  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
+  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
+  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00,
+};
+
+// Melody lines — gentle, contemplative, Civ-esque in Am/C major
+// Each entry: [note, duration in 8ths]  (0 = rest)
+const melodyA = [
+  ['E4',2],['G4',2],['A4',4],['G4',2],['E4',2],
+  ['D4',4],['C4',2],['D4',2],['E4',4],[0,4],
+  ['A4',2],['G4',2],['E4',4],['D4',2],['E4',2],
+  ['C4',8],[0,4],
+  ['E4',2],['F4',2],['G4',4],['A4',2],['G4',2],
+  ['F4',4],['E4',2],['D4',2],['C4',4],[0,4],
+  ['D4',2],['E4',2],['G4',4],['E4',2],['D4',2],
+  ['C4',8],[0,8],
+];
+
+const melodyB = [
+  ['C5',2],['B4',2],['A4',4],['G4',2],['A4',2],
+  ['E4',4],['G4',4],[0,4],
+  ['A4',2],['G4',2],['F4',4],['E4',2],['D4',2],
+  ['C4',8],[0,4],
+  ['G4',2],['A4',2],['B4',4],['C5',2],['A4',2],
+  ['G4',4],['E4',2],['D4',2],['E4',4],[0,4],
+  ['D4',2],['E4',2],['F4',4],['E4',2],['D4',2],
+  ['C4',8],[0,8],
+];
+
+// Bass line — root notes, slow
+const bassLine = [
+  ['C3',8],['A3',8],['F3',8],['G3',8],
+  ['C3',8],['E3',8],['F3',8],['G3',8],
+  ['A3',8],['F3',8],['D3',8],['G3',8],
+  ['C3',8],['G3',8],['C3',16],
+];
+
+// Counter-melody — sparse high notes
+const counterMelody = [
+  [0,8],['E5',2],['D5',2],[0,4],['C5',4],[0,4],
+  [0,8],['G5',2],[0,2],['E5',4],[0,8],
+  ['A5',2],[0,2],['G5',4],[0,4],['E5',2],['D5',2],[0,4],
+  [0,16],
+];
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.3;
+  masterGain.connect(audioCtx.destination);
+}
+
+function playNote(freq, startTime, duration, type, gainVal, panVal) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const pan = audioCtx.createStereoPanner();
+
+  osc.type = type;
+  osc.frequency.value = freq;
+
+  // Soft envelope
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.04);
+  gain.gain.setValueAtTime(gainVal, startTime + duration - 0.08);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+  pan.pan.value = panVal || 0;
+
+  osc.connect(gain);
+  gain.connect(pan);
+  pan.connect(masterGain);
+
+  osc.start(startTime);
+  osc.stop(startTime + duration);
+}
+
+function scheduleSequence(notes, startTime, type, gain, pan, eighthDur) {
+  let t = startTime;
+  for (const [note, dur] of notes) {
+    const durSec = dur * eighthDur;
+    if (note !== 0) {
+      const freq = NOTE[note];
+      if (freq) playNote(freq, t, durSec - 0.02, type, gain, pan);
+    }
+    t += durSec;
+  }
+  return t; // return end time
+}
+
+function totalDuration(notes, eighthDur) {
+  let t = 0;
+  for (const [, dur] of notes) t += dur * eighthDur;
+  return t;
+}
+
+let currentSection = 0;
+function playMusic() {
+  if (!audioCtx || musicMuted) return;
+
+  const bpm = 72; // Gentle tempo
+  const eighthDur = 60 / bpm / 2; // duration of one eighth note
+
+  const now = audioCtx.currentTime + 0.1;
+
+  // Alternate between melody A and B sections
+  const melody = currentSection % 2 === 0 ? melodyA : melodyB;
+  currentSection++;
+
+  // Schedule all voices
+  const melEnd = scheduleSequence(melody, now, 'square', 0.12, -0.2, eighthDur);
+  scheduleSequence(bassLine, now, 'triangle', 0.15, 0, eighthDur);
+  scheduleSequence(counterMelody, now, 'square', 0.06, 0.3, eighthDur);
+
+  // Light percussion — hi-hat-ish noise hits on beats
+  const percDur = totalDuration(melody, eighthDur);
+  for (let i = 0; i < percDur; i += eighthDur * 2) {
+    playPercHit(now + i, 0.03);
+  }
+  // Kick-ish on downbeats
+  for (let i = 0; i < percDur; i += eighthDur * 8) {
+    playKick(now + i, 0.06);
+  }
+
+  // Schedule next section
+  const loopDelay = (melEnd - now) * 1000;
+  const tid = setTimeout(playMusic, loopDelay);
+  musicTimeoutIds.push(tid);
+}
+
+function playPercHit(startTime, vol) {
+  if (!audioCtx) return;
+  // White noise burst — hi-hat style
+  const bufferSize = audioCtx.sampleRate * 0.03;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(vol, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.03);
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'highpass';
+  hp.frequency.value = 8000;
+
+  src.connect(hp);
+  hp.connect(gain);
+  gain.connect(masterGain);
+  src.start(startTime);
+  src.stop(startTime + 0.04);
+}
+
+function playKick(startTime, vol) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(80, startTime);
+  osc.frequency.exponentialRampToValueAtTime(30, startTime + 0.12);
+  gain.gain.setValueAtTime(vol, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start(startTime);
+  osc.stop(startTime + 0.15);
+}
+
+function toggleMusic() {
+  if (!musicPlaying) {
+    initAudio();
+    musicMuted = false;
+    musicPlaying = true;
+    playMusic();
+  } else {
+    musicMuted = !musicMuted;
+    if (musicMuted) {
+      masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+      for (const tid of musicTimeoutIds) clearTimeout(tid);
+      musicTimeoutIds = [];
+    } else {
+      masterGain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.3);
+      playMusic();
+    }
+  }
+  updateMuteBtn();
+}
+
+function updateMuteBtn() {
+  const btn = document.getElementById('muteBtn');
+  if (!btn) return;
+  if (!musicPlaying || musicMuted) {
+    btn.textContent = '\u266B MUSIC OFF — CLICK TO PLAY';
+    btn.style.color = EGA.DGRAY;
+  } else {
+    btn.textContent = '\u266B MUSIC ON';
+    btn.style.color = EGA.LGREEN;
+  }
+}
+
+// Click anywhere on bezel to start music on first interaction
+document.querySelector('.crt-bezel').addEventListener('click', function handler() {
+  if (!musicPlaying) {
+    toggleMusic();
+  }
+}, { once: false });
+
+</script>
+</body>
+</html>
