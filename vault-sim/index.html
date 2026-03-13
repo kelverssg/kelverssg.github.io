@@ -1396,50 +1396,60 @@ let musicMuted = false;
 let masterGain = null;
 let musicTimeoutIds = [];
 
-// Note frequencies (octave 3-5)
+// Note frequencies — Chinese pentatonic (宫调 gōng mode on C)
+// Scale: C D E G A (no F, no B — pure pentatonic)
 const NOTE = {
-  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
-  C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00, B4:493.88,
-  C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880.00,
+  C2: 65.41, D2: 73.42, E2: 82.41, G2: 98.00, A2:110.00,
+  C3:130.81, D3:146.83, E3:164.81, G3:196.00, A3:220.00,
+  C4:261.63, D4:293.66, E4:329.63, G4:392.00, A4:440.00,
+  C5:523.25, D5:587.33, E5:659.25, G5:783.99, A5:880.00,
+  C6:1046.50, D6:1174.66, E6:1318.51,
 };
 
-// Melody lines — gentle, contemplative, Civ-esque in Am/C major
-// Each entry: [note, duration in 8ths]  (0 = rest)
+// Melody A — guzheng-like, descending phrases with ornamental grace notes
+// Evokes a contemplative Chinese garden / ancient court feel
 const melodyA = [
-  ['E4',2],['G4',2],['A4',4],['G4',2],['E4',2],
-  ['D4',4],['C4',2],['D4',2],['E4',4],[0,4],
-  ['A4',2],['G4',2],['E4',4],['D4',2],['E4',2],
-  ['C4',8],[0,4],
-  ['E4',2],['F4',2],['G4',4],['A4',2],['G4',2],
-  ['F4',4],['E4',2],['D4',2],['C4',4],[0,4],
-  ['D4',2],['E4',2],['G4',4],['E4',2],['D4',2],
-  ['C4',8],[0,8],
+  ['E5',2],['D5',1],['C5',1],['A4',4],[0,2],['G4',2],['E4',4],[0,4],
+  ['A4',2],['G4',2],['E4',2],['D4',2],['C4',6],[0,2],
+  ['D4',2],['E4',2],['G4',4],['A4',2],['G4',2],['E4',4],[0,4],
+  ['G4',2],['E4',1],['D4',1],['C4',4],[0,2],['D4',2],['E4',4],[0,4],
+  ['A4',3],['G4',1],['E4',2],['G4',2],['A4',4],['C5',4],[0,4],
+  ['A4',2],['G4',2],['E4',2],['D4',2],['C4',8],[0,8],
 ];
 
+// Melody B — higher register, more flowing, like a dizi (竹笛) phrase
 const melodyB = [
-  ['C5',2],['B4',2],['A4',4],['G4',2],['A4',2],
-  ['E4',4],['G4',4],[0,4],
-  ['A4',2],['G4',2],['F4',4],['E4',2],['D4',2],
-  ['C4',8],[0,4],
-  ['G4',2],['A4',2],['B4',4],['C5',2],['A4',2],
-  ['G4',4],['E4',2],['D4',2],['E4',4],[0,4],
-  ['D4',2],['E4',2],['F4',4],['E4',2],['D4',2],
-  ['C4',8],[0,8],
+  ['C5',2],['D5',2],['E5',4],['D5',2],['C5',1],['A4',1],['G4',4],[0,4],
+  ['A4',2],['C5',2],['D5',4],['E5',2],['D5',2],['C5',4],[0,4],
+  ['E5',2],['D5',1],['C5',1],['A4',4],['G4',2],['A4',2],['C5',4],[0,4],
+  ['D5',2],['C5',2],['A4',4],['G4',2],['E4',2],['D4',4],[0,4],
+  ['E4',2],['G4',2],['A4',4],['C5',2],['A4',1],['G4',1],['E4',4],[0,4],
+  ['D4',2],['E4',2],['G4',2],['E4',2],['C4',8],[0,8],
 ];
 
-// Bass line — root notes, slow
+// Melody C — sparse, meditative, like a qin (古琴) solo
+const melodyC = [
+  ['C4',6],[0,2],['E4',4],['G4',4],[0,4],
+  ['A4',6],[0,2],['G4',2],['E4',2],['D4',4],[0,4],
+  ['C4',4],[0,4],['D4',4],['E4',8],[0,4],
+  ['G4',6],[0,2],['A4',4],[0,4],['G4',2],['E4',2],
+  ['D4',4],['C4',8],[0,4],
+  [0,8],['C4',4],['D4',2],['E4',2],['C4',8],[0,8],
+];
+
+// Bass — slow sustained root notes, drone-like (erhu feel)
 const bassLine = [
-  ['C3',8],['A3',8],['F3',8],['G3',8],
-  ['C3',8],['E3',8],['F3',8],['G3',8],
-  ['A3',8],['F3',8],['D3',8],['G3',8],
-  ['C3',8],['G3',8],['C3',16],
+  ['C3',8],['G2',8],['A2',8],['E3',8],
+  ['C3',8],['D3',8],['G2',8],['C3',8],
+  ['A2',8],['E3',8],['G2',8],['A2',8],
+  ['D3',8],['G2',8],['C3',16],
 ];
 
-// Counter-melody — sparse high notes
+// High register — sparse plucked harmonics (pipa / guzheng overtones)
 const counterMelody = [
-  [0,8],['E5',2],['D5',2],[0,4],['C5',4],[0,4],
-  [0,8],['G5',2],[0,2],['E5',4],[0,8],
-  ['A5',2],[0,2],['G5',4],[0,4],['E5',2],['D5',2],[0,4],
+  [0,8],['E6',1],[0,1],['D6',1],[0,1],['C6',4],[0,8],
+  [0,8],['A5',1],[0,1],['G5',2],[0,4],['E5',4],[0,4],
+  ['D6',1],[0,1],['C6',2],[0,4],[0,8],['A5',2],[0,2],[0,4],
   [0,16],
 ];
 
@@ -1451,6 +1461,7 @@ function initAudio() {
   masterGain.connect(audioCtx.destination);
 }
 
+// Plucked string note — sharp attack, natural decay (guzheng / pipa feel)
 function playNote(freq, startTime, duration, type, gainVal, panVal) {
   if (!audioCtx) return;
   const osc = audioCtx.createOscillator();
@@ -1460,11 +1471,11 @@ function playNote(freq, startTime, duration, type, gainVal, panVal) {
   osc.type = type;
   osc.frequency.value = freq;
 
-  // Soft envelope
+  // Plucked envelope — fast attack, exponential decay
   gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.04);
-  gain.gain.setValueAtTime(gainVal, startTime + duration - 0.08);
-  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.008); // Sharp pluck
+  gain.gain.exponentialRampToValueAtTime(gainVal * 0.4, startTime + duration * 0.3);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
   pan.pan.value = panVal || 0;
 
@@ -1473,20 +1484,62 @@ function playNote(freq, startTime, duration, type, gainVal, panVal) {
   pan.connect(masterGain);
 
   osc.start(startTime);
-  osc.stop(startTime + duration);
+  osc.stop(startTime + duration + 0.05);
 }
 
-function scheduleSequence(notes, startTime, type, gain, pan, eighthDur) {
+// Sustained note — for erhu-style bass drone
+function playSustained(freq, startTime, duration, type, gainVal, panVal) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const pan = audioCtx.createStereoPanner();
+
+  osc.type = type;
+  osc.frequency.value = freq;
+
+  // Gentle bow-like envelope with slight vibrato
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainVal, startTime + 0.15);
+  gain.gain.setValueAtTime(gainVal, startTime + duration - 0.2);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+  // Subtle vibrato
+  const vib = audioCtx.createOscillator();
+  const vibGain = audioCtx.createGain();
+  vib.frequency.value = 5.5; // ~5.5 Hz vibrato
+  vibGain.gain.value = freq * 0.008; // Very subtle
+  vib.connect(vibGain);
+  vibGain.connect(osc.frequency);
+  vib.start(startTime + 0.2); // Vibrato starts after attack
+  vib.stop(startTime + duration + 0.05);
+
+  pan.pan.value = panVal || 0;
+
+  osc.connect(gain);
+  gain.connect(pan);
+  pan.connect(masterGain);
+
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.05);
+}
+
+function scheduleSequence(notes, startTime, type, gain, pan, eighthDur, sustained) {
   let t = startTime;
   for (const [note, dur] of notes) {
     const durSec = dur * eighthDur;
     if (note !== 0) {
       const freq = NOTE[note];
-      if (freq) playNote(freq, t, durSec - 0.02, type, gain, pan);
+      if (freq) {
+        if (sustained) {
+          playSustained(freq, t, durSec - 0.02, type, gain, pan);
+        } else {
+          playNote(freq, t, durSec - 0.02, type, gain, pan);
+        }
+      }
     }
     t += durSec;
   }
-  return t; // return end time
+  return t;
 }
 
 function totalDuration(notes, eighthDur) {
@@ -1495,32 +1548,58 @@ function totalDuration(notes, eighthDur) {
   return t;
 }
 
+// Woodblock hit — pitched click (木鱼 mùyú / 板 bǎn feel)
+function playWoodblock(startTime, vol, high) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(high ? 1200 : 800, startTime);
+  osc.frequency.exponentialRampToValueAtTime(high ? 600 : 400, startTime + 0.03);
+  gain.gain.setValueAtTime(vol, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.06);
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start(startTime);
+  osc.stop(startTime + 0.07);
+}
+
 let currentSection = 0;
+const melodies = [melodyA, melodyB, melodyC];
+
 function playMusic() {
   if (!audioCtx || musicMuted) return;
 
-  const bpm = 72; // Gentle tempo
-  const eighthDur = 60 / bpm / 2; // duration of one eighth note
+  const bpm = 62; // Slower, more contemplative
+  const eighthDur = 60 / bpm / 2;
 
   const now = audioCtx.currentTime + 0.1;
 
-  // Alternate between melody A and B sections
-  const melody = currentSection % 2 === 0 ? melodyA : melodyB;
+  // Cycle through 3 melody sections
+  const melody = melodies[currentSection % 3];
   currentSection++;
 
-  // Schedule all voices
-  const melEnd = scheduleSequence(melody, now, 'square', 0.12, -0.2, eighthDur);
-  scheduleSequence(bassLine, now, 'triangle', 0.15, 0, eighthDur);
-  scheduleSequence(counterMelody, now, 'square', 0.06, 0.3, eighthDur);
+  // Main melody — triangle wave (softer, more flute-like for dizi feel)
+  const melEnd = scheduleSequence(melody, now, 'triangle', 0.14, -0.15, eighthDur);
 
-  // Light percussion — hi-hat-ish noise hits on beats
+  // Bass — sawtooth with low gain for erhu-like sustained drone
+  scheduleSequence(bassLine, now, 'sawtooth', 0.06, 0, eighthDur, true);
+
+  // High harmonics — plucked square, sparse (guzheng overtones)
+  scheduleSequence(counterMelody, now, 'square', 0.05, 0.25, eighthDur);
+
+  // Percussion — woodblock pattern (ban/muyu)
   const percDur = totalDuration(melody, eighthDur);
-  for (let i = 0; i < percDur; i += eighthDur * 2) {
-    playPercHit(now + i, 0.03);
-  }
-  // Kick-ish on downbeats
+  // Strong beat on 1, lighter on 3 (traditional 板眼 bǎnyǎn pattern)
   for (let i = 0; i < percDur; i += eighthDur * 8) {
-    playKick(now + i, 0.06);
+    playWoodblock(now + i, 0.04, false); // 板 — strong downbeat
+  }
+  for (let i = eighthDur * 4; i < percDur; i += eighthDur * 8) {
+    playWoodblock(now + i, 0.025, true); // 眼 — lighter upbeat
+  }
+  // Soft closed hi-hat on eighth beats for texture
+  for (let i = 0; i < percDur; i += eighthDur * 4) {
+    playPercHit(now + i + eighthDur * 2, 0.012);
   }
 
   // Schedule next section
@@ -1553,19 +1632,20 @@ function playPercHit(startTime, vol) {
   src.stop(startTime + 0.04);
 }
 
+// 堂鼓 (táng gǔ) — deep Chinese hall drum
 function playKick(startTime, vol) {
   if (!audioCtx) return;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(80, startTime);
-  osc.frequency.exponentialRampToValueAtTime(30, startTime + 0.12);
+  osc.frequency.setValueAtTime(100, startTime);
+  osc.frequency.exponentialRampToValueAtTime(45, startTime + 0.2);
   gain.gain.setValueAtTime(vol, startTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
   osc.connect(gain);
   gain.connect(masterGain);
   osc.start(startTime);
-  osc.stop(startTime + 0.15);
+  osc.stop(startTime + 0.26);
 }
 
 function toggleMusic() {
