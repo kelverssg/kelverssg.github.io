@@ -728,7 +728,7 @@ class Character {
     this.capColor = capColor;
     this.bodyColor = bodyColor;
     this.x = isoX(startCol, startRow);
-    this.y = isoY(startCol, startRow) - 12;
+    this.y = isoY(startCol, startRow) + 4;
     this.targetX = this.x;
     this.targetY = this.y;
     this.frame = 0;
@@ -746,7 +746,7 @@ class Character {
   }
 
   setWaypoints(wps) {
-    this.waypoints = wps.map(([c,r]) => [isoX(c,r), isoY(c,r) - 12]);
+    this.waypoints = wps.map(([c,r]) => [isoX(c,r), isoY(c,r) + 4]);
     this.homeX = this.waypoints[0]?.[0] ?? this.x;
     this.homeY = this.waypoints[0]?.[1] ?? this.y;
   }
@@ -1041,7 +1041,7 @@ par2.speed = 0.6;
 const vaultAgents = [claude, sub1, sub2, par1, par2];
 
 // Council positions (circle around center of citadel)
-const councilCenter = [isoX(3, 3.5), isoY(3, 3.5) - 12];
+const councilCenter = [isoX(3, 3.5), isoY(3, 3.5) + 4];
 const councilPositions = [
   [councilCenter[0], councilCenter[1] - 12],
   [councilCenter[0] + 14, councilCenter[1] - 4],
