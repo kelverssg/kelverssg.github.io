@@ -5,5 +5,7 @@
   "last_vault_council": null,
   "last_outpost_council": null,
   "activity": "building",
+  "pi_cpu_temp": 66.2,
+  "vault_file_count": 1117,
   "note": "vault sim under construction"
 }
