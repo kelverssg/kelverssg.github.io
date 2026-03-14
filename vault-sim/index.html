@@ -317,25 +317,71 @@ function drawIsoDiamond(cx, cy, w, h, fill, stroke) {
 }
 
 function drawGround() {
-  // Desert floor — large area of sand tiles
+  // Procedural terrain — citadel stone → moat → green → scrub → desert sand
   for (let r = 0; r < 14; r++) {
     for (let c = 0; c < 14; c++) {
       const x = isoX(c, r);
       const y = isoY(c, r);
-      // Citadel area (left), desert (mid), tower area (right)
-      let color;
+
+      let color, stroke;
+      const noise = (c * 17 + r * 13) % 7; // deterministic per-tile variation
+
       if (c < 6 && r < 8) {
-        color = EGA.DGRAY; // Citadel stone floor
-      } else if (c > 10 && r > 5) {
-        color = EGA.BROWN; // Tower base
-      } else if (c >= 7 && c <= 9 && r >= 1 && r <= 3) {
-        color = '#775533'; // Library courtyard — warm stone
-      } else if (c >= 9 && c <= 11 && r >= 4 && r <= 6) {
-        color = '#444444'; // Armory yard — dark stone
+        // Citadel interior stone floor
+        const shades = ['#4A4852', '#484650', '#504850', '#4C4A54'];
+        color = shades[noise % shades.length];
+        stroke = '#303040';
       } else {
-        color = (c + r) % 3 === 0 ? '#885500' : EGA.BROWN; // Desert sand variation
+        // Outside — distance from citadel edge (right wall c=6, front wall r=7)
+        const dc = Math.max(0, c - 6);
+        const dr = Math.max(0, r - 7);
+        const dist = Math.sqrt(dc * dc + dr * dr);
+
+        if (dist < 1.5) {
+          // Moat — dark water with shimmer
+          const wave = Math.floor(torchPhase * 3 + c * 0.7 + r * 0.5) % 3;
+          color = ['#1A3E7A', '#1C447E', '#183874'][wave];
+          stroke = '#0E2452';
+        } else if (dist < 3.2) {
+          // Lush green band close to citadel
+          const shades = ['#246C14', '#286E18', '#1E6410', '#2A7018', '#226012'];
+          color = shades[noise % shades.length];
+          stroke = '#164A0A';
+        } else if (dist < 5.5) {
+          // Drier scrub green
+          const shades = ['#4E7020', '#547826', '#486A1C', '#567424'];
+          color = shades[noise % shades.length];
+          stroke = '#345010';
+        } else if (dist < 7.5) {
+          // Scrubby yellow-brown transition
+          const shades = ['#A89040', '#AC9444', '#A48C3C'];
+          color = shades[noise % shades.length];
+          stroke = '#7A6A28';
+        } else {
+          // Desert sand — considerably lighter than camel (#AA5500)
+          const shades = ['#DCC87C', '#E0D086', '#D8C278', '#DCCA82'];
+          color = shades[noise % shades.length];
+          stroke = '#BEA65A';
+        }
+
+        // Bridge at gate — flagstone so caravan doesn't cross water
+        if (c >= 2 && c <= 4 && r === 8) {
+          color = '#7A6040';
+          stroke = '#5A4428';
+        }
+        // Library courtyard — warm flagstone
+        if (c >= 7 && c <= 9 && r >= 1 && r <= 3) {
+          color = '#7A6040';
+          stroke = '#5A4428';
+        }
+        // Armory yard — dark paved stone
+        if (c >= 9 && c <= 11 && r >= 4 && r <= 6) {
+          color = '#3E3E3E';
+          stroke = '#282828';
+        }
       }
-      drawIsoDiamond(x, y, TILE_W, TILE_H, color, '#332200');
+
+      drawIsoDiamond(x, y, TILE_W, TILE_H, color, stroke);
     }
   }
 }
@@ -387,7 +433,7 @@ function darken2(hex) {
 }
 
 function drawCitadel() {
-  const wallColor = EGA.WHITE;
+  const wallColor = '#C09050'; // Warm sandstone
   const wallH = 24;
 
   // Back wall (top-left to top-right of citadel)
@@ -441,8 +487,8 @@ function drawCitadel() {
   for (const [c,r] of turrets) {
     const x = isoX(c, r);
     const y = isoY(c, r);
-    drawWallBlock(x, y, wallH + 10, EGA.WHITE);
-    ctx.fillStyle = EGA.WHITE;
+    drawWallBlock(x, y, wallH + 10, '#D0A060'); // Turrets slightly lighter sandstone
+    ctx.fillStyle = '#D0A060';
     ctx.fillRect(x - 3, y - wallH - 12, 2, 2);
     ctx.fillRect(x + 1, y - wallH - 12, 2, 2);
   }
@@ -470,7 +516,7 @@ function drawCitadel() {
 
   // Town Crier — appears when activity is set (researching/building)
   if (derivedState.activity) {
-    drawTownCrier(isoX(4, 7), isoY(4, 7) - wallH - 10);
+    drawTownCrier(isoX(3, 7) + 20, isoY(3, 7) + 2);
   }
 }
 
@@ -1401,63 +1447,31 @@ function drawPigeons() {
 
 let caravanActive = false;
 let caravanEntities = [];
-let cargoPile = 0;
-const CARGO_MAX = 12;
-const CARGO_DECAY = 0.012; // units/frame — empties over ~80s at 12fps
-
-const GATE_WP_IDX = 3; // index of the gate waypoint in each animal's list
 
 class CaravanAnimal {
   constructor(delay) {
-    const jitter = (Math.random() - 0.5) * 4;
-    // Full journey: approach from right → gate (offload) → depart west
-    this.waypoints = [
-      [700 + delay * 60,  isoY(7, 7) + jitter],  // off-screen right
-      [isoX(7, 7),        isoY(7, 7) + jitter],  // outside right-wall corner
-      [isoX(5, 8),        isoY(5, 8) + jitter],  // along front perimeter
-      [isoX(3, 7),        isoY(3, 7) + 8],        // gate — offload here
-      [isoX(1, 8),        isoY(1, 8) + jitter],  // depart west along front
-      [-100,              100 + jitter],           // off-screen left
-    ];
-    this.wpIdx = 1;
-    this.x = this.waypoints[0][0];
-    this.y = this.waypoints[0][1];
+    // Start off-screen right, walk to citadel gate
+    const gateX = isoX(3, 7);
+    const gateY = isoY(3, 7);
+    this.startX = 640 + delay * 50;
+    this.startY = gateY + 12 + (Math.random() - 0.5) * 6;
+    this.x = this.startX;
+    this.y = this.startY;
+    this.targetX = gateX + (Math.random() - 0.5) * 20;
+    this.targetY = gateY + 8 + Math.random() * 8;
     this.arrived = false;
-    this.offloaded = false;
-    this.pauseTimer = 0;
-    this.speed = 0.5 + Math.random() * 0.15;
+    this.speed = 0.3 + Math.random() * 0.15;
     this.frame = Math.random() * 10;
     this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
-    this.trail = [];
   }
 
   update() {
     if (this.arrived) return;
-    this.trail.push([this.x, this.y]);
-    if (this.trail.length > 20) this.trail.shift();
-
-    // Pause at gate to offload
-    if (this.wpIdx === GATE_WP_IDX) {
-      const [tx, ty] = this.waypoints[GATE_WP_IDX];
-      const dx = tx - this.x, dy = ty - this.y;
-      if (Math.sqrt(dx*dx + dy*dy) < 2) {
-        if (!this.offloaded) {
-          cargoPile = Math.min(cargoPile + 4, CARGO_MAX);
-          this.offloaded = true;
-        }
-        this.pauseTimer++;
-        if (this.pauseTimer < 55) return; // ~4.5s pause at gate
-        this.wpIdx++;
-        return;
-      }
-    }
-
-    const [tx, ty] = this.waypoints[this.wpIdx];
-    const dx = tx - this.x, dy = ty - this.y;
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
     if (dist < 2) {
-      this.wpIdx++;
-      if (this.wpIdx >= this.waypoints.length) this.arrived = true;
+      this.arrived = true;
     } else {
       this.x += (dx / dist) * this.speed;
       this.y += (dy / dist) * this.speed;
@@ -1466,54 +1480,48 @@ class CaravanAnimal {
   }
 
   draw() {
-    // Dust trail — fading sand pixels
-    for (let i = 0; i < this.trail.length; i++) {
-      ctx.globalAlpha = (i / this.trail.length) * 0.35;
-      ctx.fillStyle = '#C8A070';
-      ctx.fillRect(Math.round(this.trail[i][0]) - 1, Math.round(this.trail[i][1]) + 3, 2, 1);
-    }
-    ctx.globalAlpha = 1;
-
     const px = Math.round(this.x);
     const py = Math.round(this.y);
     const legOff = Math.floor(this.frame) % 2 === 0 ? 1 : 0;
 
     if (this.type === 'camel') {
+      // Camel: brown, taller, hump
       ctx.fillStyle = EGA.BROWN;
       ctx.fillRect(px - 5, py - 2, 10, 4); // Body
       ctx.fillRect(px - 1, py - 5, 3, 3);  // Hump
       ctx.fillStyle = '#885500';
       ctx.fillRect(px - 7, py - 4, 3, 3);  // Head
       ctx.fillRect(px - 8, py - 3, 1, 2);  // Nose
+      // Legs
       ctx.fillStyle = EGA.BROWN;
       ctx.fillRect(px - 4, py + 2, 1, 2 + legOff);
       ctx.fillRect(px - 2, py + 2, 1, 2 + (1-legOff));
       ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
       ctx.fillRect(px + 4, py + 2, 1, 2 + (1-legOff));
-      if (!this.offloaded) {
-        ctx.fillStyle = EGA.RED;
-        ctx.fillRect(px + 1, py - 6, 3, 2);
-        ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px - 3, py - 5, 3, 2);
-      }
+      // Cargo on back — colorful packs
+      ctx.fillStyle = EGA.RED;
+      ctx.fillRect(px + 1, py - 6, 3, 2);
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(px - 3, py - 5, 3, 2);
     } else {
+      // Donkey: smaller, grey
       ctx.fillStyle = EGA.DGRAY;
       ctx.fillRect(px - 4, py - 1, 8, 3);  // Body
       ctx.fillStyle = EGA.LGRAY;
       ctx.fillRect(px - 6, py - 3, 3, 3);  // Head
       ctx.fillRect(px - 5, py - 5, 1, 2);  // Ear
       ctx.fillRect(px - 3, py - 5, 1, 2);  // Ear
+      // Legs
       ctx.fillStyle = EGA.DGRAY;
       ctx.fillRect(px - 3, py + 2, 1, 2 + legOff);
       ctx.fillRect(px - 1, py + 2, 1, 2 + (1-legOff));
       ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
       ctx.fillRect(px + 3, py + 2, 1, 2 + (1-legOff));
-      if (!this.offloaded) {
-        ctx.fillStyle = EGA.BROWN;
-        ctx.fillRect(px - 2, py - 4, 6, 2);
-        ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px, py - 5, 2, 1);
-      }
+      // Cargo — planks/crate
+      ctx.fillStyle = EGA.BROWN;
+      ctx.fillRect(px - 2, py - 4, 6, 2);
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(px, py - 5, 2, 1);
     }
   }
 }
@@ -1572,42 +1580,6 @@ function drawConstructionSite() {
   ctx.fillRect(sx + 11, sy - 32, 4 + flagFlap, 3);
 }
 
-function drawCargoPile() {
-  if (cargoPile <= 0) return;
-  const gx = isoX(3, 7);
-  const gy = isoY(3, 7);
-  const px = gx - 24;
-  const py = gy + 14;
-  const COLS = 4, CW = 5, CH = 4, GAP = 1;
-  const total = Math.floor(cargoPile);
-
-  for (let i = 0; i < total; i++) {
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    const cx = px + col * (CW + GAP);
-    const cy = py - row * (CH + GAP);
-    ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(cx, cy - CH, CW, CH);
-    ctx.fillStyle = '#774400';
-    ctx.fillRect(cx, cy - CH, CW, 1);
-    ctx.fillStyle = EGA.YELLOW;
-    ctx.fillRect(cx + 2, cy - CH + 1, 1, CH - 2);
-    ctx.fillRect(cx + 1, cy - Math.floor(CH / 2) - 1, CW - 2, 1);
-  }
-
-  // Partial top crate grows in as fraction accumulates
-  const frac = cargoPile - total;
-  if (frac > 0.05 && total < CARGO_MAX) {
-    const col = total % COLS;
-    const row = Math.floor(total / COLS);
-    const cx = px + col * (CW + GAP);
-    const cy = py - row * (CH + GAP);
-    const partH = Math.max(1, Math.round(frac * CH));
-    ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(cx, cy - partH, CW, partH);
-  }
-}
-
 function initCaravan() {
   caravanEntities = [];
   // 3 animals in a line
@@ -1628,13 +1600,10 @@ function updateCaravan() {
     caravanEntities = [];
   }
 
-  // Cargo pile decays regardless of caravan state
-  cargoPile = Math.max(0, cargoPile - CARGO_DECAY);
-
   if (caravanActive) {
     for (const c of caravanEntities) c.update();
 
-    // If all have departed off-screen, send a new caravan
+    // If all arrived, occasionally send a new caravan
     if (caravanEntities.every(c => c.arrived)) {
       if (Math.random() < 0.003) { // ~every 25s at 12fps
         initCaravan();
@@ -1645,28 +1614,7 @@ function updateCaravan() {
 
 function drawCaravan() {
   if (!caravanActive) return;
-
-  // Static hoof-mark trail along the full perimeter route (in and out)
-  const trailPts = [
-    [isoX(7, 7), isoY(7, 7)],
-    [isoX(5, 8), isoY(5, 8)],
-    [isoX(3, 7), isoY(3, 7) + 8],
-    [isoX(1, 8), isoY(1, 8)],
-  ];
-  ctx.fillStyle = '#A07840';
-  ctx.globalAlpha = 0.22;
-  for (let s = 0; s < trailPts.length - 1; s++) {
-    const [x1, y1] = trailPts[s];
-    const [x2, y2] = trailPts[s + 1];
-    const steps = Math.floor(Math.sqrt((x2-x1)**2 + (y2-y1)**2) / 7);
-    for (let t = 0; t <= steps; t++) {
-      const f = t / steps;
-      ctx.fillRect(Math.round(x1 + (x2-x1)*f) - 1, Math.round(y1 + (y2-y1)*f), 2, 1);
-    }
-  }
-  ctx.globalAlpha = 1;
-
-  // Sort by Y for depth, draw animals on top of trail
+  // Sort by Y for depth
   const sorted = [...caravanEntities].sort((a,b) => a.y - b.y);
   for (const c of sorted) c.draw();
 }
@@ -1706,13 +1654,12 @@ function gameLoop(timestamp) {
   drawPigeons(); // Pigeons behind the scene (in the sky layer)
   drawGround();
   drawTelegraphLine();
+  drawConstructionSite(); // Materials at gate (behind walls)
   drawCitadel();
   drawLibrary();
   drawArmory();
-  drawCaravan();          // Camels — above walls
-  drawPicoTower();        // Tower — above camels
-  drawConstructionSite(); // Materials — rendered last, camels walk behind them
-  drawCargoPile();        // Cargo pile — rendered last, camels walk behind it
+  drawPicoTower();
+  drawCaravan(); // Caravan animals in front of scene
 
   // Draw characters (sort by Y for depth)
   const toDraw = [...vaultAgents];
