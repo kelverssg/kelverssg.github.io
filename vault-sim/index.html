@@ -1473,8 +1473,8 @@ class CaravanAnimal {
       [330,              271 + yOff * 0.5],      // 2: past tower column
       [266,              228],                   // 3: south approach to bridge
       [gateX,            gateY + 10],            // 4: GATE — offload here (GATE_WP_IDX)
-      [isoX(1, 8),       isoY(1, 8) + yOff * 0.4], // 5: depart west along front wall
-      [-100,             120 + yOff * 0.4],      // 6: off-screen left
+      [isoX(1, 9),       isoY(1, 9) + yOff * 0.3], // 5: depart west — r=9, clear of moat (r=8)
+      [-100,             148 + yOff * 0.3],      // 6: off-screen left
     ];
     this.wpIdx = 1;
     this.x = this.waypoints[0][0];
@@ -1708,7 +1708,7 @@ function drawCaravanTrail() {
     [330,              271],
     [266,              228],
     [isoX(3, 7),       isoY(3, 7) + 10],
-    [isoX(1, 8),       isoY(1, 8)],
+    [isoX(1, 9),       isoY(1, 9)],
   ];
   ctx.fillStyle = '#A07840';
   ctx.globalAlpha = 0.22;
