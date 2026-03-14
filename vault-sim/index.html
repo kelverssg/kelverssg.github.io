@@ -1401,21 +1401,30 @@ function drawPigeons() {
 
 let caravanActive = false;
 let caravanEntities = [];
+let cargoPile = 0;
+const CARGO_MAX = 12;
+const CARGO_DECAY = 0.012; // units/frame — empties over ~80s at 12fps
+
+const GATE_WP_IDX = 3; // index of the gate waypoint in each animal's list
 
 class CaravanAnimal {
   constructor(delay) {
-    // Perimeter path: hug outside of right wall then front wall to the gate
     const jitter = (Math.random() - 0.5) * 4;
+    // Full journey: approach from right → gate (offload) → depart west
     this.waypoints = [
       [700 + delay * 60,  isoY(7, 7) + jitter],  // off-screen right
       [isoX(7, 7),        isoY(7, 7) + jitter],  // outside right-wall corner
       [isoX(5, 8),        isoY(5, 8) + jitter],  // along front perimeter
-      [isoX(3, 7),        isoY(3, 7) + 8],        // gate
+      [isoX(3, 7),        isoY(3, 7) + 8],        // gate — offload here
+      [isoX(1, 8),        isoY(1, 8) + jitter],  // depart west along front
+      [-100,              100 + jitter],           // off-screen left
     ];
-    this.wpIdx = 1; // spawn at [0], target [1] immediately
+    this.wpIdx = 1;
     this.x = this.waypoints[0][0];
     this.y = this.waypoints[0][1];
     this.arrived = false;
+    this.offloaded = false;
+    this.pauseTimer = 0;
     this.speed = 0.5 + Math.random() * 0.15;
     this.frame = Math.random() * 10;
     this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
@@ -1426,9 +1435,25 @@ class CaravanAnimal {
     if (this.arrived) return;
     this.trail.push([this.x, this.y]);
     if (this.trail.length > 20) this.trail.shift();
+
+    // Pause at gate to offload
+    if (this.wpIdx === GATE_WP_IDX) {
+      const [tx, ty] = this.waypoints[GATE_WP_IDX];
+      const dx = tx - this.x, dy = ty - this.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 2) {
+        if (!this.offloaded) {
+          cargoPile = Math.min(cargoPile + 4, CARGO_MAX);
+          this.offloaded = true;
+        }
+        this.pauseTimer++;
+        if (this.pauseTimer < 55) return; // ~4.5s pause at gate
+        this.wpIdx++;
+        return;
+      }
+    }
+
     const [tx, ty] = this.waypoints[this.wpIdx];
-    const dx = tx - this.x;
-    const dy = ty - this.y;
+    const dx = tx - this.x, dy = ty - this.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
     if (dist < 2) {
       this.wpIdx++;
@@ -1441,7 +1466,7 @@ class CaravanAnimal {
   }
 
   draw() {
-    // Dust trail — fading sand pixels behind the animal
+    // Dust trail — fading sand pixels
     for (let i = 0; i < this.trail.length; i++) {
       ctx.globalAlpha = (i / this.trail.length) * 0.35;
       ctx.fillStyle = '#C8A070';
@@ -1454,43 +1479,41 @@ class CaravanAnimal {
     const legOff = Math.floor(this.frame) % 2 === 0 ? 1 : 0;
 
     if (this.type === 'camel') {
-      // Camel: brown, taller, hump
       ctx.fillStyle = EGA.BROWN;
       ctx.fillRect(px - 5, py - 2, 10, 4); // Body
       ctx.fillRect(px - 1, py - 5, 3, 3);  // Hump
       ctx.fillStyle = '#885500';
       ctx.fillRect(px - 7, py - 4, 3, 3);  // Head
       ctx.fillRect(px - 8, py - 3, 1, 2);  // Nose
-      // Legs
       ctx.fillStyle = EGA.BROWN;
       ctx.fillRect(px - 4, py + 2, 1, 2 + legOff);
       ctx.fillRect(px - 2, py + 2, 1, 2 + (1-legOff));
       ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
       ctx.fillRect(px + 4, py + 2, 1, 2 + (1-legOff));
-      // Cargo on back — colorful packs
-      ctx.fillStyle = EGA.RED;
-      ctx.fillRect(px + 1, py - 6, 3, 2);
-      ctx.fillStyle = EGA.YELLOW;
-      ctx.fillRect(px - 3, py - 5, 3, 2);
+      if (!this.offloaded) {
+        ctx.fillStyle = EGA.RED;
+        ctx.fillRect(px + 1, py - 6, 3, 2);
+        ctx.fillStyle = EGA.YELLOW;
+        ctx.fillRect(px - 3, py - 5, 3, 2);
+      }
     } else {
-      // Donkey: smaller, grey
       ctx.fillStyle = EGA.DGRAY;
       ctx.fillRect(px - 4, py - 1, 8, 3);  // Body
       ctx.fillStyle = EGA.LGRAY;
       ctx.fillRect(px - 6, py - 3, 3, 3);  // Head
       ctx.fillRect(px - 5, py - 5, 1, 2);  // Ear
       ctx.fillRect(px - 3, py - 5, 1, 2);  // Ear
-      // Legs
       ctx.fillStyle = EGA.DGRAY;
       ctx.fillRect(px - 3, py + 2, 1, 2 + legOff);
       ctx.fillRect(px - 1, py + 2, 1, 2 + (1-legOff));
       ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
       ctx.fillRect(px + 3, py + 2, 1, 2 + (1-legOff));
-      // Cargo — planks/crate
-      ctx.fillStyle = EGA.BROWN;
-      ctx.fillRect(px - 2, py - 4, 6, 2);
-      ctx.fillStyle = EGA.YELLOW;
-      ctx.fillRect(px, py - 5, 2, 1);
+      if (!this.offloaded) {
+        ctx.fillStyle = EGA.BROWN;
+        ctx.fillRect(px - 2, py - 4, 6, 2);
+        ctx.fillStyle = EGA.YELLOW;
+        ctx.fillRect(px, py - 5, 2, 1);
+      }
     }
   }
 }
@@ -1549,6 +1572,42 @@ function drawConstructionSite() {
   ctx.fillRect(sx + 11, sy - 32, 4 + flagFlap, 3);
 }
 
+function drawCargoPile() {
+  if (cargoPile <= 0) return;
+  const gx = isoX(3, 7);
+  const gy = isoY(3, 7);
+  const px = gx - 24;
+  const py = gy + 14;
+  const COLS = 4, CW = 5, CH = 4, GAP = 1;
+  const total = Math.floor(cargoPile);
+
+  for (let i = 0; i < total; i++) {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    const cx = px + col * (CW + GAP);
+    const cy = py - row * (CH + GAP);
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(cx, cy - CH, CW, CH);
+    ctx.fillStyle = '#774400';
+    ctx.fillRect(cx, cy - CH, CW, 1);
+    ctx.fillStyle = EGA.YELLOW;
+    ctx.fillRect(cx + 2, cy - CH + 1, 1, CH - 2);
+    ctx.fillRect(cx + 1, cy - Math.floor(CH / 2) - 1, CW - 2, 1);
+  }
+
+  // Partial top crate grows in as fraction accumulates
+  const frac = cargoPile - total;
+  if (frac > 0.05 && total < CARGO_MAX) {
+    const col = total % COLS;
+    const row = Math.floor(total / COLS);
+    const cx = px + col * (CW + GAP);
+    const cy = py - row * (CH + GAP);
+    const partH = Math.max(1, Math.round(frac * CH));
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(cx, cy - partH, CW, partH);
+  }
+}
+
 function initCaravan() {
   caravanEntities = [];
   // 3 animals in a line
@@ -1569,10 +1628,13 @@ function updateCaravan() {
     caravanEntities = [];
   }
 
+  // Cargo pile decays regardless of caravan state
+  cargoPile = Math.max(0, cargoPile - CARGO_DECAY);
+
   if (caravanActive) {
     for (const c of caravanEntities) c.update();
 
-    // If all arrived, occasionally send a new caravan
+    // If all have departed off-screen, send a new caravan
     if (caravanEntities.every(c => c.arrived)) {
       if (Math.random() < 0.003) { // ~every 25s at 12fps
         initCaravan();
@@ -1584,11 +1646,12 @@ function updateCaravan() {
 function drawCaravan() {
   if (!caravanActive) return;
 
-  // Static hoof-mark trail along the perimeter route
+  // Static hoof-mark trail along the full perimeter route (in and out)
   const trailPts = [
     [isoX(7, 7), isoY(7, 7)],
     [isoX(5, 8), isoY(5, 8)],
     [isoX(3, 7), isoY(3, 7) + 8],
+    [isoX(1, 8), isoY(1, 8)],
   ];
   ctx.fillStyle = '#A07840';
   ctx.globalAlpha = 0.22;
@@ -1647,7 +1710,8 @@ function gameLoop(timestamp) {
   drawCitadel();
   drawLibrary();
   drawArmory();
-  drawCaravan(); // Caravan animals — above walls, below tower
+  drawCargoPile(); // Offloaded cargo — above walls, behind camels
+  drawCaravan();   // Caravan animals — above walls, below tower
   drawPicoTower(); // Tower topmost
 
   // Draw characters (sort by Y for depth)
