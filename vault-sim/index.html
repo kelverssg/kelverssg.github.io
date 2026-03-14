@@ -1448,30 +1448,43 @@ function drawPigeons() {
 let caravanActive = false;
 let caravanEntities = [];
 
+// Tower base Y — used for caravan draw-order split
+const TOWER_BASE_Y = 60 + (12 + 8) * 8; // isoY(12,8) = 220
+
 class CaravanAnimal {
   constructor(delay) {
-    // Start off-screen right, walk to citadel gate
     const gateX = isoX(3, 7);
     const gateY = isoY(3, 7);
-    this.startX = 640 + delay * 50;
-    this.startY = gateY + 12 + (Math.random() - 0.5) * 6;
-    this.x = this.startX;
-    this.y = this.startY;
-    this.targetX = gateX + (Math.random() - 0.5) * 20;
-    this.targetY = gateY + 8 + Math.random() * 8;
+    const yOff = (Math.random() - 0.5) * 16;
+
+    // Perimeter path: enter from bottom-right (y≈290, well below tower base y=220),
+    // swing past the tower staying below its pixel area, then approach gate from south.
+    // Tower spans roughly x=366-416, y=124-220 — all waypoints clear this rectangle.
+    this.waypoints = [
+      [680 + delay * 45, 293 + yOff],    // off-screen right, below tower
+      [460,              289 + yOff],    // right side, below tower base
+      [330,              271 + yOff * 0.5], // past tower column, in front of citadel right wall
+      [266,              228],           // south approach — bridge entry
+      [gateX,            gateY + 10],   // gate
+    ];
+    this.wpIdx = 0;
+    this.x = this.waypoints[0][0];
+    this.y = this.waypoints[0][1];
     this.arrived = false;
-    this.speed = 0.3 + Math.random() * 0.15;
+    this.speed = 0.35 + Math.random() * 0.12;
     this.frame = Math.random() * 10;
     this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
   }
 
   update() {
     if (this.arrived) return;
-    const dx = this.targetX - this.x;
-    const dy = this.targetY - this.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
+    const [tx, ty] = this.waypoints[this.wpIdx];
+    const dx = tx - this.x;
+    const dy = ty - this.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 2) {
-      this.arrived = true;
+      this.wpIdx++;
+      if (this.wpIdx >= this.waypoints.length) this.arrived = true;
     } else {
       this.x += (dx / dist) * this.speed;
       this.y += (dy / dist) * this.speed;
@@ -1612,11 +1625,18 @@ function updateCaravan() {
   }
 }
 
-function drawCaravan() {
+// Two-pass caravan draw for correct tower layering.
+// Camels with y < TOWER_BASE_Y are behind the tower — draw them before it.
+// Camels with y >= TOWER_BASE_Y are in front — draw them after.
+function drawCaravanBehind() {
   if (!caravanActive) return;
-  // Sort by Y for depth
-  const sorted = [...caravanEntities].sort((a,b) => a.y - b.y);
-  for (const c of sorted) c.draw();
+  const behind = caravanEntities.filter(c => c.y < TOWER_BASE_Y).sort((a,b) => a.y - b.y);
+  for (const c of behind) c.draw();
+}
+function drawCaravanFront() {
+  if (!caravanActive) return;
+  const front = caravanEntities.filter(c => c.y >= TOWER_BASE_Y).sort((a,b) => a.y - b.y);
+  for (const c of front) c.draw();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1658,8 +1678,9 @@ function gameLoop(timestamp) {
   drawCitadel();
   drawLibrary();
   drawArmory();
+  drawCaravanBehind(); // Camels behind tower (y < 220) — draw before tower
   drawPicoTower();
-  drawCaravan(); // Caravan animals in front of scene
+  drawCaravanFront();  // Camels in front of tower (y >= 220) — draw after tower
 
   // Draw characters (sort by Y for depth)
   const toDraw = [...vaultAgents];
