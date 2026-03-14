@@ -569,9 +569,13 @@ function drawPicoTower() {
   const tx = isoX(baseC, baseR);
   const ty = isoY(baseC, baseR);
 
-  // Tower body — tall sandstone block
-  const towerH = 60;
-  const towerW = 24;
+  // Tower body — tall sandstone watchtower
+  const towerH = 96;
+  const towerW = 36;
+
+  // Base plinth — slightly wider for visual weight
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(tx - towerW/2 - 4, ty - 12, towerW + 8, 12);
 
   // Front face
   ctx.fillStyle = EGA.LGRAY;
@@ -579,43 +583,43 @@ function drawPicoTower() {
 
   // Side face (right) — darker
   ctx.fillStyle = EGA.DGRAY;
-  const sideW = 10;
+  const sideW = 14;
   ctx.beginPath();
   ctx.moveTo(tx + towerW/2, ty - towerH);
-  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH + 5);
-  ctx.lineTo(tx + towerW/2 + sideW, ty + 5);
+  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH + 7);
+  ctx.lineTo(tx + towerW/2 + sideW, ty + 7);
   ctx.lineTo(tx + towerW/2, ty);
   ctx.closePath();
   ctx.fill();
 
   // Top face
-  ctx.fillStyle = EGA.LGRAY;
+  ctx.fillStyle = EGA.WHITE;
   ctx.beginPath();
   ctx.moveTo(tx - towerW/2, ty - towerH);
-  ctx.lineTo(tx - towerW/2 + sideW, ty - towerH - 5);
+  ctx.lineTo(tx - towerW/2 + sideW, ty - towerH - 7);
   ctx.lineTo(tx + towerW/2 + sideW, ty - towerH);
-  ctx.lineTo(tx + towerW/2, ty - towerH + 5);
+  ctx.lineTo(tx + towerW/2, ty - towerH + 7);
   ctx.closePath();
   ctx.fill();
 
   // Window slits — glow at night
   ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.BLACK;
-  ctx.fillRect(tx - 3, ty - towerH + 15, 3, 6);
-  ctx.fillRect(tx - 3, ty - towerH + 30, 3, 6);
-  ctx.fillRect(tx - 3, ty - towerH + 45, 3, 6);
+  ctx.fillRect(tx - 4, ty - towerH + 22, 4, 7);
+  ctx.fillRect(tx - 4, ty - towerH + 48, 4, 7);
+  ctx.fillRect(tx - 4, ty - towerH + 72, 4, 7);
 
   // Antenna on top
   ctx.fillStyle = EGA.LGRAY;
-  ctx.fillRect(tx + 2, ty - towerH - 18, 2, 18);
+  ctx.fillRect(tx + 3, ty - towerH - 30, 3, 30);
   // Antenna tip blinks
   const blink = Math.sin(torchPhase * 2) > 0.3;
   ctx.fillStyle = blink ? EGA.LRED : EGA.RED;
-  ctx.fillRect(tx + 1, ty - towerH - 20, 4, 3);
+  ctx.fillRect(tx + 1, ty - towerH - 33, 7, 4);
 
-  // Crenellations
+  // Crenellations — 5 merlons across the top
   ctx.fillStyle = EGA.LGRAY;
-  for (let i = 0; i < 4; i++) {
-    ctx.fillRect(tx - towerW/2 + i * 7, ty - towerH - 4, 4, 4);
+  for (let i = 0; i < 5; i++) {
+    ctx.fillRect(tx - towerW/2 + i * 8, ty - towerH - 5, 5, 5);
   }
 }
 
@@ -896,7 +900,7 @@ const pico = {
   init() {
     const baseC = 12, baseR = 8;
     this.x = isoX(baseC, baseR) - 2;
-    this.y = isoY(baseC, baseR) - 68;
+    this.y = isoY(baseC, baseR) - 104;
   },
 
   update() {
@@ -1267,7 +1271,7 @@ function drawStatusBar() {
 
 // Flight routes — named waypoint paths pigeons can take
 const citadelTop = [isoX(3, 0), isoY(3, 0) - 40];
-const towerTop   = [isoX(12, 8), isoY(12, 8) - 80];
+const towerTop   = [isoX(12, 8), isoY(12, 8) - 120];
 const offLeft    = [-30, 50 + Math.random() * 40];
 const offRight   = [670, 40 + Math.random() * 40];
 const offTop     = [320, -20];
