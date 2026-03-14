@@ -160,9 +160,11 @@ let vaultState = {
   last_vault_council: null,
   last_outpost_council: null,
   activity: '',
+  pi_cpu_temp: 0,
+  vault_file_count: 0,
   note: ''
 };
-let derivedState = { vault: 'ACTIVE', outpost: 'ACTIVE', activity: '', pigeonTarget: 0 };
+let derivedState = { vault: 'ACTIVE', outpost: 'ACTIVE', activity: '', pigeonTarget: 0, picoHot: false, chestCount: 0 };
 
 // activity values: '' (normal), 'researching', 'building', 'idle'
 // pigeonTarget: how many pigeons should be in flight (derived from state)
@@ -202,7 +204,13 @@ function deriveState(data) {
   if (outpost === 'ACTIVE') pigeonTarget += 2;
   if (outpost === 'COUNCIL') pigeonTarget += 3;
 
-  return { vault, outpost, claudeAgo, picoAgo, heartbeatMs, activity, pigeonTarget };
+  // Pi CPU temp — Pico flaps wings at 70°C+
+  const picoHot = (data.pi_cpu_temp || 0) >= 70;
+
+  // Treasure chests — 1 per 500 .md files
+  const chestCount = Math.floor((data.vault_file_count || 0) / 500);
+
+  return { vault, outpost, claudeAgo, picoAgo, heartbeatMs, activity, pigeonTarget, picoHot, chestCount };
 }
 
 async function loadState() {
@@ -221,26 +229,78 @@ setInterval(loadState, 60000);
 // SCENE DRAWING
 // ═══════════════════════════════════════════════════════
 
-// ── Sky ──
-function drawSky() {
-  // Gradient sky — EGA blue to dark blue
-  ctx.fillStyle = EGA.BLUE;
-  ctx.fillRect(0, 0, 640, 100);
-  ctx.fillStyle = '#000055';
-  ctx.fillRect(0, 0, 640, 40);
+// ── Sky (SGT time-synced) ──
+function getSGTHour() {
+  // Get current hour in Singapore Time
+  const now = new Date();
+  const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  return sgt.getHours() + sgt.getMinutes() / 60;
+}
 
-  // Stars
-  const stars = [
-    [45,12],[120,25],[200,8],[310,18],[420,30],[500,14],[580,22],[90,35],
-    [350,10],[460,5],[250,28],[530,38],[160,42],[400,15],[60,48]
-  ];
-  ctx.fillStyle = EGA.WHITE;
-  for (const [x,y] of stars) {
-    ctx.fillRect(x, y, 1, 1);
+function isNight() {
+  const h = getSGTHour();
+  return h < 7 || h >= 18.5;
+}
+
+function isDusk() {
+  const h = getSGTHour();
+  return (h >= 17.5 && h < 18.5) || (h >= 6 && h < 7);
+}
+
+function drawSky() {
+  const h = getSGTHour();
+  const night = isNight();
+  const dusk = isDusk();
+
+  if (night) {
+    // Deep night — dark blue/black
+    ctx.fillStyle = '#000055';
+    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillStyle = EGA.BLACK;
+    ctx.fillRect(0, 0, 640, 40);
+  } else if (dusk) {
+    // Dusk/dawn — orange-purple gradient
+    ctx.fillStyle = EGA.RED;
+    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillStyle = '#550055';
+    ctx.fillRect(0, 0, 640, 40);
+    // Horizon glow
+    ctx.fillStyle = EGA.BROWN;
+    ctx.fillRect(0, 85, 640, 15);
+  } else {
+    // Daytime — light blue with golden tint
+    ctx.fillStyle = EGA.LBLUE;
+    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillStyle = EGA.BLUE;
+    ctx.fillRect(0, 0, 640, 30);
+    // Sun indicator (subtle)
+    if (h >= 10 && h < 15) {
+      ctx.fillStyle = EGA.YELLOW;
+      ctx.fillRect(520, 12, 6, 6);
+      ctx.fillRect(519, 14, 1, 2);
+      ctx.fillRect(527, 14, 1, 2);
+      ctx.fillRect(522, 10, 2, 1);
+      ctx.fillRect(522, 19, 2, 1);
+    }
   }
-  ctx.fillStyle = EGA.LGRAY;
-  for (const [x,y] of [[75,20],[275,32],[475,8],[175,45],[555,35]]) {
-    ctx.fillRect(x, y, 1, 1);
+
+  // Stars — only at night and dusk
+  if (night || dusk) {
+    const stars = [
+      [45,12],[120,25],[200,8],[310,18],[420,30],[500,14],[580,22],[90,35],
+      [350,10],[460,5],[250,28],[530,38],[160,42],[400,15],[60,48]
+    ];
+    const starAlpha = night ? 1.0 : 0.4;
+    ctx.globalAlpha = starAlpha;
+    ctx.fillStyle = EGA.WHITE;
+    for (const [x,y] of stars) {
+      ctx.fillRect(x, y, 1, 1);
+    }
+    ctx.fillStyle = EGA.LGRAY;
+    for (const [x,y] of [[75,20],[275,32],[475,8],[175,45],[555,35]]) {
+      ctx.fillRect(x, y, 1, 1);
+    }
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -268,6 +328,10 @@ function drawGround() {
         color = EGA.DGRAY; // Citadel stone floor
       } else if (c > 10 && r > 5) {
         color = EGA.BROWN; // Tower base
+      } else if (c >= 7 && c <= 9 && r >= 1 && r <= 3) {
+        color = '#775533'; // Library courtyard — warm stone
+      } else if (c >= 9 && c <= 11 && r >= 4 && r <= 6) {
+        color = '#444444'; // Armory yard — dark stone
       } else {
         color = (c + r) % 3 === 0 ? '#885500' : EGA.BROWN; // Desert sand variation
       }
@@ -344,9 +408,29 @@ function drawCitadel() {
     const y = isoY(6, r);
     drawWallBlock(x, y, wallH, wallColor);
   }
-  // Front wall with gate gap
+  // Front wall with gate
+  const gateOpen = derivedState.vault === 'ACTIVE' || derivedState.vault === 'COUNCIL';
   for (let c = 0; c < 7; c++) {
-    if (c === 3) continue; // Gate opening
+    if (c === 3) {
+      // Gate — draw open or closed
+      if (!gateOpen) {
+        // Closed gate — wooden portcullis
+        const gx = isoX(c, 7);
+        const gy = isoY(c, 7);
+        ctx.fillStyle = EGA.BROWN;
+        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH, TILE_W - 4, wallH);
+        // Vertical bars
+        ctx.fillStyle = '#885500';
+        for (let b = 0; b < 4; b++) {
+          ctx.fillRect(gx - TILE_W/2 + 4 + b * 6, gy - wallH, 2, wallH);
+        }
+        // Iron bands
+        ctx.fillStyle = EGA.DGRAY;
+        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH + 6, TILE_W - 4, 2);
+        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH + 16, TILE_W - 4, 2);
+      }
+      continue;
+    }
     const x = isoX(c, 7);
     const y = isoY(c, 7);
     drawWallBlock(x, y, wallH, wallColor);
@@ -358,7 +442,6 @@ function drawCitadel() {
     const x = isoX(c, r);
     const y = isoY(c, r);
     drawWallBlock(x, y, wallH + 10, EGA.WHITE);
-    // Turret top crenellation — small pixel detail
     ctx.fillStyle = EGA.WHITE;
     ctx.fillRect(x - 3, y - wallH - 12, 2, 2);
     ctx.fillRect(x + 1, y - wallH - 12, 2, 2);
@@ -372,11 +455,67 @@ function drawCitadel() {
   // Bed in corner (for sleeping Claude)
   drawBed(isoX(5, 6), isoY(5, 6) - 4);
 
-  // Torches on walls
+  // Treasure chests — 1 per 500 vault files, placed in courtyard
+  const chestPositions = [[3,3],[4,4],[2,4],[4,5],[3,5]];
+  for (let i = 0; i < Math.min(derivedState.chestCount, chestPositions.length); i++) {
+    const [cc, cr] = chestPositions[i];
+    drawChest(isoX(cc, cr), isoY(cc, cr) - 4);
+  }
+
+  // Torches on walls — brighter at night
   drawTorch(isoX(0, 2), isoY(0, 2) - wallH);
   drawTorch(isoX(0, 5), isoY(0, 5) - wallH);
   drawTorch(isoX(6, 2), isoY(6, 2) - wallH);
   drawTorch(isoX(6, 5), isoY(6, 5) - wallH);
+
+  // Town Crier — appears when activity is set (researching/building)
+  if (derivedState.activity) {
+    drawTownCrier(isoX(3, 7) + 20, isoY(3, 7) + 2);
+  }
+}
+
+function drawChest(x, y) {
+  // Treasure chest — gold/brown
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(x - 4, y - 1, 8, 5);
+  // Lid
+  ctx.fillStyle = '#885500';
+  ctx.fillRect(x - 5, y - 3, 10, 3);
+  // Gold trim
+  ctx.fillStyle = EGA.YELLOW;
+  ctx.fillRect(x - 1, y - 2, 2, 1);
+  ctx.fillRect(x - 4, y - 1, 8, 1);
+  // Keyhole
+  ctx.fillStyle = EGA.BLACK;
+  ctx.fillRect(x, y + 1, 1, 1);
+}
+
+function drawTownCrier(x, y) {
+  // Town Crier — distinctive hat, exclamation bubble
+  // Body
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(x - 2, y - 2, 4, 6);
+  // Head
+  ctx.fillStyle = '#DDBB99';
+  ctx.fillRect(x - 2, y - 6, 4, 4);
+  // Hat — tall brimmed
+  ctx.fillStyle = EGA.YELLOW;
+  ctx.fillRect(x - 3, y - 10, 6, 2);
+  ctx.fillRect(x - 2, y - 12, 4, 2);
+  // Legs
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(x - 2, y + 4, 2, 2);
+  ctx.fillRect(x + 1, y + 4, 2, 2);
+  // Exclamation bubble
+  const bobble = Math.sin(torchPhase * 2) > 0 ? -1 : 0;
+  ctx.fillStyle = EGA.WHITE;
+  ctx.fillRect(x - 3, y - 20 + bobble, 8, 6);
+  ctx.fillStyle = EGA.WHITE;
+  ctx.fillRect(x, y - 14 + bobble, 2, 2); // Tail
+  // "!" inside
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(x, y - 19 + bobble, 2, 3);
+  ctx.fillRect(x, y - 15 + bobble, 2, 1);
 }
 
 function drawWorkstation(x, y) {
@@ -407,13 +546,20 @@ function drawTorch(x, y) {
   // Wall bracket
   ctx.fillStyle = EGA.BROWN;
   ctx.fillRect(x - 1, y, 2, 4);
-  // Flame — flickers with torchPhase
-  const flicker = 0.6 + 0.4 * Math.sin(torchPhase + x * 0.1);
-  ctx.globalAlpha = flicker;
+  // Flame — flickers with torchPhase, brighter at night
+  const nightBoost = isNight() ? 0.15 : 0;
+  const flicker = 0.6 + 0.4 * Math.sin(torchPhase + x * 0.1) + nightBoost;
+  ctx.globalAlpha = Math.min(1, flicker);
   ctx.fillStyle = EGA.YELLOW;
   ctx.fillRect(x - 2, y - 3, 4, 3);
   ctx.fillStyle = EGA.LRED;
   ctx.fillRect(x - 1, y - 4, 2, 2);
+  // Night glow halo
+  if (isNight()) {
+    ctx.fillStyle = EGA.YELLOW;
+    ctx.globalAlpha = 0.15 * flicker;
+    ctx.fillRect(x - 5, y - 6, 10, 8);
+  }
   ctx.globalAlpha = 1;
 }
 
@@ -452,8 +598,8 @@ function drawPicoTower() {
   ctx.closePath();
   ctx.fill();
 
-  // Window slits
-  ctx.fillStyle = EGA.BLACK;
+  // Window slits — glow at night
+  ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.BLACK;
   ctx.fillRect(tx - 3, ty - towerH + 15, 3, 6);
   ctx.fillRect(tx - 3, ty - towerH + 30, 3, 6);
   ctx.fillRect(tx - 3, ty - towerH + 45, 3, 6);
@@ -471,6 +617,70 @@ function drawPicoTower() {
   for (let i = 0; i < 4; i++) {
     ctx.fillRect(tx - towerW/2 + i * 7, ty - towerH - 4, 4, 4);
   }
+}
+
+// ── Library (Obsidian Vault) & Armory (Dev Environment) ──
+function drawLibrary() {
+  // Small building between citadel and tower — represents the Obsidian vault
+  const lx = isoX(8, 2);
+  const ly = isoY(8, 2);
+  const bh = 20;
+
+  // Walls
+  ctx.fillStyle = '#996600'; // Warm sandstone
+  ctx.fillRect(lx - 12, ly - bh, 24, bh);
+  // Side face
+  ctx.fillStyle = '#774400';
+  ctx.fillRect(lx + 12, ly - bh, 8, bh + 3);
+  // Roof — peaked
+  ctx.fillStyle = EGA.RED;
+  ctx.beginPath();
+  ctx.moveTo(lx - 14, ly - bh);
+  ctx.lineTo(lx, ly - bh - 10);
+  ctx.lineTo(lx + 22, ly - bh);
+  ctx.closePath();
+  ctx.fill();
+  // Door
+  ctx.fillStyle = EGA.BROWN;
+  ctx.fillRect(lx - 3, ly - 8, 6, 8);
+  // Window
+  ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.LCYAN;
+  ctx.fillRect(lx - 9, ly - bh + 5, 4, 4);
+  ctx.fillRect(lx + 5, ly - bh + 5, 4, 4);
+  // Sign — scroll icon
+  ctx.fillStyle = EGA.WHITE;
+  ctx.fillRect(lx - 2, ly - bh - 4, 4, 3);
+  ctx.fillStyle = EGA.BLACK;
+  ctx.fillRect(lx - 1, ly - bh - 3, 2, 1);
+}
+
+function drawArmory() {
+  // Dev environment — small fortified workshop near tower
+  const ax = isoX(10, 5);
+  const ay = isoY(10, 5);
+  const bh = 16;
+
+  // Walls — darker stone
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(ax - 10, ay - bh, 20, bh);
+  // Side
+  ctx.fillStyle = '#333333';
+  ctx.fillRect(ax + 10, ay - bh, 6, bh + 2);
+  // Flat roof with battlements
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(ax - 12, ay - bh - 2, 24, 3);
+  for (let i = 0; i < 4; i++) {
+    ctx.fillRect(ax - 11 + i * 7, ay - bh - 5, 3, 3);
+  }
+  // Forge glow — window
+  ctx.fillStyle = isNight() ? EGA.LRED : EGA.BROWN;
+  ctx.fillRect(ax - 7, ay - bh + 4, 4, 4);
+  ctx.fillStyle = isNight() ? EGA.YELLOW : '#885500';
+  ctx.fillRect(ax + 3, ay - bh + 4, 4, 4);
+  // Anvil by door
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(ax - 3, ay - 2, 6, 2);
+  ctx.fillRect(ax - 1, ay - 4, 2, 2);
 }
 
 // ── Telegraph Line ──
@@ -743,6 +953,25 @@ const pico = {
     ctx.fillStyle = EGA.BROWN;
     ctx.fillRect(px - 1, py + 5, 2, 1);
     ctx.fillRect(px + 3, py + 5, 2, 1);
+
+    // Wing flap — when Pi CPU is hot (70°C+)
+    if (derivedState.picoHot) {
+      const wingFlap = Math.sin(this.bobPhase * 8); // Fast flapping
+      const wingY = Math.round(wingFlap * 3);
+      ctx.fillStyle = EGA.LGRAY;
+      // Left wing extended
+      ctx.fillRect(px - 6, py - 1 + wingY, 3, 2);
+      ctx.fillRect(px - 8, py + wingY, 2, 1);
+      // Right wing extended
+      ctx.fillRect(px + 5, py - 1 + wingY, 3, 2);
+      ctx.fillRect(px + 8, py + wingY, 2, 1);
+      // Sweat drops
+      if (Math.sin(this.bobPhase * 3) > 0.5) {
+        ctx.fillStyle = EGA.LCYAN;
+        ctx.fillRect(px + 7, py - 5, 1, 2);
+        ctx.fillRect(px - 5, py - 4, 1, 2);
+      }
+    }
   },
 
   drawSleeping(px, py) {
@@ -960,15 +1189,22 @@ function updateTicker() {
   }
 
   // Outpost status
+  const temp = vaultState.pi_cpu_temp || 0;
+  const tempStr = temp ? ` ${temp}\u00B0C` : '';
   if (os === 'ACTIVE') {
-    parts.push('PICO AWAKE \u2014 OUTPOST MONITORING');
+    parts.push(`PICO AWAKE${tempStr} \u2014 OUTPOST MONITORING`);
   } else if (os === 'SLEEPING') {
     const remain = Math.max(0, derivedState.heartbeatMs - derivedState.picoAgo);
     const hrs = Math.floor(remain / 3600000);
     const mins = Math.floor((remain % 3600000) / 60000);
-    parts.push(`PICO SLEEPING \u2014 NEXT HEARTBEAT IN ${hrs}H ${mins}M`);
+    parts.push(`PICO SLEEPING${tempStr} \u2014 NEXT HEARTBEAT IN ${hrs}H ${mins}M`);
   } else if (os === 'COUNCIL') {
-    parts.push('OUTPOST COUNCIL \u2014 PICO IN SESSION');
+    parts.push(`OUTPOST COUNCIL${tempStr} \u2014 PICO IN SESSION`);
+  }
+
+  // Vault file count
+  if (vaultState.vault_file_count) {
+    parts.push(`LIBRARY: ${vaultState.vault_file_count} SCROLLS`);
   }
 
   // Note
@@ -1370,6 +1606,8 @@ function gameLoop(timestamp) {
   drawTelegraphLine();
   drawConstructionSite(); // Materials at gate (behind walls)
   drawCitadel();
+  drawLibrary();
+  drawArmory();
   drawPicoTower();
   drawCaravan(); // Caravan animals in front of scene
 
@@ -1381,10 +1619,86 @@ function gameLoop(timestamp) {
 
   pico.draw();
 
+  drawToast();
   drawStatusBar();
 }
 
 requestAnimationFrame(gameLoop);
+
+// ═══════════════════════════════════════════════════════
+// CLICK-TO-TOAST — Pixel-art info popups on buildings
+// ═══════════════════════════════════════════════════════
+
+let toast = { text: '', timer: 0, x: 0, y: 0 };
+
+function showToast(text, x, y) {
+  toast = { text, timer: 90, x, y }; // ~7.5s at 12fps
+}
+
+function drawToast() {
+  if (toast.timer <= 0) return;
+  toast.timer--;
+
+  const alpha = toast.timer < 15 ? toast.timer / 15 : 1;
+  ctx.globalAlpha = alpha;
+
+  // Background box
+  ctx.font = '8px monospace';
+  const w = ctx.measureText(toast.text).width + 10;
+  const tx = Math.min(toast.x, 640 - w - 4);
+  const ty = Math.max(toast.y, 16);
+
+  ctx.fillStyle = EGA.BLACK;
+  ctx.fillRect(tx - 2, ty - 12, w + 4, 16);
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(tx - 2, ty - 12, w + 4, 1);
+  ctx.fillRect(tx - 2, ty + 3, w + 4, 1);
+
+  ctx.fillStyle = EGA.LGREEN;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(toast.text, tx + 3, ty - 4);
+
+  ctx.globalAlpha = 1;
+}
+
+// Clickable regions (in 640x480 canvas coords)
+const clickRegions = [
+  { name: 'citadel', x1: 100, y1: 50, x2: 370, y2: 220,
+    info: () => {
+      const st = derivedState.vault;
+      const gate = st === 'IDLE' ? 'GATE CLOSED' : 'GATE OPEN';
+      return `CITADEL: ${st} | ${gate} | ${derivedState.chestCount} CHESTS`;
+    }
+  },
+  { name: 'library', x1: 310, y1: 60, x2: 420, y2: 130,
+    info: () => `LIBRARY: ${vaultState.vault_file_count || '?'} SCROLLS ARCHIVED`
+  },
+  { name: 'armory', x1: 380, y1: 120, x2: 480, y2: 190,
+    info: () => `ARMORY: DEV FORGE ${derivedState.vault === 'ACTIVE' ? 'ACTIVE' : 'COLD'}`
+  },
+  { name: 'tower', x1: 450, y1: 80, x2: 560, y2: 260,
+    info: () => {
+      const temp = vaultState.pi_cpu_temp || '?';
+      const hot = derivedState.picoHot ? ' (HOT!)' : '';
+      return `OUTPOST: ${temp}C${hot} | PICO ${derivedState.outpost}`;
+    }
+  },
+];
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = 640 / rect.width;
+  const scaleY = 480 / rect.height;
+  const cx = (e.clientX - rect.left) * scaleX;
+  const cy = (e.clientY - rect.top) * scaleY;
+
+  for (const r of clickRegions) {
+    if (cx >= r.x1 && cx <= r.x2 && cy >= r.y1 && cy <= r.y2) {
+      showToast(r.info(), cx, cy);
+      return;
+    }
+  }
+});
 
 // ═══════════════════════════════════════════════════════
 // MUSIC — Procedural Civ/SimCity-style MIDI chiptune
