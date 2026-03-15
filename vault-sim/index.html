@@ -122,7 +122,7 @@
 <div class="crt-bezel">
   <button id="muteBtn" onclick="toggleMusic()">&#9835; MUSIC OFF &mdash; CLICK TO PLAY</button>
   <div class="crt-inner">
-    <canvas id="sim" width="640" height="480"></canvas>
+    <canvas id="sim" width="1280" height="960"></canvas>
     <div class="scanlines"></div>
     <div class="vignette"></div>
     <div class="phosphor"></div>
@@ -132,11 +132,19 @@
 <script>
 // ═══════════════════════════════════════════════════════
 // Vault Sim — 90s CRT Aquarium Screen
+// ── Resolution Upgrade Progress ──
+// Phase 0+1: [x] Canvas 1280×960  [x] Tile 64×32  [x] All coords ×2
+// Phase 2:   [ ] Terrain detail   [ ] Wall coursing   [ ] Tower seams
+//            [ ] Library roof tiles   [ ] Pico Tower arch windows
+// ═══════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════
 
 const canvas = document.getElementById('sim');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
+
+// ── Resolution scale (Phase 2 additions use this) ──
+const SCALE = 2;
 
 // ── EGA Palette ──
 const EGA = {
@@ -148,9 +156,9 @@ const EGA = {
 
 // ── Isometric helpers ──
 // Tile size: 32×16 px (iso diamond)
-const TILE_W = 32, TILE_H = 16;
-function isoX(col, row) { return 320 + (col - row) * (TILE_W / 2); }
-function isoY(col, row) { return 60  + (col + row) * (TILE_H / 2); }
+const TILE_W = 64, TILE_H = 32;
+function isoX(col, row) { return 640 + (col - row) * (TILE_W / 2); }
+function isoY(col, row) { return 120 + (col + row) * (TILE_H / 2); }
 
 // ── State ──
 let vaultState = {
@@ -255,40 +263,40 @@ function drawSky() {
   if (night) {
     // Deep night — dark blue/black
     ctx.fillStyle = '#000055';
-    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillRect(0, 0, 1280, 200);
     ctx.fillStyle = EGA.BLACK;
-    ctx.fillRect(0, 0, 640, 40);
+    ctx.fillRect(0, 0, 1280, 80);
   } else if (dusk) {
     // Dusk/dawn — orange-purple gradient
     ctx.fillStyle = EGA.RED;
-    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillRect(0, 0, 1280, 200);
     ctx.fillStyle = '#550055';
-    ctx.fillRect(0, 0, 640, 40);
+    ctx.fillRect(0, 0, 1280, 80);
     // Horizon glow
     ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(0, 85, 640, 15);
+    ctx.fillRect(0, 170, 1280, 30);
   } else {
     // Daytime — light blue with golden tint
     ctx.fillStyle = EGA.LBLUE;
-    ctx.fillRect(0, 0, 640, 100);
+    ctx.fillRect(0, 0, 1280, 200);
     ctx.fillStyle = EGA.BLUE;
-    ctx.fillRect(0, 0, 640, 30);
+    ctx.fillRect(0, 0, 1280, 60);
     // Sun indicator (subtle)
     if (h >= 10 && h < 15) {
       ctx.fillStyle = EGA.YELLOW;
-      ctx.fillRect(520, 12, 6, 6);
-      ctx.fillRect(519, 14, 1, 2);
-      ctx.fillRect(527, 14, 1, 2);
-      ctx.fillRect(522, 10, 2, 1);
-      ctx.fillRect(522, 19, 2, 1);
+      ctx.fillRect(1040, 24, 12, 12);
+      ctx.fillRect(1038, 28, 2, 4);
+      ctx.fillRect(1054, 28, 2, 4);
+      ctx.fillRect(1044, 20, 4, 2);
+      ctx.fillRect(1044, 38, 4, 2);
     }
   }
 
   // Stars — only at night and dusk
   if (night || dusk) {
     const stars = [
-      [45,12],[120,25],[200,8],[310,18],[420,30],[500,14],[580,22],[90,35],
-      [350,10],[460,5],[250,28],[530,38],[160,42],[400,15],[60,48]
+      [90,24],[240,50],[400,16],[620,36],[840,60],[1000,28],[1160,44],[180,70],
+      [700,20],[920,10],[500,56],[1060,76],[320,84],[800,30],[120,96]
     ];
     const starAlpha = night ? 1.0 : 0.4;
     ctx.globalAlpha = starAlpha;
@@ -297,8 +305,8 @@ function drawSky() {
       ctx.fillRect(x, y, 1, 1);
     }
     ctx.fillStyle = EGA.LGRAY;
-    for (const [x,y] of [[75,20],[275,32],[475,8],[175,45],[555,35]]) {
-      ctx.fillRect(x, y, 1, 1);
+    for (const [x,y] of [[150,40],[550,64],[950,16],[350,90],[1110,70]]) {
+      ctx.fillRect(x, y, 2, 2);
     }
     ctx.globalAlpha = 1;
   }
@@ -434,7 +442,7 @@ function darken2(hex) {
 
 function drawCitadel() {
   const wallColor = '#C09050'; // Warm sandstone
-  const wallH = 24;
+  const wallH = 48;
 
   // Back wall (top-left to top-right of citadel)
   for (let c = 0; c < 7; c++) {
@@ -464,16 +472,16 @@ function drawCitadel() {
         const gx = isoX(c, 7);
         const gy = isoY(c, 7);
         ctx.fillStyle = EGA.BROWN;
-        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH, TILE_W - 4, wallH);
+        ctx.fillRect(gx - TILE_W/2 + 4, gy - wallH, TILE_W - 8, wallH);
         // Vertical bars
         ctx.fillStyle = '#885500';
         for (let b = 0; b < 4; b++) {
-          ctx.fillRect(gx - TILE_W/2 + 4 + b * 6, gy - wallH, 2, wallH);
+          ctx.fillRect(gx - TILE_W/2 + 8 + b * 12, gy - wallH, 4, wallH);
         }
         // Iron bands
         ctx.fillStyle = EGA.DGRAY;
-        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH + 6, TILE_W - 4, 2);
-        ctx.fillRect(gx - TILE_W/2 + 2, gy - wallH + 16, TILE_W - 4, 2);
+        ctx.fillRect(gx - TILE_W/2 + 4, gy - wallH + 12, TILE_W - 8, 4);
+        ctx.fillRect(gx - TILE_W/2 + 4, gy - wallH + 32, TILE_W - 8, 4);
       }
       continue;
     }
@@ -487,19 +495,19 @@ function drawCitadel() {
   for (const [c,r] of turrets) {
     const x = isoX(c, r);
     const y = isoY(c, r);
-    drawWallBlock(x, y, wallH + 10, '#D0A060'); // Turrets slightly lighter sandstone
+    drawWallBlock(x, y, wallH + 20, '#D0A060'); // Turrets slightly lighter sandstone
     ctx.fillStyle = '#D0A060';
-    ctx.fillRect(x - 3, y - wallH - 12, 2, 2);
-    ctx.fillRect(x + 1, y - wallH - 12, 2, 2);
+    ctx.fillRect(x - 6, y - wallH - 24, 4, 4);
+    ctx.fillRect(x + 2, y - wallH - 24, 4, 4);
   }
 
   // Inner floor detail — workstations
-  drawWorkstation(isoX(2, 2), isoY(2, 2) - 4);
-  drawWorkstation(isoX(4, 2), isoY(4, 2) - 4);
-  drawWorkstation(isoX(2, 5), isoY(2, 5) - 4);
+  drawWorkstation(isoX(2, 2), isoY(2, 2) - 8);
+  drawWorkstation(isoX(4, 2), isoY(4, 2) - 8);
+  drawWorkstation(isoX(2, 5), isoY(2, 5) - 8);
 
   // Bed in corner (for sleeping Claude)
-  drawBed(isoX(5, 6), isoY(5, 6) - 4);
+  drawBed(isoX(5, 6), isoY(5, 6) - 8);
 
   // Treasure chests — 1 per 500 vault files, placed in courtyard
   const chestPositions = [[3,3],[4,4],[2,4],[4,5],[3,5]];
@@ -516,95 +524,95 @@ function drawCitadel() {
 
   // Town Crier — appears when activity is set (researching/building)
   if (derivedState.activity) {
-    drawTownCrier(isoX(3, 7) + 16, isoY(3, 7) - 5);
+    drawTownCrier(isoX(3, 7) + 32, isoY(3, 7) - 10);
   }
 }
 
 function drawChest(x, y) {
   // Treasure chest — gold/brown
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(x - 4, y - 1, 8, 5);
+  ctx.fillRect(x - 8, y - 2, 16, 10);
   // Lid
   ctx.fillStyle = '#885500';
-  ctx.fillRect(x - 5, y - 3, 10, 3);
+  ctx.fillRect(x - 10, y - 6, 20, 6);
   // Gold trim
   ctx.fillStyle = EGA.YELLOW;
-  ctx.fillRect(x - 1, y - 2, 2, 1);
-  ctx.fillRect(x - 4, y - 1, 8, 1);
+  ctx.fillRect(x - 2, y - 4, 4, 2);
+  ctx.fillRect(x - 8, y - 2, 16, 2);
   // Keyhole
   ctx.fillStyle = EGA.BLACK;
-  ctx.fillRect(x, y + 1, 1, 1);
+  ctx.fillRect(x, y + 2, 2, 2);
 }
 
 function drawTownCrier(x, y) {
   // Town Crier — distinctive hat, exclamation bubble
   // Body
   ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(x - 2, y - 2, 4, 6);
+  ctx.fillRect(x - 4, y - 4, 8, 12);
   // Head
   ctx.fillStyle = '#DDBB99';
-  ctx.fillRect(x - 2, y - 6, 4, 4);
+  ctx.fillRect(x - 4, y - 12, 8, 8);
   // Hat — tall brimmed
   ctx.fillStyle = EGA.YELLOW;
-  ctx.fillRect(x - 3, y - 10, 6, 2);
-  ctx.fillRect(x - 2, y - 12, 4, 2);
+  ctx.fillRect(x - 6, y - 20, 12, 4);
+  ctx.fillRect(x - 4, y - 24, 8, 4);
   // Legs
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(x - 2, y + 4, 2, 2);
-  ctx.fillRect(x + 1, y + 4, 2, 2);
+  ctx.fillRect(x - 4, y + 8, 4, 4);
+  ctx.fillRect(x + 2, y + 8, 4, 4);
   // Exclamation bubble
-  const bobble = Math.sin(torchPhase * 2) > 0 ? -1 : 0;
+  const bobble = Math.sin(torchPhase * 2) > 0 ? -2 : 0;
   ctx.fillStyle = EGA.WHITE;
-  ctx.fillRect(x - 3, y - 20 + bobble, 8, 6);
+  ctx.fillRect(x - 6, y - 40 + bobble, 16, 12);
   ctx.fillStyle = EGA.WHITE;
-  ctx.fillRect(x, y - 14 + bobble, 2, 2); // Tail
+  ctx.fillRect(x, y - 28 + bobble, 4, 4); // Tail
   // "!" inside
   ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(x, y - 19 + bobble, 2, 3);
-  ctx.fillRect(x, y - 15 + bobble, 2, 1);
+  ctx.fillRect(x, y - 38 + bobble, 4, 6);
+  ctx.fillRect(x, y - 30 + bobble, 4, 2);
 }
 
 function drawWorkstation(x, y) {
   // Small desk — brown rectangle, iso-ish
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(x - 6, y - 2, 12, 4);
+  ctx.fillRect(x - 12, y - 4, 24, 8);
   ctx.fillStyle = '#885500';
-  ctx.fillRect(x - 6, y + 2, 12, 2);
+  ctx.fillRect(x - 12, y + 4, 24, 4);
   // Screen on desk
   ctx.fillStyle = EGA.LGREEN;
-  ctx.fillRect(x - 2, y - 5, 4, 3);
+  ctx.fillRect(x - 4, y - 10, 8, 6);
   ctx.fillStyle = EGA.GREEN;
-  ctx.fillRect(x - 1, y - 4, 2, 1);
+  ctx.fillRect(x - 2, y - 8, 4, 2);
 }
 
 function drawBed(x, y) {
   // Simple bed shape
   ctx.fillStyle = EGA.RED;
-  ctx.fillRect(x - 8, y - 2, 16, 6);
+  ctx.fillRect(x - 16, y - 4, 32, 12);
   ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(x - 8, y - 2, 4, 6); // Pillow end
+  ctx.fillRect(x - 16, y - 4, 8, 12); // Pillow end
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(x - 8, y + 4, 16, 2); // Frame
+  ctx.fillRect(x - 16, y + 8, 32, 4); // Frame
 }
 
 let torchPhase = 0;
 function drawTorch(x, y) {
   // Wall bracket
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(x - 1, y, 2, 4);
+  ctx.fillRect(x - 2, y, 4, 8);
   // Flame — flickers with torchPhase, brighter at night
   const nightBoost = isNight() ? 0.15 : 0;
   const flicker = 0.6 + 0.4 * Math.sin(torchPhase + x * 0.1) + nightBoost;
   ctx.globalAlpha = Math.min(1, flicker);
   ctx.fillStyle = EGA.YELLOW;
-  ctx.fillRect(x - 2, y - 3, 4, 3);
+  ctx.fillRect(x - 4, y - 6, 8, 6);
   ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(x - 1, y - 4, 2, 2);
+  ctx.fillRect(x - 2, y - 8, 4, 4);
   // Night glow halo
   if (isNight()) {
     ctx.fillStyle = EGA.YELLOW;
     ctx.globalAlpha = 0.15 * flicker;
-    ctx.fillRect(x - 5, y - 6, 10, 8);
+    ctx.fillRect(x - 10, y - 12, 20, 16);
   }
   ctx.globalAlpha = 1;
 }
@@ -616,12 +624,12 @@ function drawPicoTower() {
   const ty = isoY(baseC, baseR);
 
   // Tower body — tall sandstone watchtower
-  const towerH = 96;
-  const towerW = 36;
+  const towerH = 192;
+  const towerW = 72;
 
   // Base plinth — slightly wider for visual weight
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(tx - towerW/2 - 4, ty - 12, towerW + 8, 12);
+  ctx.fillRect(tx - towerW/2 - 8, ty - 24, towerW + 16, 24);
 
   // Front face
   ctx.fillStyle = EGA.LGRAY;
@@ -629,11 +637,11 @@ function drawPicoTower() {
 
   // Side face (right) — darker
   ctx.fillStyle = EGA.DGRAY;
-  const sideW = 14;
+  const sideW = 28;
   ctx.beginPath();
   ctx.moveTo(tx + towerW/2, ty - towerH);
-  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH + 7);
-  ctx.lineTo(tx + towerW/2 + sideW, ty + 7);
+  ctx.lineTo(tx + towerW/2 + sideW, ty - towerH + 14);
+  ctx.lineTo(tx + towerW/2 + sideW, ty + 14);
   ctx.lineTo(tx + towerW/2, ty);
   ctx.closePath();
   ctx.fill();
@@ -642,30 +650,30 @@ function drawPicoTower() {
   ctx.fillStyle = EGA.WHITE;
   ctx.beginPath();
   ctx.moveTo(tx - towerW/2, ty - towerH);
-  ctx.lineTo(tx - towerW/2 + sideW, ty - towerH - 7);
+  ctx.lineTo(tx - towerW/2 + sideW, ty - towerH - 14);
   ctx.lineTo(tx + towerW/2 + sideW, ty - towerH);
-  ctx.lineTo(tx + towerW/2, ty - towerH + 7);
+  ctx.lineTo(tx + towerW/2, ty - towerH + 14);
   ctx.closePath();
   ctx.fill();
 
   // Window slits — glow at night
   ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.BLACK;
-  ctx.fillRect(tx - 4, ty - towerH + 22, 4, 7);
-  ctx.fillRect(tx - 4, ty - towerH + 48, 4, 7);
-  ctx.fillRect(tx - 4, ty - towerH + 72, 4, 7);
+  ctx.fillRect(tx - 8, ty - towerH + 44, 8, 14);
+  ctx.fillRect(tx - 8, ty - towerH + 96, 8, 14);
+  ctx.fillRect(tx - 8, ty - towerH + 144, 8, 14);
 
   // Antenna on top
   ctx.fillStyle = EGA.LGRAY;
-  ctx.fillRect(tx + 3, ty - towerH - 30, 3, 30);
+  ctx.fillRect(tx + 6, ty - towerH - 60, 6, 60);
   // Antenna tip blinks
   const blink = Math.sin(torchPhase * 2) > 0.3;
   ctx.fillStyle = blink ? EGA.LRED : EGA.RED;
-  ctx.fillRect(tx + 1, ty - towerH - 33, 7, 4);
+  ctx.fillRect(tx + 2, ty - towerH - 66, 14, 8);
 
   // Crenellations — 5 merlons across the top
   ctx.fillStyle = EGA.LGRAY;
   for (let i = 0; i < 5; i++) {
-    ctx.fillRect(tx - towerW/2 + i * 8, ty - towerH - 5, 5, 5);
+    ctx.fillRect(tx - towerW/2 + i * 16, ty - towerH - 10, 10, 10);
   }
 }
 
@@ -674,87 +682,87 @@ function drawLibrary() {
   // Small building between citadel and tower — represents the Obsidian vault
   const lx = isoX(8, 2);
   const ly = isoY(8, 2);
-  const bh = 20;
+  const bh = 40;
 
   // Walls
   ctx.fillStyle = '#996600'; // Warm sandstone
-  ctx.fillRect(lx - 12, ly - bh, 24, bh);
+  ctx.fillRect(lx - 24, ly - bh, 48, bh);
   // Side face
   ctx.fillStyle = '#774400';
-  ctx.fillRect(lx + 12, ly - bh, 8, bh + 3);
+  ctx.fillRect(lx + 24, ly - bh, 16, bh + 6);
   // Roof — peaked
   ctx.fillStyle = EGA.RED;
   ctx.beginPath();
-  ctx.moveTo(lx - 14, ly - bh);
-  ctx.lineTo(lx, ly - bh - 10);
-  ctx.lineTo(lx + 22, ly - bh);
+  ctx.moveTo(lx - 28, ly - bh);
+  ctx.lineTo(lx, ly - bh - 20);
+  ctx.lineTo(lx + 44, ly - bh);
   ctx.closePath();
   ctx.fill();
   // Door
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(lx - 3, ly - 8, 6, 8);
+  ctx.fillRect(lx - 6, ly - 16, 12, 16);
   // Window
   ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.LCYAN;
-  ctx.fillRect(lx - 9, ly - bh + 5, 4, 4);
-  ctx.fillRect(lx + 5, ly - bh + 5, 4, 4);
+  ctx.fillRect(lx - 18, ly - bh + 10, 8, 8);
+  ctx.fillRect(lx + 10, ly - bh + 10, 8, 8);
   // Sign — scroll icon
   ctx.fillStyle = EGA.WHITE;
-  ctx.fillRect(lx - 2, ly - bh - 4, 4, 3);
+  ctx.fillRect(lx - 4, ly - bh - 8, 8, 6);
   ctx.fillStyle = EGA.BLACK;
-  ctx.fillRect(lx - 1, ly - bh - 3, 2, 1);
+  ctx.fillRect(lx - 2, ly - bh - 6, 4, 2);
 }
 
 function drawArmory() {
   // Dev environment — small fortified workshop near tower
   const ax = isoX(10, 5);
   const ay = isoY(10, 5);
-  const bh = 16;
+  const bh = 32;
 
   // Walls — darker stone
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(ax - 10, ay - bh, 20, bh);
+  ctx.fillRect(ax - 20, ay - bh, 40, bh);
   // Side
   ctx.fillStyle = '#333333';
-  ctx.fillRect(ax + 10, ay - bh, 6, bh + 2);
+  ctx.fillRect(ax + 20, ay - bh, 12, bh + 4);
   // Flat roof with battlements
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(ax - 12, ay - bh - 2, 24, 3);
+  ctx.fillRect(ax - 24, ay - bh - 4, 48, 6);
   for (let i = 0; i < 4; i++) {
-    ctx.fillRect(ax - 11 + i * 7, ay - bh - 5, 3, 3);
+    ctx.fillRect(ax - 22 + i * 14, ay - bh - 10, 6, 6);
   }
   // Forge glow — window
   ctx.fillStyle = isNight() ? EGA.LRED : EGA.BROWN;
-  ctx.fillRect(ax - 7, ay - bh + 4, 4, 4);
+  ctx.fillRect(ax - 14, ay - bh + 8, 8, 8);
   ctx.fillStyle = isNight() ? EGA.YELLOW : '#885500';
-  ctx.fillRect(ax + 3, ay - bh + 4, 4, 4);
+  ctx.fillRect(ax + 6, ay - bh + 8, 8, 8);
   // Anvil by door
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(ax - 3, ay - 2, 6, 2);
-  ctx.fillRect(ax - 1, ay - 4, 2, 2);
+  ctx.fillRect(ax - 6, ay - 4, 12, 4);
+  ctx.fillRect(ax - 2, ay - 8, 4, 4);
 }
 
 // ── Telegraph Line ──
 let telegraphOffset = 0;
 function drawTelegraphLine() {
   const startX = isoX(7, 4);
-  const startY = isoY(7, 4) - 8;
+  const startY = isoY(7, 4) - 16;
   const endX = isoX(11, 7);
-  const endY = isoY(11, 7) - 30;
+  const endY = isoY(11, 7) - 60;
 
   // Poles
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(startX - 1, startY - 12, 2, 16);
-  ctx.fillRect(endX - 1, endY - 12, 2, 16);
+  ctx.fillRect(startX - 2, startY - 24, 4, 32);
+  ctx.fillRect(endX - 2, endY - 24, 4, 32);
 
   // Wire
   ctx.strokeStyle = EGA.DGRAY;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(startX, startY - 10);
+  ctx.moveTo(startX, startY - 20);
   // Catenary sag
   const midX = (startX + endX) / 2;
-  const midY = Math.max(startY, endY) - 4;
-  ctx.quadraticCurveTo(midX, midY, endX, endY - 10);
+  const midY = Math.max(startY, endY) - 8;
+  ctx.quadraticCurveTo(midX, midY, endX, endY - 20);
   ctx.stroke();
 
   // Animated signal dashes moving along the wire
@@ -763,8 +771,8 @@ function drawTelegraphLine() {
     const t = ((i * 0.2 + telegraphOffset) % 1);
     const px = startX + (endX - startX) * t;
     // Approximate Y along the curve
-    const py = startY - 10 + (endY - 10 - startY + 10) * t + Math.sin(t * Math.PI) * 6;
-    ctx.fillRect(Math.round(px), Math.round(py), 3, 1);
+    const py = startY - 20 + (endY - 20 - startY + 20) * t + Math.sin(t * Math.PI) * 12;
+    ctx.fillRect(Math.round(px), Math.round(py), 6, 2);
   }
 }
 
@@ -778,7 +786,7 @@ class Character {
     this.capColor = capColor;
     this.bodyColor = bodyColor;
     this.x = isoX(startCol, startRow);
-    this.y = isoY(startCol, startRow) + 4;
+    this.y = isoY(startCol, startRow) + 8;
     this.targetX = this.x;
     this.targetY = this.y;
     this.frame = 0;
@@ -823,7 +831,7 @@ class Character {
     const dy = this.targetY - this.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
 
-    if (dist > 1.5) {
+    if (dist > 3.0) {
       this.walking = true;
       this.x += (dx / dist) * this.speed;
       this.y += (dy / dist) * this.speed;
@@ -846,66 +854,66 @@ class Character {
     }
 
     // Legs — 2-frame walk cycle
-    const legOffset = this.walking ? (Math.floor(this.frame) % 2 === 0 ? 1 : -1) : 0;
+    const legOffset = this.walking ? (Math.floor(this.frame) % 2 === 0 ? 2 : -2) : 0;
     ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px - 2, py + 4, 2, 2);
-    ctx.fillRect(px + legOffset, py + 4, 2, 2);
+    ctx.fillRect(px - 4, py + 8, 4, 4);
+    ctx.fillRect(px + legOffset, py + 8, 4, 4);
 
     // Body
     ctx.fillStyle = this.bodyColor;
-    ctx.fillRect(px - 2, py - 2, 4, 6);
+    ctx.fillRect(px - 4, py - 4, 8, 12);
 
     // Head
     ctx.fillStyle = '#DDBB99'; // Skin
-    ctx.fillRect(px - 2, py - 6, 4, 4);
+    ctx.fillRect(px - 4, py - 12, 8, 8);
 
     // Cap
     ctx.fillStyle = this.capColor;
-    ctx.fillRect(px - 3, py - 8, 6, 2);
+    ctx.fillRect(px - 6, py - 16, 12, 4);
 
     // Eyes
     ctx.fillStyle = EGA.BLACK;
-    ctx.fillRect(px - 1, py - 5, 1, 1);
-    ctx.fillRect(px + 1, py - 5, 1, 1);
+    ctx.fillRect(px - 2, py - 10, 2, 2);
+    ctx.fillRect(px + 2, py - 10, 2, 2);
 
     // Speech bubble in council
     if (this.speechBubble && this.speechTimer > 0) {
       ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px - 4, py - 16, 10, 6);
+      ctx.fillRect(px - 8, py - 32, 20, 12);
       ctx.fillStyle = EGA.BLACK;
-      ctx.fillRect(px - 3, py - 15, 2, 1);
-      ctx.fillRect(px, py - 15, 2, 1);
-      ctx.fillRect(px + 3, py - 15, 2, 1);
+      ctx.fillRect(px - 6, py - 30, 4, 2);
+      ctx.fillRect(px, py - 30, 4, 2);
+      ctx.fillRect(px + 6, py - 30, 4, 2);
       // Tail
       ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px, py - 10, 2, 2);
+      ctx.fillRect(px, py - 20, 4, 4);
     }
   }
 
   drawSleeping(px, py) {
     // Horizontal body (lying down)
     ctx.fillStyle = this.bodyColor;
-    ctx.fillRect(px - 6, py - 1, 8, 4);
+    ctx.fillRect(px - 12, py - 2, 16, 8);
 
     // Head (at left end)
     ctx.fillStyle = '#DDBB99';
-    ctx.fillRect(px - 10, py - 2, 4, 4);
+    ctx.fillRect(px - 20, py - 4, 8, 8);
 
     // Cap
     ctx.fillStyle = this.capColor;
-    ctx.fillRect(px - 11, py - 4, 6, 2);
+    ctx.fillRect(px - 22, py - 8, 12, 4);
 
     // Closed eyes
     ctx.fillStyle = EGA.BLACK;
-    ctx.fillRect(px - 9, py - 1, 2, 1);
+    ctx.fillRect(px - 18, py - 2, 4, 2);
 
     // Legs
     ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px + 2, py, 2, 2);
-    ctx.fillRect(px + 2, py + 2, 2, 2);
+    ctx.fillRect(px + 4, py, 4, 4);
+    ctx.fillRect(px + 4, py + 4, 4, 4);
 
     // ZZZ bubble
-    this.drawZzz(px - 8, py - 8);
+    this.drawZzz(px - 16, py - 16);
   }
 
   drawZzz(bx, by) {
@@ -916,20 +924,20 @@ class Character {
     ctx.globalAlpha = alpha;
     // Bubble
     ctx.fillStyle = EGA.WHITE;
-    const bubbleY = by - t * 14;
-    ctx.fillRect(bx - 4, bubbleY - 6, 10, 8);
+    const bubbleY = by - t * 28;
+    ctx.fillRect(bx - 8, bubbleY - 12, 20, 16);
 
     // "z" inside
     ctx.fillStyle = EGA.BLACK;
-    const zx = bx - 1, zy = bubbleY - 4;
-    ctx.fillRect(zx, zy, 4, 1);
-    ctx.fillRect(zx + 2, zy + 1, 1, 1);
-    ctx.fillRect(zx + 1, zy + 2, 1, 1);
-    ctx.fillRect(zx, zy + 3, 4, 1);
+    const zx = bx - 2, zy = bubbleY - 8;
+    ctx.fillRect(zx, zy, 8, 2);
+    ctx.fillRect(zx + 4, zy + 2, 2, 2);
+    ctx.fillRect(zx + 2, zy + 4, 2, 2);
+    ctx.fillRect(zx, zy + 6, 8, 2);
 
     // Bubble tail
     ctx.fillStyle = EGA.WHITE;
-    ctx.fillRect(bx, bubbleY + 2, 2, 2);
+    ctx.fillRect(bx, bubbleY + 4, 4, 4);
 
     ctx.globalAlpha = 1;
   }
@@ -945,8 +953,8 @@ const pico = {
 
   init() {
     const baseC = 12, baseR = 8;
-    this.x = isoX(baseC, baseR) - 2;
-    this.y = isoY(baseC, baseR) - 104;
+    this.x = isoX(baseC, baseR) - 4;
+    this.y = isoY(baseC, baseR) - 208;
   },
 
   update() {
@@ -970,56 +978,56 @@ const pico = {
 
     // Body — white roundish
     ctx.fillStyle = EGA.WHITE;
-    ctx.fillRect(px - 3, py - 2, 8, 6);
-    ctx.fillRect(px - 2, py - 4, 6, 2);
-    ctx.fillRect(px - 1, py + 4, 4, 1);
+    ctx.fillRect(px - 6, py - 4, 16, 12);
+    ctx.fillRect(px - 4, py - 8, 12, 4);
+    ctx.fillRect(px - 2, py + 8, 8, 2);
 
     // Ears/tufts
     ctx.fillStyle = EGA.LGRAY;
-    ctx.fillRect(px - 2, py - 6, 2, 2);
-    ctx.fillRect(px + 4, py - 6, 2, 2);
+    ctx.fillRect(px - 4, py - 12, 4, 4);
+    ctx.fillRect(px + 8, py - 12, 4, 4);
 
     // Eyes
     const blinking = this.blinkDuration > 0;
     if (blinking) {
       this.blinkDuration--;
       ctx.fillStyle = EGA.LGRAY;
-      ctx.fillRect(px - 1, py - 2, 2, 1);
-      ctx.fillRect(px + 3, py - 2, 2, 1);
+      ctx.fillRect(px - 2, py - 4, 4, 2);
+      ctx.fillRect(px + 6, py - 4, 4, 2);
     } else {
       ctx.fillStyle = EGA.YELLOW;
-      ctx.fillRect(px - 1, py - 3, 2, 2);
-      ctx.fillRect(px + 3, py - 3, 2, 2);
+      ctx.fillRect(px - 2, py - 6, 4, 4);
+      ctx.fillRect(px + 6, py - 6, 4, 4);
       ctx.fillStyle = EGA.BLACK;
-      ctx.fillRect(px, py - 2, 1, 1);
-      ctx.fillRect(px + 4, py - 2, 1, 1);
+      ctx.fillRect(px, py - 4, 2, 2);
+      ctx.fillRect(px + 8, py - 4, 2, 2);
     }
 
     // Beak
     ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(px + 1, py, 2, 1);
+    ctx.fillRect(px + 2, py, 4, 2);
 
     // Feet
     ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(px - 1, py + 5, 2, 1);
-    ctx.fillRect(px + 3, py + 5, 2, 1);
+    ctx.fillRect(px - 2, py + 10, 4, 2);
+    ctx.fillRect(px + 6, py + 10, 4, 2);
 
     // Wing flap — when Pi CPU is hot (70°C+)
     if (derivedState.picoHot) {
       const wingFlap = Math.sin(this.bobPhase * 8); // Fast flapping
-      const wingY = Math.round(wingFlap * 3);
+      const wingY = Math.round(wingFlap * 6);
       ctx.fillStyle = EGA.LGRAY;
       // Left wing extended
-      ctx.fillRect(px - 6, py - 1 + wingY, 3, 2);
-      ctx.fillRect(px - 8, py + wingY, 2, 1);
+      ctx.fillRect(px - 12, py - 2 + wingY, 6, 4);
+      ctx.fillRect(px - 16, py + wingY, 4, 2);
       // Right wing extended
-      ctx.fillRect(px + 5, py - 1 + wingY, 3, 2);
-      ctx.fillRect(px + 8, py + wingY, 2, 1);
+      ctx.fillRect(px + 10, py - 2 + wingY, 6, 4);
+      ctx.fillRect(px + 16, py + wingY, 4, 2);
       // Sweat drops
       if (Math.sin(this.bobPhase * 3) > 0.5) {
         ctx.fillStyle = EGA.LCYAN;
-        ctx.fillRect(px + 7, py - 5, 1, 2);
-        ctx.fillRect(px - 5, py - 4, 1, 2);
+        ctx.fillRect(px + 14, py - 10, 2, 4);
+        ctx.fillRect(px - 10, py - 8, 2, 4);
       }
     }
   },
@@ -1027,41 +1035,41 @@ const pico = {
   drawSleeping(px, py) {
     // Rounder, puffed up sleeping owl
     ctx.fillStyle = EGA.WHITE;
-    ctx.fillRect(px - 3, py - 1, 8, 5);
-    ctx.fillRect(px - 2, py - 3, 6, 2);
-    ctx.fillRect(px - 1, py + 4, 4, 1);
+    ctx.fillRect(px - 6, py - 2, 16, 10);
+    ctx.fillRect(px - 4, py - 6, 12, 4);
+    ctx.fillRect(px - 2, py + 8, 8, 2);
 
     // Ear tufts relaxed
     ctx.fillStyle = EGA.LGRAY;
-    ctx.fillRect(px - 1, py - 4, 2, 1);
-    ctx.fillRect(px + 3, py - 4, 2, 1);
+    ctx.fillRect(px - 2, py - 8, 4, 2);
+    ctx.fillRect(px + 6, py - 8, 4, 2);
 
     // Closed eyes (lines)
     ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px - 1, py - 1, 2, 1);
-    ctx.fillRect(px + 3, py - 1, 2, 1);
+    ctx.fillRect(px - 2, py - 2, 4, 2);
+    ctx.fillRect(px + 6, py - 2, 4, 2);
 
     // Beak tucked
     ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(px + 1, py + 1, 2, 1);
+    ctx.fillRect(px + 2, py + 2, 4, 2);
 
     // ZZZ bubble
     const t = (Date.now() % 3000) / 3000;
     const alpha = 1 - t;
     if (alpha > 0) {
       ctx.globalAlpha = alpha;
-      const bubbleY = py - 8 - t * 16;
+      const bubbleY = py - 16 - t * 32;
       ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px + 6, bubbleY - 4, 8, 6);
+      ctx.fillRect(px + 12, bubbleY - 8, 16, 12);
       // z
       ctx.fillStyle = EGA.BLACK;
-      ctx.fillRect(px + 8, bubbleY - 2, 3, 1);
-      ctx.fillRect(px + 9, bubbleY - 1, 1, 1);
-      ctx.fillRect(px + 8, bubbleY, 1, 1);
-      ctx.fillRect(px + 8, bubbleY + 1, 3, 1);
+      ctx.fillRect(px + 14, bubbleY - 4, 6, 2);
+      ctx.fillRect(px + 18, bubbleY - 2, 2, 2);
+      ctx.fillRect(px + 14, bubbleY, 2, 2);
+      ctx.fillRect(px + 14, bubbleY + 2, 6, 2);
       // tail
       ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px + 6, bubbleY + 2, 2, 1);
+      ctx.fillRect(px + 12, bubbleY + 4, 4, 2);
       ctx.globalAlpha = 1;
     }
   }
@@ -1070,42 +1078,42 @@ const pico = {
 // ── Create characters ──
 const claude = new Character('Claude', EGA.LRED, EGA.LBLUE, 2, 3);
 claude.setWaypoints([[2,2],[4,2],[4,5],[2,5],[3,3]]);
-claude.speed = 0.5;
+claude.speed = 1.0;
 
 const sub1 = new Character('Sub-1', EGA.YELLOW, EGA.GREEN, 3, 2);
 sub1.setWaypoints([[2,2],[4,4],[3,5],[4,2]]);
-sub1.speed = 0.7;
+sub1.speed = 1.4;
 
 const sub2 = new Character('Sub-2', EGA.YELLOW, EGA.GREEN, 4, 4);
 sub2.setWaypoints([[4,2],[2,5],[3,2],[2,4]]);
-sub2.speed = 0.7;
+sub2.speed = 1.4;
 
 const par1 = new Character('Par-1', EGA.LCYAN, EGA.MAGENTA, 2, 4);
 par1.setWaypoints([[2,4],[4,3],[3,5],[2,2]]);
-par1.speed = 0.6;
+par1.speed = 1.2;
 
 const par2 = new Character('Par-2', EGA.LCYAN, EGA.MAGENTA, 3, 5);
 par2.setWaypoints([[3,5],[4,4],[2,3],[3,2]]);
-par2.speed = 0.6;
+par2.speed = 1.2;
 
 const vaultAgents = [claude, sub1, sub2, par1, par2];
 
 // Council positions (circle around center of citadel)
-const councilCenter = [isoX(3, 3.5), isoY(3, 3.5) + 4];
+const councilCenter = [isoX(3, 3.5), isoY(3, 3.5) + 8];
 const councilPositions = [
-  [councilCenter[0], councilCenter[1] - 12],
-  [councilCenter[0] + 14, councilCenter[1] - 4],
-  [councilCenter[0] + 10, councilCenter[1] + 8],
-  [councilCenter[0] - 10, councilCenter[1] + 8],
-  [councilCenter[0] - 14, councilCenter[1] - 4],
+  [councilCenter[0], councilCenter[1] - 24],
+  [councilCenter[0] + 28, councilCenter[1] - 8],
+  [councilCenter[0] + 20, councilCenter[1] + 16],
+  [councilCenter[0] - 20, councilCenter[1] + 16],
+  [councilCenter[0] - 28, councilCenter[1] - 8],
 ];
 
 // Outpost council positions (around tower base)
 const towerBase = [isoX(12, 8), isoY(12, 8)];
 const outpostCouncilPositions = [
-  [towerBase[0] - 16, towerBase[1] + 4],
-  [towerBase[0] - 8, towerBase[1] + 10],
-  [towerBase[0] + 8, towerBase[1] + 10],
+  [towerBase[0] - 32, towerBase[1] + 8],
+  [towerBase[0] - 16, towerBase[1] + 20],
+  [towerBase[0] + 16, towerBase[1] + 20],
 ];
 // Small agents that appear during outpost council
 const outpostAgents = [
@@ -1134,7 +1142,7 @@ function applyState() {
   if (vs !== prevVaultState) {
     if (vs === 'IDLE') {
       // Claude goes to bed, others sit idle
-      const bedPos = [isoX(5, 6), isoY(5, 6) - 8];
+      const bedPos = [isoX(5, 6), isoY(5, 6) - 16];
       claude.goTo(bedPos[0], bedPos[1]);
       claude.sleeping = false; // will sleep when arrives
       for (const a of [sub1, sub2, par1, par2]) {
@@ -1175,8 +1183,8 @@ function applyState() {
   // Ongoing behavior
   if (vs === 'IDLE') {
     // Check if Claude reached bed
-    const bedPos = [isoX(5, 6), isoY(5, 6) - 8];
-    if (Math.abs(claude.x - bedPos[0]) < 2 && Math.abs(claude.y - bedPos[1]) < 2) {
+    const bedPos = [isoX(5, 6), isoY(5, 6) - 16];
+    if (Math.abs(claude.x - bedPos[0]) < 4 && Math.abs(claude.y - bedPos[1]) < 4) {
       claude.sleeping = true;
     }
   }
@@ -1266,24 +1274,24 @@ function updateTicker() {
 }
 
 function drawStatusBar() {
-  const barY = 448; // 480 - 32
-  const barH = 32;
+  const barY = 896; // 960 - 64
+  const barH = 64;
 
   // Background
   ctx.fillStyle = EGA.BLACK;
-  ctx.fillRect(0, barY, 640, barH);
+  ctx.fillRect(0, barY, 1280, barH);
 
   // Top border
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(0, barY, 640, 1);
+  ctx.fillRect(0, barY, 1280, 2);
 
   // Text
   ctx.fillStyle = EGA.LGREEN;
-  ctx.font = '8px monospace';
+  ctx.font = '16px monospace';
   ctx.textBaseline = 'middle';
 
   const textY = barY + barH / 2;
-  const maxW = 620;
+  const maxW = 1240;
 
   // Measure text
   const fullText = tickerText + (cursorVisible ? ' \u2588' : '  ');
@@ -1292,15 +1300,15 @@ function drawStatusBar() {
   if (measured > maxW) {
     // Scroll
     tickerScroll += 0.5;
-    if (tickerScroll > measured + 100) tickerScroll = -maxW;
+    if (tickerScroll > measured + 200) tickerScroll = -maxW;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(10, barY, maxW, barH);
+    ctx.rect(20, barY, maxW, barH);
     ctx.clip();
-    ctx.fillText(fullText, 10 - tickerScroll, textY);
+    ctx.fillText(fullText, 20 - tickerScroll, textY);
     ctx.restore();
   } else {
-    ctx.fillText(fullText, 10, textY);
+    ctx.fillText(fullText, 20, textY);
   }
 
   // Cursor blink
@@ -1316,13 +1324,13 @@ function drawStatusBar() {
 // ═══════════════════════════════════════════════════════
 
 // Flight routes — named waypoint paths pigeons can take
-const citadelTop = [isoX(3, 0), isoY(3, 0) - 40];
-const towerTop   = [isoX(12, 8), isoY(12, 8) - 120];
-const offLeft    = [-30, 50 + Math.random() * 40];
-const offRight   = [670, 40 + Math.random() * 40];
-const offTop     = [320, -20];
-const skyMidL    = [180, 35];
-const skyMidR    = [460, 30];
+const citadelTop = [isoX(3, 0), isoY(3, 0) - 80];
+const towerTop   = [isoX(12, 8), isoY(12, 8) - 240];
+const offLeft    = [-60, 100 + Math.random() * 80];
+const offRight   = [1340, 80 + Math.random() * 80];
+const offTop     = [640, -40];
+const skyMidL    = [360, 70];
+const skyMidR    = [920, 60];
 
 function randomRoute() {
   const routes = [
@@ -1334,13 +1342,13 @@ function randomRoute() {
     // In from right to tower
     [offRight, skyMidR, towerTop, skyMidL, offLeft],
     // High pass across screen
-    [offLeft, [200, 20], [440, 25], offRight],
+    [offLeft, [400, 40], [880, 50], offRight],
     // Loop around citadel
-    [citadelTop, [citadelTop[0]-40, citadelTop[1]+20], [citadelTop[0]+40, citadelTop[1]+15], citadelTop],
+    [citadelTop, [citadelTop[0]-80, citadelTop[1]+40], [citadelTop[0]+80, citadelTop[1]+30], citadelTop],
     // Dive from sky to tower and back
     [offTop, skyMidR, towerTop, skyMidR, offTop],
     // Citadel gate swoop
-    [[isoX(3,7), isoY(3,7)-30], skyMidL, citadelTop, skyMidR, towerTop],
+    [[isoX(3,7), isoY(3,7)-60], skyMidL, citadelTop, skyMidR, towerTop],
   ];
   return routes[Math.floor(Math.random() * routes.length)];
 }
@@ -1352,11 +1360,11 @@ class Pigeon {
 
   reset() {
     const route = randomRoute();
-    this.waypoints = route.map(([x,y]) => [x + (Math.random()-0.5)*16, y + (Math.random()-0.5)*10]);
+    this.waypoints = route.map(([x,y]) => [x + (Math.random()-0.5)*32, y + (Math.random()-0.5)*20]);
     this.wpIdx = 0;
     this.x = this.waypoints[0][0];
     this.y = this.waypoints[0][1];
-    this.speed = 1.0 + Math.random() * 0.8;
+    this.speed = 2.0 + Math.random() * 1.6;
     this.flapPhase = Math.random() * Math.PI * 2;
     this.alive = true;
     this.shade = Math.random() > 0.5 ? EGA.LGRAY : EGA.DGRAY; // Varied pigeon colors
@@ -1375,7 +1383,7 @@ class Pigeon {
     const dy = ty - this.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
 
-    if (dist < 3) {
+    if (dist < 6) {
       this.wpIdx++;
     } else {
       this.x += (dx / dist) * this.speed;
@@ -1390,21 +1398,21 @@ class Pigeon {
     const px = Math.round(this.x);
     const py = Math.round(this.y);
 
-    // Body — 3×2 pixel block
+    // Body — 6×4 pixel block
     ctx.fillStyle = this.shade;
-    ctx.fillRect(px - 1, py, 3, 2);
+    ctx.fillRect(px - 2, py, 6, 4);
 
-    // Wings — flapping, ±2px sine
-    const wingY = Math.round(Math.sin(this.flapPhase) * 2);
+    // Wings — flapping, ±4px sine
+    const wingY = Math.round(Math.sin(this.flapPhase) * 4);
     ctx.fillStyle = this.shade;
-    ctx.fillRect(px - 3, py + wingY, 2, 1);     // Left wing
-    ctx.fillRect(px + 2, py + wingY, 2, 1);      // Right wing
+    ctx.fillRect(px - 6, py + wingY, 4, 2);     // Left wing
+    ctx.fillRect(px + 4, py + wingY, 4, 2);      // Right wing
 
-    // Head — 1px in travel direction
+    // Head — in travel direction
     const hdx = this.wpIdx < this.waypoints.length
       ? this.waypoints[this.wpIdx][0] - this.x : 1;
     ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px + (hdx > 0 ? 2 : -2), py - 1, 1, 1);
+    ctx.fillRect(px + (hdx > 0 ? 4 : -4), py - 2, 2, 2);
   }
 }
 
@@ -1452,7 +1460,7 @@ const CARGO_MAX = 12;
 const CARGO_DECAY = 0.012; // units/frame — empties over ~80s at 12fps
 
 // Tower base Y — used for caravan draw-order split
-const TOWER_BASE_Y = 60 + (12 + 8) * 8; // isoY(12,8) = 220
+const TOWER_BASE_Y = 120 + (12 + 8) * 16; // isoY(12,8) = 440
 
 // Gate waypoint index in each animal's waypoint list
 const GATE_WP_IDX = 4;
@@ -1461,20 +1469,19 @@ class CaravanAnimal {
   constructor(delay) {
     const gateX = isoX(3, 7);
     const gateY = isoY(3, 7);
-    const yOff = (Math.random() - 0.5) * 16;
+    const yOff = (Math.random() - 0.5) * 32;
 
     // Full journey:
-    //   Enter bottom-right (well below tower base y=220) → swing past tower
+    //   Enter bottom-right (well below tower base y=440) → swing past tower
     //   → approach gate from south → offload pause → depart west → off-screen left.
-    // Tower spans x=366-416, y=124-220. When path crosses that x-band, y≈278-284 → clear.
     this.waypoints = [
-      [680 + delay * 45, 293 + yOff],          // 0: off-screen right
-      [460,              289 + yOff],            // 1: right side, below tower
-      [330,              271 + yOff * 0.5],      // 2: past tower column
-      [266,              228],                   // 3: south approach to bridge
-      [gateX,            gateY + 10],            // 4: GATE — offload here (GATE_WP_IDX)
-      [isoX(1, 9),       isoY(1, 9) + yOff * 0.3], // 5: depart west — r=9, clear of moat (r=8)
-      [-100,             148 + yOff * 0.3],      // 6: off-screen left
+      [1360 + delay * 90, 586 + yOff],          // 0: off-screen right
+      [920,               578 + yOff],           // 1: right side, below tower
+      [660,               542 + yOff * 0.5],     // 2: past tower column
+      [532,               456],                  // 3: south approach to bridge
+      [gateX,             gateY + 20],           // 4: GATE — offload here (GATE_WP_IDX)
+      [isoX(1, 9),        isoY(1, 9) + yOff * 0.3], // 5: depart west — r=9, clear of moat (r=8)
+      [-200,              296 + yOff * 0.3],     // 6: off-screen left
     ];
     this.wpIdx = 1;
     this.x = this.waypoints[0][0];
@@ -1482,7 +1489,7 @@ class CaravanAnimal {
     this.arrived = false;
     this.offloaded = false;
     this.pauseTimer = 0;
-    this.speed = 0.35 + Math.random() * 0.12;
+    this.speed = 0.70 + Math.random() * 0.24;
     this.frame = Math.random() * 10;
     this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
     this.trail = [];
@@ -1498,7 +1505,7 @@ class CaravanAnimal {
     if (this.wpIdx === GATE_WP_IDX) {
       const [tx, ty] = this.waypoints[GATE_WP_IDX];
       const dx = tx - this.x, dy = ty - this.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 2) {
+      if (Math.sqrt(dx * dx + dy * dy) < 4) {
         if (!this.offloaded) {
           cargoPile = Math.min(cargoPile + 4, CARGO_MAX);
           this.offloaded = true;
@@ -1513,7 +1520,7 @@ class CaravanAnimal {
     const [tx, ty] = this.waypoints[this.wpIdx];
     const dx = tx - this.x, dy = ty - this.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 2) {
+    if (dist < 4) {
       this.wpIdx++;
       if (this.wpIdx >= this.waypoints.length) this.arrived = true;
     } else {
@@ -1528,7 +1535,7 @@ class CaravanAnimal {
     for (let i = 0; i < this.trail.length; i++) {
       ctx.globalAlpha = (i / this.trail.length) * 0.35;
       ctx.fillStyle = '#C8A070';
-      ctx.fillRect(Math.round(this.trail[i][0]) - 1, Math.round(this.trail[i][1]) + 3, 2, 1);
+      ctx.fillRect(Math.round(this.trail[i][0]) - 2, Math.round(this.trail[i][1]) + 6, 4, 2);
     }
     ctx.globalAlpha = 1;
 
@@ -1538,39 +1545,39 @@ class CaravanAnimal {
 
     if (this.type === 'camel') {
       ctx.fillStyle = EGA.BROWN;
-      ctx.fillRect(px - 5, py - 2, 10, 4); // Body
-      ctx.fillRect(px - 1, py - 5, 3, 3);  // Hump
+      ctx.fillRect(px - 10, py - 4, 20, 8); // Body
+      ctx.fillRect(px - 2, py - 10, 6, 6);  // Hump
       ctx.fillStyle = '#885500';
-      ctx.fillRect(px - 7, py - 4, 3, 3);  // Head
-      ctx.fillRect(px - 8, py - 3, 1, 2);  // Nose
+      ctx.fillRect(px - 14, py - 8, 6, 6);  // Head
+      ctx.fillRect(px - 16, py - 6, 2, 4);  // Nose
       ctx.fillStyle = EGA.BROWN;
-      ctx.fillRect(px - 4, py + 2, 1, 2 + legOff);
-      ctx.fillRect(px - 2, py + 2, 1, 2 + (1 - legOff));
-      ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
-      ctx.fillRect(px + 4, py + 2, 1, 2 + (1 - legOff));
+      ctx.fillRect(px - 8, py + 4, 2, 4 + legOff * 2);
+      ctx.fillRect(px - 4, py + 4, 2, 4 + (1 - legOff) * 2);
+      ctx.fillRect(px + 4, py + 4, 2, 4 + legOff * 2);
+      ctx.fillRect(px + 8, py + 4, 2, 4 + (1 - legOff) * 2);
       if (!this.offloaded) {
         ctx.fillStyle = EGA.RED;
-        ctx.fillRect(px + 1, py - 6, 3, 2);
+        ctx.fillRect(px + 2, py - 12, 6, 4);
         ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px - 3, py - 5, 3, 2);
+        ctx.fillRect(px - 6, py - 10, 6, 4);
       }
     } else {
       ctx.fillStyle = EGA.DGRAY;
-      ctx.fillRect(px - 4, py - 1, 8, 3);  // Body
+      ctx.fillRect(px - 8, py - 2, 16, 6);  // Body
       ctx.fillStyle = EGA.LGRAY;
-      ctx.fillRect(px - 6, py - 3, 3, 3);  // Head
-      ctx.fillRect(px - 5, py - 5, 1, 2);  // Ear
-      ctx.fillRect(px - 3, py - 5, 1, 2);  // Ear
+      ctx.fillRect(px - 12, py - 6, 6, 6);  // Head
+      ctx.fillRect(px - 10, py - 10, 2, 4); // Ear
+      ctx.fillRect(px - 6, py - 10, 2, 4);  // Ear
       ctx.fillStyle = EGA.DGRAY;
-      ctx.fillRect(px - 3, py + 2, 1, 2 + legOff);
-      ctx.fillRect(px - 1, py + 2, 1, 2 + (1 - legOff));
-      ctx.fillRect(px + 2, py + 2, 1, 2 + legOff);
-      ctx.fillRect(px + 3, py + 2, 1, 2 + (1 - legOff));
+      ctx.fillRect(px - 6, py + 4, 2, 4 + legOff * 2);
+      ctx.fillRect(px - 2, py + 4, 2, 4 + (1 - legOff) * 2);
+      ctx.fillRect(px + 4, py + 4, 2, 4 + legOff * 2);
+      ctx.fillRect(px + 6, py + 4, 2, 4 + (1 - legOff) * 2);
       if (!this.offloaded) {
         ctx.fillStyle = EGA.BROWN;
-        ctx.fillRect(px - 2, py - 4, 6, 2);
+        ctx.fillRect(px - 4, py - 8, 12, 4);
         ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px, py - 5, 2, 1);
+        ctx.fillRect(px, py - 10, 4, 2);
       }
     }
   }
@@ -1585,58 +1592,58 @@ function drawConstructionSite() {
 
   // Pile of stone blocks (left of gate)
   ctx.fillStyle = EGA.LGRAY;
-  ctx.fillRect(gx - 28, gy + 6, 8, 4);
-  ctx.fillRect(gx - 26, gy + 2, 6, 4);
-  ctx.fillRect(gx - 24, gy - 1, 4, 3);
+  ctx.fillRect(gx - 56, gy + 12, 16, 8);
+  ctx.fillRect(gx - 52, gy + 4, 12, 8);
+  ctx.fillRect(gx - 48, gy - 2, 8, 6);
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(gx - 28, gy + 10, 8, 1);
+  ctx.fillRect(gx - 56, gy + 20, 16, 2);
 
   // Timber planks (right of gate)
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(gx + 18, gy + 4, 12, 2);
-  ctx.fillRect(gx + 19, gy + 6, 12, 2);
-  ctx.fillRect(gx + 20, gy + 8, 12, 2);
+  ctx.fillRect(gx + 36, gy + 8, 24, 4);
+  ctx.fillRect(gx + 38, gy + 12, 24, 4);
+  ctx.fillRect(gx + 40, gy + 16, 24, 4);
   ctx.fillStyle = '#885500';
-  ctx.fillRect(gx + 18, gy + 2, 12, 2);
+  ctx.fillRect(gx + 36, gy + 4, 24, 4);
 
   // Crate (near gate)
   ctx.fillStyle = EGA.BROWN;
-  ctx.fillRect(gx + 6, gy + 4, 8, 8);
+  ctx.fillRect(gx + 12, gy + 8, 16, 16);
   ctx.fillStyle = '#774400';
-  ctx.fillRect(gx + 6, gy + 4, 8, 1);
-  ctx.fillRect(gx + 6, gy + 11, 8, 1);
+  ctx.fillRect(gx + 12, gy + 8, 16, 2);
+  ctx.fillRect(gx + 12, gy + 22, 16, 2);
   ctx.fillStyle = EGA.YELLOW;
   // Cross bracing on crate
-  ctx.fillRect(gx + 9, gy + 5, 1, 6);
-  ctx.fillRect(gx + 7, gy + 7, 6, 1);
+  ctx.fillRect(gx + 18, gy + 10, 2, 12);
+  ctx.fillRect(gx + 14, gy + 14, 12, 2);
 
   // Scaffolding — thin poles near left wall
   ctx.fillStyle = EGA.BROWN;
   const sx = isoX(1, 6);
   const sy = isoY(1, 6);
-  ctx.fillRect(sx + 2, sy - 28, 1, 28);
-  ctx.fillRect(sx + 10, sy - 28, 1, 28);
+  ctx.fillRect(sx + 4, sy - 56, 2, 56);
+  ctx.fillRect(sx + 20, sy - 56, 2, 56);
   // Cross beams
-  ctx.fillRect(sx + 2, sy - 26, 9, 1);
-  ctx.fillRect(sx + 2, sy - 18, 9, 1);
-  ctx.fillRect(sx + 2, sy - 10, 9, 1);
+  ctx.fillRect(sx + 4, sy - 52, 18, 2);
+  ctx.fillRect(sx + 4, sy - 36, 18, 2);
+  ctx.fillRect(sx + 4, sy - 20, 18, 2);
   // Plank on top
   ctx.fillStyle = '#996600';
-  ctx.fillRect(sx, sy - 28, 14, 2);
+  ctx.fillRect(sx, sy - 56, 28, 4);
 
   // Small flag/banner on scaffolding
-  const flagFlap = Math.sin(torchPhase * 1.5) > 0 ? 0 : 1;
+  const flagFlap = Math.sin(torchPhase * 1.5) > 0 ? 0 : 2;
   ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(sx + 11, sy - 32, 4 + flagFlap, 3);
+  ctx.fillRect(sx + 22, sy - 64, 8 + flagFlap, 6);
 }
 
 function drawCargoPile() {
   if (cargoPile <= 0) return;
   const gx = isoX(3, 7);
   const gy = isoY(3, 7);
-  const px = gx - 24;
-  const py = gy + 14;
-  const COLS = 4, CW = 5, CH = 4, GAP = 1;
+  const px = gx - 48;
+  const py = gy + 28;
+  const COLS = 4, CW = 10, CH = 8, GAP = 2;
   const total = Math.floor(cargoPile);
 
   for (let i = 0; i < total; i++) {
@@ -1704,10 +1711,10 @@ function updateCaravan() {
 function drawCaravanTrail() {
   if (!caravanActive) return;
   const trailPts = [
-    [460,              289],
-    [330,              271],
-    [266,              228],
-    [isoX(3, 7),       isoY(3, 7) + 10],
+    [920,              578],
+    [660,              542],
+    [532,              456],
+    [isoX(3, 7),       isoY(3, 7) + 20],
     [isoX(1, 9),       isoY(1, 9)],
   ];
   ctx.fillStyle = '#A07840';
@@ -1718,7 +1725,7 @@ function drawCaravanTrail() {
     const steps = Math.floor(Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 7);
     for (let t = 0; t <= steps; t++) {
       const f = t / steps;
-      ctx.fillRect(Math.round(x1 + (x2 - x1) * f) - 1, Math.round(y1 + (y2 - y1) * f), 2, 1);
+      ctx.fillRect(Math.round(x1 + (x2 - x1) * f) - 2, Math.round(y1 + (y2 - y1) * f), 4, 2);
     }
   }
   ctx.globalAlpha = 1;
@@ -1767,7 +1774,7 @@ function gameLoop(timestamp) {
   pico.update();
 
   // Draw
-  ctx.clearRect(0, 0, 640, 480);
+  ctx.clearRect(0, 0, 1280, 960);
 
   drawSky();
   drawPigeons(); // Pigeons behind the scene (in the sky layer)
@@ -1815,40 +1822,40 @@ function drawToast() {
   ctx.globalAlpha = alpha;
 
   // Background box
-  ctx.font = '8px monospace';
-  const w = ctx.measureText(toast.text).width + 10;
-  const tx = Math.min(toast.x, 640 - w - 4);
-  const ty = Math.max(toast.y, 16);
+  ctx.font = '16px monospace';
+  const w = ctx.measureText(toast.text).width + 20;
+  const tx = Math.min(toast.x, 1280 - w - 8);
+  const ty = Math.max(toast.y, 32);
 
   ctx.fillStyle = EGA.BLACK;
-  ctx.fillRect(tx - 2, ty - 12, w + 4, 16);
+  ctx.fillRect(tx - 4, ty - 24, w + 8, 32);
   ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(tx - 2, ty - 12, w + 4, 1);
-  ctx.fillRect(tx - 2, ty + 3, w + 4, 1);
+  ctx.fillRect(tx - 4, ty - 24, w + 8, 2);
+  ctx.fillRect(tx - 4, ty + 6, w + 8, 2);
 
   ctx.fillStyle = EGA.LGREEN;
   ctx.textBaseline = 'middle';
-  ctx.fillText(toast.text, tx + 3, ty - 4);
+  ctx.fillText(toast.text, tx + 6, ty - 8);
 
   ctx.globalAlpha = 1;
 }
 
 // Clickable regions (in 640x480 canvas coords)
 const clickRegions = [
-  { name: 'citadel', x1: 100, y1: 50, x2: 370, y2: 220,
+  { name: 'citadel', x1: 200, y1: 100, x2: 740, y2: 440,
     info: () => {
       const st = derivedState.vault;
       const gate = st === 'IDLE' ? 'GATE CLOSED' : 'GATE OPEN';
       return `CITADEL: ${st} | ${gate} | ${derivedState.chestCount} CHESTS`;
     }
   },
-  { name: 'library', x1: 310, y1: 60, x2: 420, y2: 130,
+  { name: 'library', x1: 620, y1: 120, x2: 840, y2: 260,
     info: () => `LIBRARY: ${vaultState.vault_file_count || '?'} SCROLLS ARCHIVED`
   },
-  { name: 'armory', x1: 380, y1: 120, x2: 480, y2: 190,
+  { name: 'armory', x1: 760, y1: 240, x2: 960, y2: 380,
     info: () => `ARMORY: DEV FORGE ${derivedState.vault === 'ACTIVE' ? 'ACTIVE' : 'COLD'}`
   },
-  { name: 'tower', x1: 450, y1: 80, x2: 560, y2: 260,
+  { name: 'tower', x1: 900, y1: 160, x2: 1120, y2: 520,
     info: () => {
       const temp = vaultState.pi_cpu_temp || '?';
       const hot = derivedState.picoHot ? ' (HOT!)' : '';
@@ -1859,8 +1866,8 @@ const clickRegions = [
 
 canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = 640 / rect.width;
-  const scaleY = 480 / rect.height;
+  const scaleX = 1280 / rect.width;
+  const scaleY = 960 / rect.height;
   const cx = (e.clientX - rect.left) * scaleX;
   const cy = (e.clientY - rect.top) * scaleY;
 
