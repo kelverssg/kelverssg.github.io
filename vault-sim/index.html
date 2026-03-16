@@ -151,18 +151,18 @@ charSheet.onload = () => { spriteReady = true; };
 
 // Sprite frame geometry (sprites-characters-t.png, 2750×1568)
 const CHAR_SPR = {
-  FW: 187, FH: 120,              // walk frame source dimensions (120 captures full legs to y=418)
+  FW: 124, FH: 120,              // walk frame (trimmed: skip left 63px label+border, was 187)
   FEET_Y: 119,                   // y of feet within source frame
   SY0: 298, ROW_H: 140,         // sprite art y_start (row 0) and row step
-  walkX: col => 333 + col * 187, // walk frame source x (col 0-7)
-  SLP_X: 1832, SLP_W: 152,       // sleep frame
+  walkX: col => 333 + col * 187 + 63, // skip left 63px (62 transparent label + 1px border)
+  SLP_X: 1832, SLP_W: 152,       // sleep frame (untrimmed — different cell structure)
   PICO_X: [1984, 2220, 2456],    // pico frames: perched-open, perched-closed, sleep
   PICO_W: 236,
   // Color variant rows: 0=orange(Claude), 1=blue(outpost), 3=purple(par), 4=yellow(sub)
   ROW: { '#FF5555': 0, '#55FF55': 1, '#55FFFF': 3, '#FFFF55': 4 },
 };
 const CHAR_SCALE = 0.275;  // character draw scale (50% of previous 0.55)
-const CHAR_ANCHOR_X = 142; // character visual-centre x within 187px frame
+const CHAR_ANCHOR_X = 79;  // visual-centre x within trimmed 124px frame (was 142 in 187px)
 const PICO_SCALE = 0.35;   // pico draw scale
 const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 
@@ -170,8 +170,9 @@ const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 const BEAST_SPR = {
   FW: 345,                                            // cell width (all frames)
   frameX: [1682, 2027, 2372],                        // [standing, walk1, walk2] sx
-  camel:  { SY: 1137, FH: 188, FEET_Y: 178, AX: 220 },
-  donkey: { SY: 1325, FH: 185, FEET_Y: 173, AX: 172 },
+  // SY trimmed to skip inter-section separator lines (dark 228px-wide horizontal bars)
+  camel:  { SY: 1148, FH: 168, FEET_Y: 167, AX: 220 },
+  donkey: { SY: 1330, FH: 169, FEET_Y: 168, AX: 172 },
 };
 const BEAST_SCALE = 0.28;
 
@@ -1703,13 +1704,17 @@ class CaravanAnimal {
       const ax = Math.round(bspr.AX * BEAST_SCALE);
       const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
       const sprTopY = py + 10 - feetOff;
-      ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, px - ax, sprTopY, dw, dh);
+      // Caravan always travels left — flip sprite horizontally around anchor px
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, ax - px - dw, sprTopY, dw, dh);
+      ctx.restore();
       // Cargo saddle-bags on top of sprite
       if (!this.offloaded) {
         ctx.fillStyle = EGA.RED;
-        ctx.fillRect(px + 2, sprTopY + 6, 8, 5);
+        ctx.fillRect(px - 8, sprTopY + 6, 8, 5);
         ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px - 10, sprTopY + 8, 8, 5);
+        ctx.fillRect(px + 2, sprTopY + 8, 8, 5);
       }
       return;
     }
