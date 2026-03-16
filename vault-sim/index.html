@@ -26,6 +26,7 @@
       0 0 60px rgba(0,0,0,0.6),
       0 0 4px rgba(85,255,85,0.05);
     position: relative;
+    transform-origin: center center;
   }
   .crt-inner {
     position: relative;
@@ -337,17 +338,40 @@ function drawSky() {
       [90,24],[240,50],[400,16],[620,36],[840,60],[1000,28],[1160,44],[180,70],
       [700,20],[920,10],[500,56],[1060,76],[320,84],[800,30],[120,96]
     ];
-    const starAlpha = night ? 1.0 : 0.4;
-    ctx.globalAlpha = starAlpha;
-    ctx.fillStyle = EGA.WHITE;
-    for (const [x,y] of stars) {
+    const bigStars = [[150,40],[550,64],[950,16],[350,90],[1110,70]];
+    const baseAlpha = night ? 1.0 : 0.4;
+
+    // 1-pixel stars — twinkle via per-star phase offset
+    for (let i = 0; i < stars.length; i++) {
+      const [x, y] = stars[i];
+      const twinkle = 0.6 + 0.4 * Math.sin(torchPhase * 1.3 + i * 1.7);
+      ctx.globalAlpha = baseAlpha * twinkle;
+      ctx.fillStyle = EGA.WHITE;
       ctx.fillRect(x, y, 1, 1);
     }
-    ctx.fillStyle = EGA.LGRAY;
-    for (const [x,y] of [[150,40],[550,64],[950,16],[350,90],[1110,70]]) {
+    // 2-pixel bright stars — slower twinkle
+    for (let i = 0; i < bigStars.length; i++) {
+      const [x, y] = bigStars[i];
+      const twinkle = 0.55 + 0.45 * Math.sin(torchPhase * 0.9 + i * 2.3 + 1.1);
+      ctx.globalAlpha = baseAlpha * twinkle;
+      ctx.fillStyle = EGA.LGRAY;
       ctx.fillRect(x, y, 2, 2);
     }
     ctx.globalAlpha = 1;
+
+    // Crescent moon — top-right of sky, only at night
+    if (night) {
+      const mx = 1090, my = 48, mr = 14;
+      ctx.fillStyle = '#FFFFAA';
+      ctx.beginPath();
+      ctx.arc(mx, my, mr, 0, Math.PI * 2);
+      ctx.fill();
+      // Crescent shadow — slightly offset disc in sky colour
+      ctx.fillStyle = '#000055';
+      ctx.beginPath();
+      ctx.arc(mx - 7, my - 2, mr - 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 
@@ -2026,6 +2050,19 @@ function gameLoop(timestamp) {
   drawToast();
   drawStatusBar();
 }
+
+// ── Viewport-fit scaling ──
+// Scales the CRT bezel down to fit any screen; never scales above natural size.
+function fitBezel() {
+  const bezel = document.querySelector('.crt-bezel');
+  bezel.style.transform = '';          // reset to read natural dimensions
+  const bw = bezel.offsetWidth;
+  const bh = bezel.offsetHeight;
+  const scale = Math.min(1, window.innerWidth / bw, window.innerHeight / bh);
+  if (scale < 1) bezel.style.transform = `scale(${scale.toFixed(4)})`;
+}
+window.addEventListener('resize', fitBezel);
+fitBezel();
 
 requestAnimationFrame(gameLoop);
 
