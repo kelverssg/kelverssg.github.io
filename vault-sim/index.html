@@ -1459,6 +1459,12 @@ let cargoPile = 0;
 const CARGO_MAX = 12;
 const CARGO_DECAY = 0.012; // units/frame — empties over ~80s at 12fps
 
+// Poisson arrival parameters
+const CARAVAN_MEAN_INTERVAL_S = 25; // mean seconds between caravans (exponential inter-arrival)
+const CARAVAN_MEAN_SIZE = 3;        // mean animals per caravan (Poisson batch size)
+const CARAVAN_FPS = 12;             // frame rate used for timer conversion
+let nextCaravanTimer = 0;           // frames remaining until next caravan spawns
+
 // Tower base Y — used for caravan draw-order split
 const TOWER_BASE_Y = 120 + (12 + 8) * 16; // isoY(12,8) = 440
 
@@ -1673,9 +1679,27 @@ function drawCargoPile() {
   }
 }
 
-function initCaravan() {
+// Exponential inter-arrival time — memoryless, correct for a Poisson arrival process
+function sampleExponential(meanFrames) {
+  return -Math.log(1 - Math.random()) * meanFrames;
+}
+
+// Poisson-distributed integer (Knuth algorithm) — batch size per caravan
+function samplePoisson(lambda) {
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= Math.random(); } while (p > L);
+  return Math.max(1, k - 1); // at least 1 animal
+}
+
+function scheduleNextCaravan() {
+  nextCaravanTimer = Math.round(sampleExponential(CARAVAN_MEAN_INTERVAL_S * CARAVAN_FPS));
+}
+
+function initCaravan(size) {
+  const n = (size !== undefined) ? size : samplePoisson(CARAVAN_MEAN_SIZE);
   caravanEntities = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < n; i++) {
     caravanEntities.push(new CaravanAnimal(i));
   }
 }
@@ -1698,10 +1722,13 @@ function updateCaravan() {
   if (caravanActive) {
     for (const c of caravanEntities) c.update();
 
-    // All have departed off-screen — send a new caravan
+    // All have departed — count down Poisson inter-arrival timer, then spawn next batch
     if (caravanEntities.every(c => c.arrived)) {
-      if (Math.random() < 0.003) { // ~every 25s at 12fps
-        initCaravan();
+      if (nextCaravanTimer > 0) {
+        nextCaravanTimer--;
+      } else {
+        initCaravan();        // batch size drawn from Poisson(CARAVAN_MEAN_SIZE)
+        scheduleNextCaravan(); // next gap drawn from Exp(CARAVAN_MEAN_INTERVAL_S)
       }
     }
   }
