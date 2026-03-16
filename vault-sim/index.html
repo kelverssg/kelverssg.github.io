@@ -151,7 +151,8 @@ charSheet.onload = () => { spriteReady = true; };
 
 // Sprite frame geometry (sprites-characters-t.png, 2750×1568)
 const CHAR_SPR = {
-  FW: 187, FH: 97,              // walk frame dimensions in source sheet
+  FW: 187, FH: 120,              // walk frame source dimensions (120 captures full legs to y=418)
+  FEET_Y: 119,                   // y of feet within source frame
   SY0: 298, ROW_H: 140,         // sprite art y_start (row 0) and row step
   walkX: col => 333 + col * 187, // walk frame source x (col 0-7)
   SLP_X: 1832, SLP_W: 152,       // sleep frame
@@ -160,7 +161,7 @@ const CHAR_SPR = {
   // Color variant rows: 0=orange(Claude), 1=blue(outpost), 3=purple(par), 4=yellow(sub)
   ROW: { '#FF5555': 0, '#55FF55': 1, '#55FFFF': 3, '#FFFF55': 4 },
 };
-const CHAR_SCALE = 0.55;   // character draw scale (187×97 → 103×53 dest)
+const CHAR_SCALE = 0.275;  // character draw scale (50% of previous 0.55)
 const CHAR_ANCHOR_X = 142; // character visual-centre x within 187px frame
 const PICO_SCALE = 0.35;   // pico draw scale
 const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
@@ -977,11 +978,13 @@ class Character {
       const dw = Math.round(CHAR_SPR.FW * CHAR_SCALE);
       const dh = Math.round(CHAR_SPR.FH * CHAR_SCALE);
       const ax = Math.round(CHAR_ANCHOR_X * CHAR_SCALE);
-      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.FW, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
+      const feetOff = Math.round(dh * CHAR_SPR.FEET_Y / CHAR_SPR.FH);
+      const sprTopY = py + 12 - feetOff; // align sprite feet with old pixel-art feet (py+12)
+      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.FW, CHAR_SPR.FH, px - ax, sprTopY, dw, dh);
 
       // Speech bubble in council
       if (this.speechBubble && this.speechTimer > 0) {
-        const bubbleY = py - dh - 8;
+        const bubbleY = sprTopY - 8;
         ctx.fillStyle = EGA.WHITE;
         ctx.fillRect(px - 8, bubbleY - 12, 20, 12);
         ctx.fillStyle = EGA.BLACK;
@@ -1016,8 +1019,10 @@ class Character {
       const dw = Math.round(CHAR_SPR.SLP_W * CHAR_SCALE);
       const dh = Math.round(CHAR_SPR.FH * CHAR_SCALE);
       const ax = Math.round(76 * CHAR_SCALE);
-      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.SLP_W, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
-      this.drawZzz(px + 6, py - dh);
+      const feetOff = Math.round(dh * CHAR_SPR.FEET_Y / CHAR_SPR.FH);
+      const sprTopY = py + 12 - feetOff;
+      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.SLP_W, CHAR_SPR.FH, px - ax, sprTopY, dw, dh);
+      this.drawZzz(px + 6, sprTopY);
     } else {
       // Fallback pixel art
       ctx.fillStyle = this.bodyColor;
