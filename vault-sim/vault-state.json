@@ -1,11 +1,11 @@
 {
-  "claude_last_active": "2026-03-17T01:58:05+08:00",
+  "claude_last_active": "2026-03-17T01:59:05+08:00",
   "pico_last_heartbeat": "2026-03-17T00:37:57+08:00",
   "pico_heartbeat_interval_hours": 3,
   "last_vault_council": null,
   "last_outpost_council": null,
   "activity": "building",
-  "pi_cpu_temp": 67.2,
+  "pi_cpu_temp": 68.2,
   "vault_file_count": 1126,
   "note": "vault sim under construction"
 }
