@@ -166,6 +166,15 @@ const CHAR_ANCHOR_X = 142; // character visual-centre x within 187px frame
 const PICO_SCALE = 0.35;   // pico draw scale
 const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 
+// Beast of Burden sprite geometry (sprites-characters-t.png, band 2, x=1599..2718, y=1031..1541)
+const BEAST_SPR = {
+  FW: 345,                                            // cell width (all frames)
+  frameX: [1682, 2027, 2372],                        // [standing, walk1, walk2] sx
+  camel:  { SY: 1137, FH: 188, FEET_Y: 178, AX: 220 },
+  donkey: { SY: 1325, FH: 185, FEET_Y: 173, AX: 172 },
+};
+const BEAST_SCALE = 0.28;
+
 // ── Resolution scale (Phase 2 additions use this) ──
 const SCALE = 2;
 
@@ -636,31 +645,38 @@ function drawChest(x, y) {
 }
 
 function drawTownCrier(x, y) {
-  // Town Crier — distinctive hat, exclamation bubble
-  // Body
-  ctx.fillStyle = EGA.LRED;
-  ctx.fillRect(x - 4, y - 4, 8, 12);
-  // Head
-  ctx.fillStyle = '#DDBB99';
-  ctx.fillRect(x - 4, y - 12, 8, 8);
-  // Hat — tall brimmed
-  ctx.fillStyle = EGA.YELLOW;
-  ctx.fillRect(x - 6, y - 20, 12, 4);
-  ctx.fillRect(x - 4, y - 24, 8, 4);
-  // Legs
-  ctx.fillStyle = EGA.DGRAY;
-  ctx.fillRect(x - 4, y + 8, 4, 4);
-  ctx.fillRect(x + 2, y + 8, 4, 4);
-  // Exclamation bubble
+  // Exclamation bubble — always drawn (above sprite or pixel art)
   const bobble = Math.sin(torchPhase * 2) > 0 ? -2 : 0;
   ctx.fillStyle = EGA.WHITE;
   ctx.fillRect(x - 6, y - 40 + bobble, 16, 12);
-  ctx.fillStyle = EGA.WHITE;
   ctx.fillRect(x, y - 28 + bobble, 4, 4); // Tail
-  // "!" inside
   ctx.fillStyle = EGA.LRED;
   ctx.fillRect(x, y - 38 + bobble, 4, 6);
   ctx.fillRect(x, y - 30 + bobble, 4, 2);
+
+  if (spriteReady) {
+    // Use row 0 (orange), facing right, standing frame (col 4)
+    const sx = CHAR_SPR.walkX(4);
+    const sy = CHAR_SPR.SY0; // row 0
+    const dw = Math.round(CHAR_SPR.FW * CHAR_SCALE);
+    const dh = Math.round(CHAR_SPR.FH * CHAR_SCALE);
+    const ax = Math.round(CHAR_ANCHOR_X * CHAR_SCALE);
+    const feetOff = Math.round(dh * CHAR_SPR.FEET_Y / CHAR_SPR.FH);
+    const sprTopY = y + 12 - feetOff;
+    ctx.drawImage(charSheet, sx, sy, CHAR_SPR.FW, CHAR_SPR.FH, x - ax, sprTopY, dw, dh);
+    return;
+  }
+  // Pixel-art fallback
+  ctx.fillStyle = EGA.LRED;
+  ctx.fillRect(x - 4, y - 4, 8, 12);
+  ctx.fillStyle = '#DDBB99';
+  ctx.fillRect(x - 4, y - 12, 8, 8);
+  ctx.fillStyle = EGA.YELLOW;
+  ctx.fillRect(x - 6, y - 20, 12, 4);
+  ctx.fillRect(x - 4, y - 24, 8, 4);
+  ctx.fillStyle = EGA.DGRAY;
+  ctx.fillRect(x - 4, y + 8, 4, 4);
+  ctx.fillRect(x + 2, y + 8, 4, 4);
 }
 
 function drawWorkstation(x, y) {
@@ -1678,6 +1694,27 @@ class CaravanAnimal {
     const py = Math.round(this.y);
     const legOff = Math.floor(this.frame) % 2 === 0 ? 1 : 0;
 
+    if (spriteReady) {
+      const frameIdx = this.pauseTimer > 0 ? 0 : (1 + legOff); // 0=standing, 1/2=walk
+      const bspr = this.type === 'camel' ? BEAST_SPR.camel : BEAST_SPR.donkey;
+      const sx = BEAST_SPR.frameX[frameIdx];
+      const dw = Math.round(BEAST_SPR.FW * BEAST_SCALE);
+      const dh = Math.round(bspr.FH * BEAST_SCALE);
+      const ax = Math.round(bspr.AX * BEAST_SCALE);
+      const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
+      const sprTopY = py + 10 - feetOff;
+      ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, px - ax, sprTopY, dw, dh);
+      // Cargo saddle-bags on top of sprite
+      if (!this.offloaded) {
+        ctx.fillStyle = EGA.RED;
+        ctx.fillRect(px + 2, sprTopY + 6, 8, 5);
+        ctx.fillStyle = EGA.YELLOW;
+        ctx.fillRect(px - 10, sprTopY + 8, 8, 5);
+      }
+      return;
+    }
+
+    // Pixel-art fallback
     if (this.type === 'camel') {
       ctx.fillStyle = EGA.BROWN;
       ctx.fillRect(px - 10, py - 4, 20, 8); // Body
