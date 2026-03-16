@@ -154,7 +154,7 @@ const CHAR_SPR = {
   FW: 124, FH: 120,              // walk frame (trimmed: skip left 63px label+border, was 187)
   FEET_Y: 119,                   // y of feet within source frame
   SY0: 298, ROW_H: 140,         // sprite art y_start (row 0) and row step
-  walkX: col => 333 + col * 187 + 63, // skip left 63px (62 transparent label + 1px border)
+  walkX: col => 333 + col * 187 + 66, // skip left 66px (62 transparent label + ~4px border/bleed)
   SLP_X: 1832, SLP_W: 152,       // sleep frame (untrimmed — different cell structure)
   PICO_X: [1984, 2220, 2456],    // pico frames: perched-open, perched-closed, sleep
   PICO_W: 236,
@@ -170,8 +170,8 @@ const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 const BEAST_SPR = {
   // Camel: tight per-frame source rects — each cell has label text on the left and bleed-over
   // from adjacent frames, so we crop to just the camel art.
-  camelFrameX: [1840, 2155, 2445],    // tight art-only sx per frame [stand, walk1, walk2]
-  camelFrameW: [187, 217, 272],        // per-frame width to cell-end — includes full snout
+  camelFrameX: [1840, 2157, 2445],    // tight art-only sx per frame [stand, walk1, walk2] — walk1 +2 to skip border
+  camelFrameW: [189, 215, 272],        // per-frame width to cell-end — stand +2 for full snout, walk1 -2 to match
   CAMEL_AX: 95,                        // body-centre anchor within tight frame
   camel: { SY: 1148, FH: 168, FEET_Y: 167 },
 
@@ -1729,10 +1729,10 @@ class CaravanAnimal {
         const dh = Math.round(bspr.FH * BEAST_SCALE);
         const ax = Math.round(bspr.AX * BEAST_SCALE);
         const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
-        const sprTopY = py + 10 - feetOff;
+        const sprTopY = py + 10 - feetOff - 10; // -10px offset to reduce frame-to-frame gyration
         ctx.save();
         ctx.scale(-1, 1);
-        ctx.filter = 'brightness(2.5)';
+        ctx.filter = 'grayscale(1) brightness(2)'; // grey tones so outline art is visible
         ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, ax - px - dw, sprTopY, dw, dh);
         ctx.filter = 'none';
         ctx.restore();
