@@ -360,16 +360,17 @@ function drawSky() {
     ctx.globalAlpha = 1;
 
     // Crescent moon — top-right of sky, only at night
+    // Moon sits at y=110 (in the dark-blue band, below the black top strip)
     if (night) {
-      const mx = 1090, my = 48, mr = 14;
-      ctx.fillStyle = '#FFFFAA';
+      const mx = 1080, my = 110, mr = 16;
+      ctx.fillStyle = '#FFFFBB';
       ctx.beginPath();
       ctx.arc(mx, my, mr, 0, Math.PI * 2);
       ctx.fill();
-      // Crescent shadow — slightly offset disc in sky colour
+      // Crescent shadow matches dark-blue sky band (#000055)
       ctx.fillStyle = '#000055';
       ctx.beginPath();
-      ctx.arc(mx - 7, my - 2, mr - 2, 0, Math.PI * 2);
+      ctx.arc(mx - 8, my - 2, mr - 2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
