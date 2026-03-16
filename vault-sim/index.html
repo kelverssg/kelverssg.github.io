@@ -134,8 +134,8 @@
 // Vault Sim — 90s CRT Aquarium Screen
 // ── Resolution Upgrade Progress ──
 // Phase 0+1: [x] Canvas 1280×960  [x] Tile 64×32  [x] All coords ×2
-// Phase 2:   [ ] Terrain detail   [ ] Wall coursing   [ ] Tower seams
-//            [ ] Library roof tiles   [ ] Pico Tower arch windows
+// Phase 2:   [x] Terrain detail   [x] Wall coursing   [x] Tower seams
+//            [x] Library roof tiles   [x] Pico Tower arch windows
 // ═══════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════
 
@@ -313,6 +313,49 @@ function drawSky() {
 }
 
 // ── Isometric ground tiles ──
+
+// Terrain surface micro-marks — drawn atop base tile colour, skipped on special tiles
+function drawTileDetail(c, r, cx, cy, dist) {
+  const n1 = (c * 17 + r * 13) % 7;
+  const n2 = (c * 31 + r * 19) % 5;
+  const ox = [-10,  6, -4, 12,  0, -8,  8];
+  const oy = [  3, -5,  7, -2,  5, -7,  2];
+  ctx.save();
+  if (c < 6 && r < 8) {
+    // Citadel floor — stone joint hairlines
+    ctx.strokeStyle = '#282838';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(cx + ox[n1] - 8, cy + oy[n1]);
+    ctx.lineTo(cx + ox[n1] + 8, cy + oy[n1]);
+    ctx.stroke();
+  } else if (dist >= 1.5 && dist < 3.2) {
+    // Lush green — grass tufts (3 vertical strokes per tile)
+    ctx.fillStyle = '#3AB820';
+    ctx.globalAlpha = 0.7;
+    for (let i = 0; i < 3; i++) {
+      ctx.fillRect(cx + ox[(n1+i)%7]*0.7, cy + oy[(n1+i)%7]*0.6 - 2, 2, 4);
+    }
+  } else if (dist >= 3.2 && dist < 5.5) {
+    // Scrub — scattered pebble dots
+    ctx.fillStyle = '#907830';
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < 2; i++) {
+      ctx.fillRect(cx + ox[(n2+i)%7]*0.6, cy + oy[(n2+i)%7]*0.5, 3, 2);
+    }
+  } else if (dist >= 7.5) {
+    // Desert — sand ripple arc
+    ctx.strokeStyle = '#BEA856';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.28;
+    ctx.beginPath();
+    ctx.arc(cx + ox[n1]*0.5, cy + 3, 12 + n2*2, 0.15, Math.PI - 0.15);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawIsoDiamond(cx, cy, w, h, fill, stroke) {
   ctx.beginPath();
   ctx.moveTo(cx, cy - h/2);
@@ -332,6 +375,7 @@ function drawGround() {
       const y = isoY(c, r);
 
       let color, stroke;
+      let dist = 0, isSpecial = false;
       const noise = (c * 17 + r * 13) % 7; // deterministic per-tile variation
 
       if (c < 6 && r < 8) {
@@ -343,7 +387,7 @@ function drawGround() {
         // Outside — distance from citadel edge (right wall c=6, front wall r=7)
         const dc = Math.max(0, c - 6);
         const dr = Math.max(0, r - 7);
-        const dist = Math.sqrt(dc * dc + dr * dr);
+        dist = Math.sqrt(dc * dc + dr * dr);
 
         if (dist < 1.5) {
           // Moat — dark water with shimmer
@@ -374,22 +418,20 @@ function drawGround() {
 
         // Bridge at gate — flagstone so caravan doesn't cross water
         if (c >= 2 && c <= 4 && r === 8) {
-          color = '#7A6040';
-          stroke = '#5A4428';
+          color = '#7A6040'; stroke = '#5A4428'; isSpecial = true;
         }
         // Library courtyard — warm flagstone
         if (c >= 7 && c <= 9 && r >= 1 && r <= 3) {
-          color = '#7A6040';
-          stroke = '#5A4428';
+          color = '#7A6040'; stroke = '#5A4428'; isSpecial = true;
         }
         // Armory yard — dark paved stone
         if (c >= 9 && c <= 11 && r >= 4 && r <= 6) {
-          color = '#3E3E3E';
-          stroke = '#282828';
+          color = '#3E3E3E'; stroke = '#282828'; isSpecial = true;
         }
       }
 
       drawIsoDiamond(x, y, TILE_W, TILE_H, color, stroke);
+      if (!isSpecial) drawTileDetail(c, r, x, y, dist);
     }
   }
 }
@@ -425,6 +467,22 @@ function drawWallBlock(x, y, h, color) {
   ctx.closePath();
   ctx.fillStyle = darken2(color);
   ctx.fill();
+
+  // Wall coursing — iso-correct mortar lines (parallel to tile top/bottom edges)
+  // At height dh, the course runs: (x±TW/2, y - dh*mult) → (x, y+TH/2 - dh*mult)
+  const mult = 1 - TILE_H / (2 * h);
+  const courseSpacing = 14;
+  ctx.save();
+  ctx.strokeStyle = darken2(color);
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.4;
+  for (let dh = courseSpacing; dh < h; dh += courseSpacing) {
+    const yL = y - dh * mult;
+    const yR = y + TILE_H/2 - dh * mult;
+    ctx.beginPath(); ctx.moveTo(x + TILE_W/2, yL); ctx.lineTo(x, yR); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - TILE_W/2, yL); ctx.lineTo(x, yR); ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function darken(hex) {
@@ -438,6 +496,16 @@ function darken2(hex) {
   const g = Math.max(0, parseInt(hex.slice(3,5),16) - 70);
   const b = Math.max(0, parseInt(hex.slice(5,7),16) - 70);
   return `rgb(${r},${g},${b})`;
+}
+
+// Arch-topped window — cx/botY are centre-x and bottom-y; w/h are dimensions
+function drawArchWindow(cx, botY, w, h, color) {
+  const r = w / 2;
+  ctx.fillStyle = color;
+  ctx.fillRect(cx - r, botY - h + r, w, h - r); // rectangular lower portion
+  ctx.beginPath();
+  ctx.arc(cx, botY - h + r, r, Math.PI, 0);      // semicircular arch top
+  ctx.fill();
 }
 
 function drawCitadel() {
@@ -656,11 +724,22 @@ function drawPicoTower() {
   ctx.closePath();
   ctx.fill();
 
-  // Window slits — glow at night
-  ctx.fillStyle = isNight() ? EGA.YELLOW : EGA.BLACK;
-  ctx.fillRect(tx - 8, ty - towerH + 44, 8, 14);
-  ctx.fillRect(tx - 8, ty - towerH + 96, 8, 14);
-  ctx.fillRect(tx - 8, ty - towerH + 144, 8, 14);
+  // Tower stone seams — horizontal courses on front face, iso-sloped on side face
+  ctx.save();
+  ctx.strokeStyle = EGA.DGRAY;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.35;
+  for (let sy = ty - towerH + 16; sy < ty; sy += 16) {
+    ctx.beginPath(); ctx.moveTo(tx - towerW/2, sy); ctx.lineTo(tx + towerW/2, sy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tx + towerW/2, sy); ctx.lineTo(tx + towerW/2 + sideW, sy + 14); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Arch windows — glow at night
+  const winColor = isNight() ? EGA.YELLOW : EGA.BLACK;
+  drawArchWindow(tx - 4, ty - towerH + 58,  8, 14, winColor);
+  drawArchWindow(tx - 4, ty - towerH + 110, 8, 14, winColor);
+  drawArchWindow(tx - 4, ty - towerH + 158, 8, 14, winColor);
 
   // Antenna on top
   ctx.fillStyle = EGA.LGRAY;
@@ -698,6 +777,20 @@ function drawLibrary() {
   ctx.lineTo(lx + 44, ly - bh);
   ctx.closePath();
   ctx.fill();
+  // Roof tile lines — horizontal courses across the triangle
+  ctx.save();
+  ctx.strokeStyle = '#880000';
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.5;
+  const roofTop = ly - bh - 20, roofBot = ly - bh;
+  for (let ry = roofTop + 5; ry < roofBot; ry += 5) {
+    const t = (ry - roofTop) / 20;
+    ctx.beginPath();
+    ctx.moveTo(lx - t * 28, ry);
+    ctx.lineTo(lx + t * 44, ry);
+    ctx.stroke();
+  }
+  ctx.restore();
   // Door
   ctx.fillStyle = EGA.BROWN;
   ctx.fillRect(lx - 6, ly - 16, 12, 16);
