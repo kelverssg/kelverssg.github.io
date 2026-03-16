@@ -143,6 +143,28 @@ const canvas = document.getElementById('sim');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
+// ── Sprite sheet ──
+const charSheet = new Image();
+charSheet.src = 'sprites-characters-t.png';
+let spriteReady = false;
+charSheet.onload = () => { spriteReady = true; };
+
+// Sprite frame geometry (sprites-characters-t.png, 2750×1568)
+const CHAR_SPR = {
+  FW: 187, FH: 97,              // walk frame dimensions in source sheet
+  SY0: 298, ROW_H: 140,         // sprite art y_start (row 0) and row step
+  walkX: col => 333 + col * 187, // walk frame source x (col 0-7)
+  SLP_X: 1832, SLP_W: 152,       // sleep frame
+  PICO_X: [1984, 2220, 2456],    // pico frames: perched-open, perched-closed, sleep
+  PICO_W: 236,
+  // Color variant rows: 0=orange(Claude), 1=blue(outpost), 3=purple(par), 4=yellow(sub)
+  ROW: { '#FF5555': 0, '#55FF55': 1, '#55FFFF': 3, '#FFFF55': 4 },
+};
+const CHAR_SCALE = 0.55;   // character draw scale (187×97 → 103×53 dest)
+const CHAR_ANCHOR_X = 142; // character visual-centre x within 187px frame
+const PICO_SCALE = 0.35;   // pico draw scale
+const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
+
 // ── Resolution scale (Phase 2 additions use this) ──
 const SCALE = 2;
 
@@ -878,6 +900,7 @@ class Character {
     this.name = name;
     this.capColor = capColor;
     this.bodyColor = bodyColor;
+    this.sprRow = CHAR_SPR.ROW[capColor] ?? 0;
     this.x = isoX(startCol, startRow);
     this.y = isoY(startCol, startRow) + 8;
     this.targetX = this.x;
@@ -946,67 +969,70 @@ class Character {
       return;
     }
 
-    // Legs — 2-frame walk cycle
-    const legOffset = this.walking ? (Math.floor(this.frame) % 2 === 0 ? 2 : -2) : 0;
-    ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px - 4, py + 8, 4, 4);
-    ctx.fillRect(px + legOffset, py + 8, 4, 4);
+    if (spriteReady) {
+      const walkFrame = this.walking ? Math.floor(this.frame) % 2 : 0;
+      const col = this.facing > 0 ? 4 + walkFrame : 6 + walkFrame;
+      const sx = CHAR_SPR.walkX(col);
+      const sy = CHAR_SPR.SY0 + this.sprRow * CHAR_SPR.ROW_H;
+      const dw = Math.round(CHAR_SPR.FW * CHAR_SCALE);
+      const dh = Math.round(CHAR_SPR.FH * CHAR_SCALE);
+      const ax = Math.round(CHAR_ANCHOR_X * CHAR_SCALE);
+      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.FW, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
 
-    // Body
-    ctx.fillStyle = this.bodyColor;
-    ctx.fillRect(px - 4, py - 4, 8, 12);
-
-    // Head
-    ctx.fillStyle = '#DDBB99'; // Skin
-    ctx.fillRect(px - 4, py - 12, 8, 8);
-
-    // Cap
-    ctx.fillStyle = this.capColor;
-    ctx.fillRect(px - 6, py - 16, 12, 4);
-
-    // Eyes
-    ctx.fillStyle = EGA.BLACK;
-    ctx.fillRect(px - 2, py - 10, 2, 2);
-    ctx.fillRect(px + 2, py - 10, 2, 2);
-
-    // Speech bubble in council
-    if (this.speechBubble && this.speechTimer > 0) {
-      ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px - 8, py - 32, 20, 12);
+      // Speech bubble in council
+      if (this.speechBubble && this.speechTimer > 0) {
+        const bubbleY = py - dh - 8;
+        ctx.fillStyle = EGA.WHITE;
+        ctx.fillRect(px - 8, bubbleY - 12, 20, 12);
+        ctx.fillStyle = EGA.BLACK;
+        ctx.fillRect(px - 6, bubbleY - 10, 4, 2);
+        ctx.fillRect(px, bubbleY - 10, 4, 2);
+        ctx.fillRect(px + 6, bubbleY - 10, 4, 2);
+        ctx.fillStyle = EGA.WHITE;
+        ctx.fillRect(px, bubbleY, 4, 4);
+      }
+    } else {
+      // Fallback pixel art
+      const legOffset = this.walking ? (Math.floor(this.frame) % 2 === 0 ? 2 : -2) : 0;
+      ctx.fillStyle = EGA.DGRAY;
+      ctx.fillRect(px - 4, py + 8, 4, 4);
+      ctx.fillRect(px + legOffset, py + 8, 4, 4);
+      ctx.fillStyle = this.bodyColor;
+      ctx.fillRect(px - 4, py - 4, 8, 12);
+      ctx.fillStyle = '#DDBB99';
+      ctx.fillRect(px - 4, py - 12, 8, 8);
+      ctx.fillStyle = this.capColor;
+      ctx.fillRect(px - 6, py - 16, 12, 4);
       ctx.fillStyle = EGA.BLACK;
-      ctx.fillRect(px - 6, py - 30, 4, 2);
-      ctx.fillRect(px, py - 30, 4, 2);
-      ctx.fillRect(px + 6, py - 30, 4, 2);
-      // Tail
-      ctx.fillStyle = EGA.WHITE;
-      ctx.fillRect(px, py - 20, 4, 4);
+      ctx.fillRect(px - 2, py - 10, 2, 2);
+      ctx.fillRect(px + 2, py - 10, 2, 2);
     }
   }
 
   drawSleeping(px, py) {
-    // Horizontal body (lying down)
-    ctx.fillStyle = this.bodyColor;
-    ctx.fillRect(px - 12, py - 2, 16, 8);
-
-    // Head (at left end)
-    ctx.fillStyle = '#DDBB99';
-    ctx.fillRect(px - 20, py - 4, 8, 8);
-
-    // Cap
-    ctx.fillStyle = this.capColor;
-    ctx.fillRect(px - 22, py - 8, 12, 4);
-
-    // Closed eyes
-    ctx.fillStyle = EGA.BLACK;
-    ctx.fillRect(px - 18, py - 2, 4, 2);
-
-    // Legs
-    ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px + 4, py, 4, 4);
-    ctx.fillRect(px + 4, py + 4, 4, 4);
-
-    // ZZZ bubble
-    this.drawZzz(px - 16, py - 16);
+    if (spriteReady) {
+      const sx = CHAR_SPR.SLP_X;
+      const sy = CHAR_SPR.SY0 + this.sprRow * CHAR_SPR.ROW_H;
+      const dw = Math.round(CHAR_SPR.SLP_W * CHAR_SCALE);
+      const dh = Math.round(CHAR_SPR.FH * CHAR_SCALE);
+      const ax = Math.round(76 * CHAR_SCALE);
+      ctx.drawImage(charSheet, sx, sy, CHAR_SPR.SLP_W, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
+      this.drawZzz(px + 6, py - dh);
+    } else {
+      // Fallback pixel art
+      ctx.fillStyle = this.bodyColor;
+      ctx.fillRect(px - 12, py - 2, 16, 8);
+      ctx.fillStyle = '#DDBB99';
+      ctx.fillRect(px - 20, py - 4, 8, 8);
+      ctx.fillStyle = this.capColor;
+      ctx.fillRect(px - 22, py - 8, 12, 4);
+      ctx.fillStyle = EGA.BLACK;
+      ctx.fillRect(px - 18, py - 2, 4, 2);
+      ctx.fillStyle = EGA.DGRAY;
+      ctx.fillRect(px + 4, py, 4, 4);
+      ctx.fillRect(px + 4, py + 4, 4, 4);
+      this.drawZzz(px - 16, py - 16);
+    }
   }
 
   drawZzz(bx, by) {
@@ -1069,21 +1095,36 @@ const pico = {
       return;
     }
 
-    // Body — white roundish
+    // Decrement blink duration here regardless of render path
+    const blinking = this.blinkDuration > 0;
+    if (blinking) this.blinkDuration--;
+
+    if (spriteReady) {
+      const picoIdx = blinking ? 1 : 0; // 0=perched-open, 1=perched-closed
+      const sx = CHAR_SPR.PICO_X[picoIdx];
+      const dw = Math.round(CHAR_SPR.PICO_W * PICO_SCALE);
+      const dh = Math.round(CHAR_SPR.FH * PICO_SCALE);
+      const ax = Math.round(PICO_ANCHOR_X * PICO_SCALE);
+      ctx.drawImage(charSheet, sx, CHAR_SPR.SY0, CHAR_SPR.PICO_W, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
+
+      // Hot sweat drops overlay
+      if (derivedState.picoHot && Math.sin(this.bobPhase * 3) > 0.5) {
+        ctx.fillStyle = EGA.LCYAN;
+        ctx.fillRect(px + 14, py - 10, 2, 4);
+        ctx.fillRect(px - 10, py - 8, 2, 4);
+      }
+      return;
+    }
+
+    // Fallback pixel art
     ctx.fillStyle = EGA.WHITE;
     ctx.fillRect(px - 6, py - 4, 16, 12);
     ctx.fillRect(px - 4, py - 8, 12, 4);
     ctx.fillRect(px - 2, py + 8, 8, 2);
-
-    // Ears/tufts
     ctx.fillStyle = EGA.LGRAY;
     ctx.fillRect(px - 4, py - 12, 4, 4);
     ctx.fillRect(px + 8, py - 12, 4, 4);
-
-    // Eyes
-    const blinking = this.blinkDuration > 0;
     if (blinking) {
-      this.blinkDuration--;
       ctx.fillStyle = EGA.LGRAY;
       ctx.fillRect(px - 2, py - 4, 4, 2);
       ctx.fillRect(px + 6, py - 4, 4, 2);
@@ -1095,28 +1136,18 @@ const pico = {
       ctx.fillRect(px, py - 4, 2, 2);
       ctx.fillRect(px + 8, py - 4, 2, 2);
     }
-
-    // Beak
     ctx.fillStyle = EGA.BROWN;
     ctx.fillRect(px + 2, py, 4, 2);
-
-    // Feet
-    ctx.fillStyle = EGA.BROWN;
     ctx.fillRect(px - 2, py + 10, 4, 2);
     ctx.fillRect(px + 6, py + 10, 4, 2);
-
-    // Wing flap — when Pi CPU is hot (70°C+)
     if (derivedState.picoHot) {
-      const wingFlap = Math.sin(this.bobPhase * 8); // Fast flapping
+      const wingFlap = Math.sin(this.bobPhase * 8);
       const wingY = Math.round(wingFlap * 6);
       ctx.fillStyle = EGA.LGRAY;
-      // Left wing extended
       ctx.fillRect(px - 12, py - 2 + wingY, 6, 4);
       ctx.fillRect(px - 16, py + wingY, 4, 2);
-      // Right wing extended
       ctx.fillRect(px + 10, py - 2 + wingY, 6, 4);
       ctx.fillRect(px + 16, py + wingY, 4, 2);
-      // Sweat drops
       if (Math.sin(this.bobPhase * 3) > 0.5) {
         ctx.fillStyle = EGA.LCYAN;
         ctx.fillRect(px + 14, py - 10, 2, 4);
@@ -1126,41 +1157,41 @@ const pico = {
   },
 
   drawSleeping(px, py) {
-    // Rounder, puffed up sleeping owl
-    ctx.fillStyle = EGA.WHITE;
-    ctx.fillRect(px - 6, py - 2, 16, 10);
-    ctx.fillRect(px - 4, py - 6, 12, 4);
-    ctx.fillRect(px - 2, py + 8, 8, 2);
-
-    // Ear tufts relaxed
-    ctx.fillStyle = EGA.LGRAY;
-    ctx.fillRect(px - 2, py - 8, 4, 2);
-    ctx.fillRect(px + 6, py - 8, 4, 2);
-
-    // Closed eyes (lines)
-    ctx.fillStyle = EGA.DGRAY;
-    ctx.fillRect(px - 2, py - 2, 4, 2);
-    ctx.fillRect(px + 6, py - 2, 4, 2);
-
-    // Beak tucked
-    ctx.fillStyle = EGA.BROWN;
-    ctx.fillRect(px + 2, py + 2, 4, 2);
-
+    if (spriteReady) {
+      const sx = CHAR_SPR.PICO_X[2]; // sleep frame
+      const dw = Math.round(CHAR_SPR.PICO_W * PICO_SCALE);
+      const dh = Math.round(CHAR_SPR.FH * PICO_SCALE);
+      const ax = Math.round(PICO_ANCHOR_X * PICO_SCALE);
+      ctx.drawImage(charSheet, sx, CHAR_SPR.SY0, CHAR_SPR.PICO_W, CHAR_SPR.FH, px - ax, py - dh, dw, dh);
+    } else {
+      // Fallback pixel art
+      ctx.fillStyle = EGA.WHITE;
+      ctx.fillRect(px - 6, py - 2, 16, 10);
+      ctx.fillRect(px - 4, py - 6, 12, 4);
+      ctx.fillRect(px - 2, py + 8, 8, 2);
+      ctx.fillStyle = EGA.LGRAY;
+      ctx.fillRect(px - 2, py - 8, 4, 2);
+      ctx.fillRect(px + 6, py - 8, 4, 2);
+      ctx.fillStyle = EGA.DGRAY;
+      ctx.fillRect(px - 2, py - 2, 4, 2);
+      ctx.fillRect(px + 6, py - 2, 4, 2);
+      ctx.fillStyle = EGA.BROWN;
+      ctx.fillRect(px + 2, py + 2, 4, 2);
+    }
     // ZZZ bubble
     const t = (Date.now() % 3000) / 3000;
     const alpha = 1 - t;
     if (alpha > 0) {
       ctx.globalAlpha = alpha;
-      const bubbleY = py - 16 - t * 32;
+      const dh = spriteReady ? Math.round(CHAR_SPR.FH * PICO_SCALE) : 16;
+      const bubbleY = py - dh - t * 32;
       ctx.fillStyle = EGA.WHITE;
       ctx.fillRect(px + 12, bubbleY - 8, 16, 12);
-      // z
       ctx.fillStyle = EGA.BLACK;
       ctx.fillRect(px + 14, bubbleY - 4, 6, 2);
       ctx.fillRect(px + 18, bubbleY - 2, 2, 2);
       ctx.fillRect(px + 14, bubbleY, 2, 2);
       ctx.fillRect(px + 14, bubbleY + 2, 6, 2);
-      // tail
       ctx.fillStyle = EGA.WHITE;
       ctx.fillRect(px + 12, bubbleY + 4, 4, 2);
       ctx.globalAlpha = 1;
