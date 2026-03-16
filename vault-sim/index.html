@@ -168,10 +168,16 @@ const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 
 // Beast of Burden sprite geometry (sprites-characters-t.png, band 2, x=1599..2718, y=1031..1541)
 const BEAST_SPR = {
-  FW: 345,                                            // cell width (all frames)
-  frameX: [1682, 2027, 2372],                        // [standing, walk1, walk2] sx
-  // SY trimmed to skip inter-section separator lines (dark 228px-wide horizontal bars)
-  camel:  { SY: 1148, FH: 168, FEET_Y: 167, AX: 220 },
+  // Camel: tight per-frame source rects — each cell has label text on the left and bleed-over
+  // from adjacent frames, so we crop to just the camel art.
+  camelFrameX: [1840, 2155, 2445],   // tight art-only sx per frame [stand, walk1, walk2]
+  CAMEL_FW: 192,                      // tight frame width (covers art + small margin)
+  CAMEL_AX: 95,                       // body-centre anchor within tight frame
+  camel: { SY: 1148, FH: 168, FEET_Y: 167 },
+
+  // Donkey: full cell (label area sparser, art fills more of cell)
+  FW: 345,
+  frameX: [1682, 2027, 2372],
   donkey: { SY: 1330, FH: 169, FEET_Y: 168, AX: 172 },
 };
 const BEAST_SCALE = 0.28;
@@ -1697,24 +1703,45 @@ class CaravanAnimal {
 
     if (spriteReady) {
       const frameIdx = this.pauseTimer > 0 ? 0 : (1 + legOff); // 0=standing, 1/2=walk
-      const bspr = this.type === 'camel' ? BEAST_SPR.camel : BEAST_SPR.donkey;
-      const sx = BEAST_SPR.frameX[frameIdx];
-      const dw = Math.round(BEAST_SPR.FW * BEAST_SCALE);
-      const dh = Math.round(bspr.FH * BEAST_SCALE);
-      const ax = Math.round(bspr.AX * BEAST_SCALE);
-      const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
-      const sprTopY = py + 10 - feetOff;
-      // Caravan always travels left — flip sprite horizontally around anchor px
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, ax - px - dw, sprTopY, dw, dh);
-      ctx.restore();
-      // Cargo saddle-bags on top of sprite
-      if (!this.offloaded) {
-        ctx.fillStyle = EGA.RED;
-        ctx.fillRect(px - 8, sprTopY + 6, 8, 5);
-        ctx.fillStyle = EGA.YELLOW;
-        ctx.fillRect(px + 2, sprTopY + 8, 8, 5);
+      if (this.type === 'camel') {
+        const bspr = BEAST_SPR.camel;
+        const sx = BEAST_SPR.camelFrameX[frameIdx];
+        const fw = BEAST_SPR.CAMEL_FW;
+        const dw = Math.round(fw * BEAST_SCALE);
+        const dh = Math.round(bspr.FH * BEAST_SCALE);
+        const ax = Math.round(BEAST_SPR.CAMEL_AX * BEAST_SCALE);
+        const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
+        const sprTopY = py + 10 - feetOff;
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(charSheet, sx, bspr.SY, fw, bspr.FH, ax - px - dw, sprTopY, dw, dh);
+        ctx.restore();
+        if (!this.offloaded) {
+          ctx.fillStyle = EGA.RED;
+          ctx.fillRect(px - 8, sprTopY + 6, 8, 5);
+          ctx.fillStyle = EGA.YELLOW;
+          ctx.fillRect(px + 2, sprTopY + 8, 8, 5);
+        }
+      } else {
+        const bspr = BEAST_SPR.donkey;
+        const sx = BEAST_SPR.frameX[frameIdx];
+        const dw = Math.round(BEAST_SPR.FW * BEAST_SCALE);
+        const dh = Math.round(bspr.FH * BEAST_SCALE);
+        const ax = Math.round(bspr.AX * BEAST_SCALE);
+        const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
+        const sprTopY = py + 10 - feetOff;
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.filter = 'brightness(2.5)';
+        ctx.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, ax - px - dw, sprTopY, dw, dh);
+        ctx.filter = 'none';
+        ctx.restore();
+        if (!this.offloaded) {
+          ctx.fillStyle = EGA.RED;
+          ctx.fillRect(px - 8, sprTopY + 6, 8, 5);
+          ctx.fillStyle = EGA.YELLOW;
+          ctx.fillRect(px + 2, sprTopY + 8, 8, 5);
+        }
       }
       return;
     }
