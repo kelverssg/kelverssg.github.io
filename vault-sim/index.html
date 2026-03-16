@@ -170,9 +170,9 @@ const PICO_ANCHOR_X = 118; // pico visual-centre x within 236px frame
 const BEAST_SPR = {
   // Camel: tight per-frame source rects — each cell has label text on the left and bleed-over
   // from adjacent frames, so we crop to just the camel art.
-  camelFrameX: [1840, 2155, 2445],   // tight art-only sx per frame [stand, walk1, walk2]
-  CAMEL_FW: 192,                      // tight frame width (covers art + small margin)
-  CAMEL_AX: 95,                       // body-centre anchor within tight frame
+  camelFrameX: [1840, 2155, 2445],    // tight art-only sx per frame [stand, walk1, walk2]
+  camelFrameW: [187, 217, 272],        // per-frame width to cell-end — includes full snout
+  CAMEL_AX: 95,                        // body-centre anchor within tight frame
   camel: { SY: 1148, FH: 168, FEET_Y: 167 },
 
   // Donkey: full cell (label area sparser, art fills more of cell)
@@ -1684,7 +1684,7 @@ class CaravanAnimal {
     } else {
       this.x += (dx / dist) * this.speed;
       this.y += (dy / dist) * this.speed;
-      this.frame += 0.06;
+      this.frame += this.type === 'donkey' ? 0.14 : 0.06;
     }
   }
 
@@ -1706,7 +1706,7 @@ class CaravanAnimal {
       if (this.type === 'camel') {
         const bspr = BEAST_SPR.camel;
         const sx = BEAST_SPR.camelFrameX[frameIdx];
-        const fw = BEAST_SPR.CAMEL_FW;
+        const fw = BEAST_SPR.camelFrameW[frameIdx];
         const dw = Math.round(fw * BEAST_SCALE);
         const dh = Math.round(bspr.FH * BEAST_SCALE);
         const ax = Math.round(BEAST_SPR.CAMEL_AX * BEAST_SCALE);
