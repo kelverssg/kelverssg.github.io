@@ -150,6 +150,14 @@ charSheet.src = 'sprites-characters-t.png';
 let spriteReady = false;
 charSheet.onload = () => { spriteReady = true; };
 
+// ── Beast sprite sheet (sprites-beasts.png) ──
+// Layout: 3 cols (stand, walk1, walk2) × 4 rows (coat colors)
+const beastSheet = new Image();
+beastSheet.src = 'sprites-beasts.png';
+let beastReady = false;
+beastSheet.onload = () => { beastReady = true; };
+const BEAST_FW = 159, BEAST_FH = 169; // cell size in sprites-beasts.png
+
 // Sprite frame geometry (sprites-characters-t.png, 2750×1568)
 const CHAR_SPR = {
   FW: 124, FH: 120,              // walk frame (trimmed: skip left 63px label+border, was 187)
@@ -1675,6 +1683,7 @@ class CaravanAnimal {
     this.speed = 0.70 + Math.random() * 0.24;
     this.frame = Math.random() * 10;
     this.type = Math.random() > 0.5 ? 'camel' : 'donkey';
+    this.colorRow = Math.floor(Math.random() * 4); // coat color variant (0-3)
     this.trail = [];
   }
 
@@ -1749,24 +1758,19 @@ class CaravanAnimal {
         }
       } else {
         const bspr = BEAST_SPR.donkey;
-        const sx = BEAST_SPR.frameX[frameIdx];
-        const dw = Math.round(BEAST_SPR.FW * BEAST_SCALE);
-        const dh = Math.round(bspr.FH * BEAST_SCALE);
+        const dw = Math.round(BEAST_FW * BEAST_SCALE);
+        const dh = Math.round(BEAST_FH * BEAST_SCALE);
         const ax = Math.round(bspr.AX * BEAST_SCALE);
         const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
-        const sprTopY = py + 10 - feetOff - 10; // -10px offset to reduce frame-to-frame gyration
-        // Tint outline art with warm brown using source-in composite (filter brightness was washing out outlines)
-        const dtc = document.createElement('canvas');
-        dtc.width = dw; dtc.height = dh;
-        const dtc2 = dtc.getContext('2d');
-        dtc2.imageSmoothingEnabled = false;
-        dtc2.fillStyle = '#888888'; // solid grey donkey
-        dtc2.fillRect(0, 0, dw, dh);
-        dtc2.globalCompositeOperation = 'destination-in';
-        dtc2.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, 0, 0, dw, dh);
+        const sprTopY = py + 10 - feetOff - 10;
+        const bsx = frameIdx * BEAST_FW;            // col: 0=stand, 1=walk1, 2=walk2
+        const bsy = this.colorRow * BEAST_FH;       // row: coat color variant
         ctx.save();
         ctx.scale(-1, 1);
-        ctx.drawImage(dtc, ax - px - dw, sprTopY);
+        ctx.imageSmoothingEnabled = false;
+        if (beastReady) {
+          ctx.drawImage(beastSheet, bsx, bsy, BEAST_FW, BEAST_FH, ax - px - dw, sprTopY, dw, dh);
+        }
         ctx.restore();
         if (!this.offloaded) {
           ctx.fillStyle = EGA.RED;
