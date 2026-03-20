@@ -1736,7 +1736,7 @@ class CaravanAnimal {
         const dh = Math.round(bspr.FH * BEAST_SCALE);
         const ax = Math.round(BEAST_SPR.CAMEL_AX * BEAST_SCALE);
         const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
-        const sprTopY = py + 10 - feetOff;
+        const sprTopY = py + 20 - feetOff;
         ctx.save();
         ctx.scale(-1, 1);
         ctx.drawImage(charSheet, sx, bspr.SY, fw, bspr.FH, ax - px - dw, sprTopY, dw, dh);
@@ -1760,10 +1760,10 @@ class CaravanAnimal {
         dtc.width = dw; dtc.height = dh;
         const dtc2 = dtc.getContext('2d');
         dtc2.imageSmoothingEnabled = false;
-        dtc2.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, 0, 0, dw, dh);
-        dtc2.globalCompositeOperation = 'source-in';
-        dtc2.fillStyle = '#7A5820'; // warm donkey brown
+        dtc2.fillStyle = '#888888'; // solid grey donkey
         dtc2.fillRect(0, 0, dw, dh);
+        dtc2.globalCompositeOperation = 'destination-in';
+        dtc2.drawImage(charSheet, sx, bspr.SY, BEAST_SPR.FW, bspr.FH, 0, 0, dw, dh);
         ctx.save();
         ctx.scale(-1, 1);
         ctx.drawImage(dtc, ax - px - dw, sprTopY);
@@ -1989,16 +1989,16 @@ function drawCaravanTrail() {
 }
 
 // Two-pass caravan draw for correct tower layering.
-// Camels with y < TOWER_BASE_Y are behind/at the tower — draw them before it.
-// Camels with y >= TOWER_BASE_Y are in front (entering from right) — draw them after.
+// Entities with y < TOWER_BASE_Y (and not yet offloaded) are behind the tower — draw before it.
+// Entities with y >= TOWER_BASE_Y, OR already offloaded, are in front — draw after it.
 function drawCaravanBehind() {
   if (!caravanActive) return;
-  const behind = caravanEntities.filter(c => c.y < TOWER_BASE_Y).sort((a, b) => a.y - b.y);
+  const behind = caravanEntities.filter(c => c.y < TOWER_BASE_Y && !c.offloaded).sort((a, b) => a.y - b.y);
   for (const c of behind) c.draw();
 }
 function drawCaravanFront() {
   if (!caravanActive) return;
-  const front = caravanEntities.filter(c => c.y >= TOWER_BASE_Y).sort((a, b) => a.y - b.y);
+  const front = caravanEntities.filter(c => c.y >= TOWER_BASE_Y || c.offloaded).sort((a, b) => a.y - b.y);
   for (const c of front) c.draw();
 }
 
@@ -2043,9 +2043,9 @@ function gameLoop(timestamp) {
   drawArmory();
   drawCaravanTrail();  // Static hoof-mark trail (faint, behind everything)
   drawCargoPile();     // Offloaded goods pile near gate
-  drawCaravanBehind(); // Camels at/past gate, departing west (y < 220)
+  drawCaravanBehind(); // y < 440 && not offloaded — behind tower
   drawPicoTower();
-  drawCaravanFront();  // Camels entering from right (y >= 220)
+  drawCaravanFront();  // y >= 440 || offloaded — in front of tower
 
   // Draw characters (sort by Y for depth)
   const toDraw = [...vaultAgents];
