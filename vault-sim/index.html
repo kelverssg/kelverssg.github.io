@@ -1763,73 +1763,86 @@ class CaravanAnimal {
           ctx.globalAlpha = 1;
         }
       } else {
-        // Donkey — procedural pixel-art (sprite sheet is outline-only with transparent body)
-        // Geometry: head LEFT (faces direction of travel), tail RIGHT
-        // Feet at py; sprite occupies px-21..px+24 wide, py-47..py tall
-        const fy = py;
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.18)';
-        ctx.fillRect(px - 16, fy - 1, 30, 3);
-        // Tail
-        ctx.fillStyle = '#7A6040';
-        ctx.fillRect(px + 14, fy - 22, 4, 10);
-        ctx.fillStyle = '#C8A870';
-        ctx.fillRect(px + 15, fy - 21, 2, 12);
-        // Rear haunch (sits higher than body)
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px + 8, fy - 28, 9, 18);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px + 9, fy - 27, 7, 16);
-        // Body
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 9, fy - 23, 20, 14);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px - 8, fy - 22, 18, 12);
-        // Neck
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 14, fy - 30, 8, 12);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px - 13, fy - 29, 6, 10);
-        // Head
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 21, fy - 37, 12, 13);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px - 20, fy - 36, 10, 11);
-        // Muzzle (lighter)
-        ctx.fillStyle = '#C4A070';
-        ctx.fillRect(px - 21, fy - 30, 5, 7);
-        // Eye
-        ctx.fillStyle = '#2A1800';
-        ctx.fillRect(px - 17, fy - 34, 2, 2);
-        // Ear rear
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 18, fy - 46, 4, 11);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px - 17, fy - 45, 2, 9);
-        // Ear front (with inner pink)
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 13, fy - 45, 4, 10);
-        ctx.fillStyle = '#8A6840';
-        ctx.fillRect(px - 12, fy - 44, 2, 8);
-        ctx.fillStyle = '#D49090';
-        ctx.fillRect(px - 12, fy - 43, 1, 5);
-        // Legs — 4, alternating front/rear pairs
-        ctx.fillStyle = '#5A3E20';
-        ctx.fillRect(px - 6, fy - 10, 3, 10 + legOff * 2);
-        ctx.fillRect(px - 2, fy - 10, 3, 10 + (1 - legOff) * 2);
-        ctx.fillRect(px + 4, fy - 10, 3, 10 + (1 - legOff) * 2);
-        ctx.fillRect(px + 9, fy - 10, 3, 10 + legOff * 2);
-        ctx.fillStyle = '#7A5A30';
-        ctx.fillRect(px - 5, fy - 9, 1, 8 + legOff * 2);
-        ctx.fillRect(px - 1, fy - 9, 1, 8 + (1 - legOff) * 2);
-        ctx.fillRect(px + 5, fy - 9, 1, 8 + (1 - legOff) * 2);
-        ctx.fillRect(px + 10, fy - 9, 1, 8 + legOff * 2);
-        // Panniers (cargo boxes, hidden once offloaded)
-        if (!this.offloaded) {
-          ctx.fillStyle = '#CC3030';
-          ctx.fillRect(px - 8, fy - 22, 7, 8);
-          ctx.fillStyle = '#E8B030';
-          ctx.fillRect(px + 1, fy - 22, 7, 8);
+        // Donkey — procedural pixel-art (sprite sheet is outline-only / transparent body)
+        // Layout: head LEFT (leads travel), tail RIGHT, feet at py
+        // Canvas region: px-21..px+24 wide, py-47..py tall
+        const _dFade = Math.min(1, Math.max(0, (px - 21 + 10) / 40)); // fade near left edge
+        if (_dFade > 0) {
+          ctx.globalAlpha = _dFade;
+          const fy = py;
+          // Shadow
+          ctx.fillStyle = 'rgba(0,0,0,0.18)';
+          ctx.fillRect(px - 14, fy - 1, 32, 3);
+          // --- Tail ---
+          ctx.fillStyle = '#7A6040';
+          ctx.fillRect(px + 17, fy - 24, 4, 8);
+          ctx.fillStyle = '#C8A870';
+          ctx.fillRect(px + 18, fy - 23, 2, 10);
+          // --- Rump (raised haunch) ---
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px + 11, fy - 28, 8, 18);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px + 12, fy - 27, 6, 16);
+          // --- Body ---
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 5, fy - 24, 18, 13);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px - 4, fy - 23, 16, 11);
+          // --- Neck (bridges body to head) ---
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 10, fy - 30, 7, 10);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px - 9, fy - 29, 5, 8);
+          // --- Head (long flat donkey face) ---
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 21, fy - 35, 14, 12);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px - 20, fy - 34, 12, 10);
+          // Muzzle / nose (lighter, extends left)
+          ctx.fillStyle = '#C4A070';
+          ctx.fillRect(px - 21, fy - 29, 6, 6);
+          // Nostril
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 20, fy - 27, 2, 2);
+          // Eye
+          ctx.fillStyle = '#2A1800';
+          ctx.fillRect(px - 15, fy - 33, 2, 2);
+          // --- Ears (tall — the donkey's trademark) ---
+          // Ear rear (left/behind)
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 19, fy - 46, 4, 13);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px - 18, fy - 45, 2, 11);
+          // Ear front (right/forward)
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 14, fy - 45, 4, 12);
+          ctx.fillStyle = '#8A6840';
+          ctx.fillRect(px - 13, fy - 44, 2, 10);
+          ctx.fillStyle = '#D49090'; // pink inner ear
+          ctx.fillRect(px - 13, fy - 43, 1, 7);
+          // --- Legs (4, alternating front/rear pairs) ---
+          ctx.fillStyle = '#5A3E20';
+          ctx.fillRect(px - 3, fy - 11, 3, 11 + legOff * 2);        // front-L
+          ctx.fillRect(px + 1, fy - 11, 3, 11 + (1 - legOff) * 2);  // front-R
+          ctx.fillRect(px + 7, fy - 11, 3, 11 + (1 - legOff) * 2);  // rear-L
+          ctx.fillRect(px + 12, fy - 11, 3, 11 + legOff * 2);        // rear-R
+          ctx.fillStyle = '#7A5A30';
+          ctx.fillRect(px - 2, fy - 10, 1, 9 + legOff * 2);
+          ctx.fillRect(px + 2, fy - 10, 1, 9 + (1 - legOff) * 2);
+          ctx.fillRect(px + 8, fy - 10, 1, 9 + (1 - legOff) * 2);
+          ctx.fillRect(px + 13, fy - 10, 1, 9 + legOff * 2);
+          // --- Panniers (cargo bags, removed once offloaded) ---
+          if (!this.offloaded && _dFade > 0.4) {
+            ctx.fillStyle = '#CC3030';
+            ctx.fillRect(px - 4, fy - 23, 7, 8);
+            ctx.fillStyle = '#AA2020';
+            ctx.fillRect(px - 3, fy - 22, 5, 6);
+            ctx.fillStyle = '#E8B030';
+            ctx.fillRect(px + 5, fy - 23, 7, 8);
+            ctx.fillStyle = '#C89020';
+            ctx.fillRect(px + 6, fy - 22, 5, 6);
+          }
+          ctx.globalAlpha = 1;
         }
       }
       return;
