@@ -1746,8 +1746,12 @@ class CaravanAnimal {
         const ax = Math.round(BEAST_SPR.CAMEL_AX * BEAST_SCALE);
         const feetOff = Math.round(dh * bspr.FEET_Y / bspr.FH);
         const sprTopY = py + 20 - feetOff;
-        // Fade out near canvas left edge so snout doesn't hard-clip
-        const _edgeFade = Math.min(1, Math.max(0, (px - ax + 10) / 40));
+        // Fade on right edge (snout entering) AND left edge (tail exiting)
+        // Head is on screen RIGHT: screen_right = px - ax + dw
+        // Tail is on screen LEFT:  screen_left  = px - ax
+        const _snoutIn  = Math.min(1, Math.max(0, (canvas.width - (px - ax + dw) + 20) / 40));
+        const _tailOut  = Math.min(1, Math.max(0, (px - ax + 10) / 40));
+        const _edgeFade = Math.min(_snoutIn, _tailOut);
         if (_edgeFade > 0) {
           ctx.globalAlpha = _edgeFade;
           ctx.save();
