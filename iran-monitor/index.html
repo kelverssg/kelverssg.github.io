@@ -3456,55 +3456,11 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       '9. "Singapore port security" OR "Japan critical infrastructure cyber" \u2014 APAC-specific threat indicators\n' +
       '10. "Marsh WTW war risk" \u2014 competitor moves in war risk placement\n\n' +
       'STEP 2 \u2014 UPDATE THESE FIELDS IN THE HTML (find by HTML comment marker):\n' +
-      '- <!-- DATA: oil_price -->
-        <div class="intel-card">
-          <div class="intel-card-header">
-            <span class="intel-card-title">Oil Price (Brent)</span>
-            <span class="intel-status warning">Watch</span>
-          </div>
-          <div class="intel-card-body">
-            Current: <span class="value">$69.30/bbl</span> (18 Mar 2026, +$0.30 / +0.4% vs prior close of $69.00) | No update as of 21 Mar 2026. Brent remains elevated versus pre-crisis assumptions but far below early war spike scenarios, suggesting emergency stock releases and partial traffic adaptation are containing the upside even as Gulf war risk stays acute.
-          </div>
-          <div class="intel-card-footer">Source: Trading Economics — 18 Mar 2026</div>
-        </div>
-
-        <!-- DATA: hormuz_status -->
-        <div class="intel-card">
-          <div class="intel-card-header">
-            <span class="intel-card-title">Hormuz — Severe Transit Disruption, Active Strike Risk</span>
-            <span class="intel-status alert">Critical</span>
-          </div>
-          <div class="intel-card-body">
-            Vessels struck: <span class="value">20+</span> | Traffic remains far below normal, with reports that only a handful of commercial cargo transits were confirmed over the past 24 hours and that passage is still 'trickling through'. At least 16 vessels have been struck near Fujairah, Khor Al Zubair and the Strait, while conflict trackers say 20 commercial vessels have been attacked off the Iranian coast since the crisis began.
-          </div>
-          <div class="intel-card-footer">Source: Reuters / Lloyd's List Intelligence / crisis transit trackers — 2026-03-21</div>
-        </div>
-
-        <!-- DATA: jwc_areas -->
-        <div class="intel-card">
-          <div class="intel-card-header">
-            <span class="intel-card-title">JWC Listed Areas — JWLA-033</span>
-            <span class="intel-status alert">Alert</span>
-          </div>
-          <div class="intel-card-body">
-            Issued: <span class="value">2026-03-03</span> | Effective: <span class="value">2026-03-04</span> | JWC updated Hull War, Piracy, Terrorism and Related Perils Listed Areas with Iran-related changes, adding Bahrain, Djibouti, Kuwait, Oman and Qatar, and amending Gulf waters including the Persian/Arabian Gulf and Gulf of Oman. No update as of 21 Mar 2026.
-          </div>
-          <div class="intel-card-footer">Source: Joint War Committee / JWLA-033 — 2026-03-03</div>
-        </div>
-
-        <!-- DATA: iran_cyber_threat -->
-        <div class="intel-card">
-          <div class="intel-card-header">
-            <span class="intel-card-title">APAC Cyber Threat — Elevated (Multi-Actor)</span>
-            <span class="intel-status alert">Alert</span>
-          </div>
-          <div class="intel-card-body">
-            <strong>Iran-linked (Elevated):</strong> Unit 42 and other threat reporting indicate increased Iranian phishing, hacktivist and destructive cyber risk tied to retaliation dynamics following US-Israel strikes, with governments, defence and critical sectors in scope. <br><strong>Singapore:</strong> No direct Iran-linked national incident reported in the fresh results, but Singapore remains on heightened cyber posture after its 2026 telecom intrusion by UNC3886, underscoring the risk that APAC digital infrastructure is already stressed before any Iran-linked spillover.
-          </div>
-          <div class="intel-card-footer">Source: Unit 42 / Industrial Cyber / CSA Singapore reporting — 2026-03-21</div>
-        </div>
-
-        <!-- DATA: news_feed_1 through news_feed_6 --> : Replace with 6 most recent relevant headlines (title, source, timestamp, one-line summary)\n' +
+      '- <!-- DATA: oil_price --> : Update Brent crude price and 24h change\n' +
+      '- <!-- DATA: hormuz_status --> : Update Strait status (Open/Monitored/Restricted/Closed)\n' +
+      '- <!-- DATA: jwc_areas --> : Update JWC listed area count and last change date\n' +
+      '- <!-- DATA: iran_cyber_threat --> : Update threat level (Low/Elevated/High/Critical)\n' +
+      '- <!-- DATA: news_feed_1 through news_feed_6 --> : Replace with 6 most recent relevant headlines (title, source, timestamp, one-line summary)\n' +
       '- <!-- DATA: market_pulse_summary --> : Update one-paragraph market summary\n' +
       '- <!-- DATA: last_refresh --> : Set to current timestamp in format YYYY-MM-DD HH:MM SGT\n\n' +
       'STEP 3 \u2014 REASSESS LOB STATUS (update if warranted):\n' +
