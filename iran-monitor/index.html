@@ -1278,13 +1278,13 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
   </div>
   <div class="severity-badge">
     <div class="severity-dot"></div>
-    SEVERITY: CRITICAL — 3 LINES RED | HORMUZ STATUS | DAY 21
+    SEVERITY: CRITICAL — 3 LINES RED | HORMUZ CRITICAL DISRUPTION | DAY 21
   </div>
   <!-- REFRESH STATUS BAR -->
   <!-- DATA: last_refresh -->
   <div class="refresh-bar" id="refreshBar">
     <span class="refresh-badge" id="refreshBadge"><span class="badge-dot"></span><span id="refreshBadgeText">LOADING…</span></span>
-    <span class="refresh-meta">Last: <strong id="refreshLastTime">2026-03-21 09:33 SGT</strong></span>
+    <span class="refresh-meta">Last: <strong id="refreshLastTime">2026-03-21 09:44 SGT</strong></span>
     <span class="refresh-meta">Next: <strong id="refreshNextTime">--:--</strong></span>
     <span class="refresh-meta">In: <span class="refresh-countdown" id="refreshCountdown">--:--:--</span></span>
     <button class="refresh-bar-btn" id="btnMarkRefreshed" onclick="markRefreshed()">Mark as Refreshed</button>
@@ -1311,8 +1311,8 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
 
     <!-- DATA: market_pulse_summary -->
     <div class="thesis-box">
-      <span class="label">Working Thesis — Updated Sat Mar 21 2026, 09:33 SGT</span>
-      <strong>Day 21: Energy Markets in Turmoil.</strong> The ongoing conflict between Iran and Israel, with US involvement, has caused significant disruptions in the global energy markets. The Strait of Hormuz, a critical chokepoint for oil transit, remains under threat, leading to soaring oil prices. As the situation escalates, market participants are grappling with uncertainty, while governments and organizations scramble to mitigate the impact on energy supplies and economic stability.
+      <span class="label">Working Thesis — Updated 21 Mar 2026, 09:44 SGT</span>
+      <strong>Day 21: war risk has stopped being a surcharge and become a market structure.</strong> The signal is no longer simply missiles and headlines; it is the compounding interaction of degraded Hormuz throughput, wider JWC listed areas, cancelled or repriced war cover, and cyber retaliation risk spilling into APAC networks. In insurance terms, the region has shifted from volatility to impaired insurability, with pricing power moving to those still willing to write short-tail marine, energy and trade-credit exposure. For APAC carriers and brokers, the real task is not prediction but filtration: separate temporary price spikes from persistent corridor dysfunction, because the claims pattern will follow duration more than drama.
     </div>
 
     <div class="pulse-grid">
@@ -1734,12 +1734,12 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="intel-card">
           <div class="intel-card-header">
             <span class="intel-card-title">Oil Price (Brent)</span>
-            <span class="intel-status alert">Alert</span>
+            <span class="intel-status warning">Watch</span>
           </div>
           <div class="intel-card-body">
-            Current: <span class="value">$69.3/bbl</span> (2026-03-21, +$X / +X% vs prior close of $XX.XX) | The price continues to rise due to the conflict's impact on supply routes and market sentiment.
+            Current: <span class="value">$69.30/bbl</span> (18 Mar 2026, +$0.30 / +0.4% vs prior close of $69.00) | No update as of 21 Mar 2026. Brent remains elevated versus pre-crisis assumptions but far below early war spike scenarios, suggesting emergency stock releases and partial traffic adaptation are containing the upside even as Gulf war risk stays acute.
           </div>
-          <div class="intel-card-footer">Source: Markets Insider — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Trading Economics — 18 Mar 2026</div>
         </div>
 
         <!-- DATA: jwc_areas -->
@@ -1749,57 +1749,57 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             <span class="intel-status alert">Alert</span>
           </div>
           <div class="intel-card-body">
-            Issued: <span class="value">2026-03-03</span> | Effective: <span class="value">2026-03-04</span> | The Joint War Committee has updated the Hull War, Piracy, Terrorism and Related Perils Listed Areas to include new regions affected by the conflict.
+            Issued: <span class="value">2026-03-03</span> | Effective: <span class="value">2026-03-04</span> | JWC updated Hull War, Piracy, Terrorism and Related Perils Listed Areas with Iran-related changes, adding Bahrain, Djibouti, Kuwait, Oman and Qatar, and amending Gulf waters including the Persian/Arabian Gulf and Gulf of Oman. No update as of 21 Mar 2026.
           </div>
-          <div class="intel-card-footer">Source: Alandia — 2026-03-03</div>
+          <div class="intel-card-footer">Source: Joint War Committee / JWLA-033 — 2026-03-03</div>
         </div>
 
         <!-- DATA: hormuz_status -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">Hormuz — TRAFFIC TRICKLING</span>
+            <span class="intel-card-title">Hormuz — Severe Transit Disruption, Active Strike Risk</span>
             <span class="intel-status alert">Critical</span>
           </div>
           <div class="intel-card-body">
-            Vessels struck: <span class="value">20+</span> | Traffic remains severely restricted, with ongoing threats and military actions impacting transit.
+            Vessels struck: <span class="value">20+</span> | Traffic remains far below normal, with reports that only a handful of commercial cargo transits were confirmed over the past 24 hours and that passage is still 'trickling through'. At least 16 vessels have been struck near Fujairah, Khor Al Zubair and the Strait, while conflict trackers say 20 commercial vessels have been attacked off the Iranian coast since the crisis began.
           </div>
-          <div class="intel-card-footer">Source: New York Times — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Reuters / Lloyd's List Intelligence / crisis transit trackers — 2026-03-21</div>
         </div>
 
         <!-- DATA: iran_cyber_threat -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">APAC Cyber Threat — HIGH (Multi-Actor)</span>
+            <span class="intel-card-title">APAC Cyber Threat — Elevated (Multi-Actor)</span>
             <span class="intel-status alert">Alert</span>
           </div>
           <div class="intel-card-body">
-            <strong>Iran-linked (HIGH):</strong> Recent cyber activities include phishing and hacktivist operations targeting critical infrastructure. <br><strong>Singapore:</strong> Coordinated efforts have been launched to counter threats from advanced persistent threat actors.
+            <strong>Iran-linked (Elevated):</strong> Unit 42 and other threat reporting indicate increased Iranian phishing, hacktivist and destructive cyber risk tied to retaliation dynamics following US-Israel strikes, with governments, defence and critical sectors in scope. <br><strong>Singapore:</strong> No direct Iran-linked national incident reported in the fresh results, but Singapore remains on heightened cyber posture after its 2026 telecom intrusion by UNC3886, underscoring the risk that APAC digital infrastructure is already stressed before any Iran-linked spillover.
           </div>
-          <div class="intel-card-footer">Source: Unit 42 — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Unit 42 / Industrial Cyber / CSA Singapore reporting — 2026-03-21</div>
         </div>
 
         <!-- DATA: news_feed_1 -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">Day 21 — ISRAEL STRIKES SOUTH PARS FIELD</span>
+            <span class="intel-card-title">Day 21 — War Expands Across Energy and Gulf Targets</span>
             <span class="intel-status alert">Critical</span>
           </div>
           <div class="intel-card-body">
-            Israel's recent strike on the South Pars gas field has escalated tensions, drawing condemnation from Gulf states and increasing the risk of further retaliatory actions by Iran.
+            Fresh reporting says Iran has threatened to widen retaliation to tourism sites worldwide while the US moves more Marines and warships into theatre. Gulf states are reportedly intercepting missiles and drones as attacks on energy assets and military infrastructure continue, keeping escalation risk live even amid talk of a possible US wind-down.
           </div>
-          <div class="intel-card-footer">Source: Al Jazeera — 2026-03-21</div>
+          <div class="intel-card-footer">Source: AP / Al Jazeera / BBC live coverage — 2026-03-21</div>
         </div>
 
         <!-- DATA: news_feed_2 -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">INSURANCE PREMIUMS SKYROCKET</span>
+            <span class="intel-card-title">Marine Insurance Shock Deepens as Gulf Cover Reprices</span>
             <span class="intel-status alert">Alert</span>
           </div>
           <div class="intel-card-body">
-            War risk insurance premiums in the Gulf region have surged tenfold, reflecting the heightened risk and uncertainty in the area, impacting shipping and trade.
+            War risk pricing in the Gulf remains dislocated, with market reports saying seven-day cover costs are roughly 10-fold above pre-strike levels and cancellation notices forcing rapid repricing or reinstatement. The commercial consequence is not just higher premium but narrower certainty of placement, especially for voyages touching the Middle East Gulf and Hormuz approaches.
           </div>
-          <div class="intel-card-footer">Source: Lloyd's List — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Lloyd's List / The Guardian / JWC market updates — 2026-03-21</div>
         </div>
 
         </section>
@@ -3454,24 +3454,24 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="intel-card">
           <div class="intel-card-header">
             <span class="intel-card-title">Oil Price (Brent)</span>
-            <span class="intel-status alert">Alert</span>
+            <span class="intel-status warning">Watch</span>
           </div>
           <div class="intel-card-body">
-            Current: <span class="value">$69.3/bbl</span> (2026-03-21, +$X / +X% vs prior close of $XX.XX) | The price continues to rise due to the conflict's impact on supply routes and market sentiment.
+            Current: <span class="value">$69.30/bbl</span> (18 Mar 2026, +$0.30 / +0.4% vs prior close of $69.00) | No update as of 21 Mar 2026. Brent remains elevated versus pre-crisis assumptions but far below early war spike scenarios, suggesting emergency stock releases and partial traffic adaptation are containing the upside even as Gulf war risk stays acute.
           </div>
-          <div class="intel-card-footer">Source: Markets Insider — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Trading Economics — 18 Mar 2026</div>
         </div>
 
         <!-- DATA: hormuz_status -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">Hormuz — TRAFFIC TRICKLING</span>
+            <span class="intel-card-title">Hormuz — Severe Transit Disruption, Active Strike Risk</span>
             <span class="intel-status alert">Critical</span>
           </div>
           <div class="intel-card-body">
-            Vessels struck: <span class="value">20+</span> | Traffic remains severely restricted, with ongoing threats and military actions impacting transit.
+            Vessels struck: <span class="value">20+</span> | Traffic remains far below normal, with reports that only a handful of commercial cargo transits were confirmed over the past 24 hours and that passage is still 'trickling through'. At least 16 vessels have been struck near Fujairah, Khor Al Zubair and the Strait, while conflict trackers say 20 commercial vessels have been attacked off the Iranian coast since the crisis began.
           </div>
-          <div class="intel-card-footer">Source: New York Times — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Reuters / Lloyd's List Intelligence / crisis transit trackers — 2026-03-21</div>
         </div>
 
         <!-- DATA: jwc_areas -->
@@ -3481,21 +3481,21 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             <span class="intel-status alert">Alert</span>
           </div>
           <div class="intel-card-body">
-            Issued: <span class="value">2026-03-03</span> | Effective: <span class="value">2026-03-04</span> | The Joint War Committee has updated the Hull War, Piracy, Terrorism and Related Perils Listed Areas to include new regions affected by the conflict.
+            Issued: <span class="value">2026-03-03</span> | Effective: <span class="value">2026-03-04</span> | JWC updated Hull War, Piracy, Terrorism and Related Perils Listed Areas with Iran-related changes, adding Bahrain, Djibouti, Kuwait, Oman and Qatar, and amending Gulf waters including the Persian/Arabian Gulf and Gulf of Oman. No update as of 21 Mar 2026.
           </div>
-          <div class="intel-card-footer">Source: Alandia — 2026-03-03</div>
+          <div class="intel-card-footer">Source: Joint War Committee / JWLA-033 — 2026-03-03</div>
         </div>
 
         <!-- DATA: iran_cyber_threat -->
         <div class="intel-card">
           <div class="intel-card-header">
-            <span class="intel-card-title">APAC Cyber Threat — HIGH (Multi-Actor)</span>
+            <span class="intel-card-title">APAC Cyber Threat — Elevated (Multi-Actor)</span>
             <span class="intel-status alert">Alert</span>
           </div>
           <div class="intel-card-body">
-            <strong>Iran-linked (HIGH):</strong> Recent cyber activities include phishing and hacktivist operations targeting critical infrastructure. <br><strong>Singapore:</strong> Coordinated efforts have been launched to counter threats from advanced persistent threat actors.
+            <strong>Iran-linked (Elevated):</strong> Unit 42 and other threat reporting indicate increased Iranian phishing, hacktivist and destructive cyber risk tied to retaliation dynamics following US-Israel strikes, with governments, defence and critical sectors in scope. <br><strong>Singapore:</strong> No direct Iran-linked national incident reported in the fresh results, but Singapore remains on heightened cyber posture after its 2026 telecom intrusion by UNC3886, underscoring the risk that APAC digital infrastructure is already stressed before any Iran-linked spillover.
           </div>
-          <div class="intel-card-footer">Source: Unit 42 — 2026-03-21</div>
+          <div class="intel-card-footer">Source: Unit 42 / Industrial Cyber / CSA Singapore reporting — 2026-03-21</div>
         </div>
 
         <!-- DATA: news_feed_1 through news_feed_6 --> : Replace with 6 most recent relevant headlines (title, source, timestamp, one-line summary)\n' +
