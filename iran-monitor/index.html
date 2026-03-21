@@ -749,6 +749,12 @@
     .growth-row { flex-direction: column; gap: 0.15rem; }
     .growth-row-label { min-width: unset; }
     .tab-btn { padding: 0.55rem 1rem; font-size: 0.75rem; }
+    /* Larger touch targets on mobile */
+    .refresh-bar-btn { padding: 0.55rem 0.9rem; font-size: 0.72rem; min-height: 36px; }
+    .refresh-bar { gap: 0.6rem; padding: 0.5rem 1rem; flex-wrap: wrap; }
+    .copy-code-btn { padding: 0.45rem 0.75rem; min-height: 36px; }
+    .cron-pill { padding: 0.5rem 0.9rem; min-height: 36px; }
+    .action-status { padding: 0.35rem 0.7rem; min-height: 36px; display: inline-flex; align-items: center; }
   }
 
   /* ═══ Visualisation styles ═══ */
@@ -1296,10 +1302,10 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
 
   <!-- TAB NAVIGATION -->
   <nav class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('risk-monitor')">Risk Monitor</button>
-    <button class="tab-btn" onclick="switchTab('growth-opportunities')">Growth Opportunities</button>
-    <button class="tab-btn" onclick="switchTab('geo-impact')">Geo Impact</button>
-    <button class="tab-btn" onclick="switchTab('protocol')">Protocol</button>
+    <button class="tab-btn active" onclick="switchTab('risk-monitor', this)">Risk Monitor</button>
+    <button class="tab-btn" onclick="switchTab('growth-opportunities', this)">Growth Opportunities</button>
+    <button class="tab-btn" onclick="switchTab('geo-impact', this)">Geo Impact</button>
+    <button class="tab-btn" onclick="switchTab('protocol', this)">Protocol</button>
   </nav>
 
   <!-- TAB 1: RISK MONITOR -->
@@ -2665,11 +2671,11 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
   }
 
   // Tab switching
-  function switchTab(tabId) {
+  function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
     document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById('tab-' + tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (btn) btn.classList.add('active');
     var panel = document.getElementById('tab-' + tabId);
     var cards = panel.querySelectorAll('.line-card, .intel-card, .action-item, .pulse-item, .growth-card, .estimator-item');
     cards.forEach(function(card, i) {
@@ -3515,10 +3521,31 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       '- Refresh cycle: Daily 07:33 SGT';
   }
 
+  // Clipboard helper with iOS fallback
+  function copyWithFallback(text, onSuccess) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess).catch(function() {
+        iosFallbackCopy(text, onSuccess);
+      });
+    } else {
+      iosFallbackCopy(text, onSuccess);
+    }
+  }
+  function iosFallbackCopy(text, onSuccess) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); onSuccess(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
   function copyRefreshPrompt() {
     var text = getLLMPromptText();
-    navigator.clipboard.writeText(text).then(function() {
-      var btn = document.getElementById('btnCopyPrompt');
+    var btn = document.getElementById('btnCopyPrompt');
+    copyWithFallback(text, function() {
       btn.classList.add('flash');
       btn.textContent = 'Copied!';
       setTimeout(function() { btn.classList.remove('flash'); btn.textContent = 'Copy Refresh Prompt'; }, 1500);
@@ -3567,7 +3594,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
   function copyCodeBlock(btn) {
     var pre = btn.parentElement.querySelector('pre');
     var text = pre.textContent;
-    navigator.clipboard.writeText(text).then(function() {
+    copyWithFallback(text, function() {
       btn.classList.add('copied');
       btn.textContent = 'Copied!';
       setTimeout(function() { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1500);
