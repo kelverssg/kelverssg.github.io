@@ -2415,7 +2415,8 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             <tr><td>China</td><td>50%</td><td>Marine, CBI</td><td class="tag-medium">MED</td><td class="tag-low">LOW</td></tr>
             <tr><td>Singapore</td><td>10%</td><td>Marine hub, Cyber</td><td class="tag-low">LOW</td><td class="tag-high">HIGH</td></tr>
             <tr><td>Australia</td><td>5%</td><td>Energy (LNG upside)</td><td class="tag-low">LOW</td><td class="tag-high">HIGH</td></tr>
-            <tr><td>Vietnam / Thailand</td><td>20%</td><td>CBI, Marine</td><td class="tag-medium">MED</td><td class="tag-high">HIGH</td></tr>
+            <tr><td>Vietnam</td><td>20%</td><td>CBI, Marine</td><td class="tag-medium">MED</td><td class="tag-high">HIGH</td></tr>
+            <tr><td>Thailand</td><td>20%</td><td>CBI, EV Manufacturing</td><td class="tag-medium">MED</td><td class="tag-high">HIGH</td></tr>
           </tbody>
         </table>
       </div>
@@ -2471,6 +2472,11 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
               <div class="supply-card-title">Vietnam</div>
               <p>Structurally trapped. Nghi Son refinery operates under a 25-year crude supply agreement with Kuwait Petroleum Corp signed at financial close. If Kuwaiti crude stops flowing, the refinery stops. No renegotiation clause for war.</p>
               <p class="supply-card-impl"><strong>Client implication:</strong> BI/CBI cover for Nghi Son is the single most urgent placement in Vietnam.</p>
+            </div>
+            <div class="supply-card">
+              <div class="supply-card-title">Thailand</div>
+              <p>Partially exposed. Thailand imports ~20% of its crude from Gulf sources for industrial and petrochemical use. The automotive manufacturing sector — now transitioning rapidly to EV — depends on Gulf energy for plant operations. BYD, Great Wall Motor, and Honda EV plants under construction create new energy demand exactly as Gulf supply is disrupted.</p>
+              <p class="supply-card-impl"><strong>Client implication:</strong> CBI uplift on automotive supply chains is immediate; new EV plant construction risk is the 12-month pipeline play.</p>
             </div>
             <div class="supply-card">
               <div class="supply-card-title">China</div>
@@ -2553,6 +2559,13 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
               <div>
                 <div class="supply-card-title">Korea/Japan offshore wind</div>
                 <p><em>6 months.</em> Slower build cycle but high contract values when they move.</p>
+              </div>
+            </div>
+            <div class="supply-card supply-priority">
+              <div class="supply-priority-badge p2">P2</div>
+              <div>
+                <div class="supply-card-title">Thailand &mdash; EV manufacturing CBI</div>
+                <p><em>3 months.</em> BYD, Great Wall Motor, and Honda EV plants are being built now. Thai automotive is the &ldquo;Detroit of Southeast Asia&rdquo; pivot story. Gulf-linked CBI on component supply chains (Gulf petrochemical inputs for plastics, rubber, electronics) is under-placed. First broker to run a structured CBI review across the Bangkok-Eastern Seaboard corridor wins this book.</p>
               </div>
             </div>
           </div>
@@ -3740,7 +3753,8 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     400: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Jordan', tip: null },
     422: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Lebanon', tip: null },
     792: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Turkey', tip: null },
-    764: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Thailand', tip: null },
+    764: { fill: '#007A8A', stroke: '#00BCD4', role: 'opportunity', name: 'Thailand',
+           tip: { risk: 'MEDIUM', lob: 'CBI, EV Manufacturing', rev: '"Detroit of SE Asia" EV hub — BYD/Honda plants, CBI uplift' }},
     360: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Indonesia', tip: null },
     608: { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Philippines', tip: null },
     50:  { fill: '#1e3a5f', stroke: '#2a4a6f', role: 'context', name: 'Bangladesh', tip: null },
@@ -3845,9 +3859,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       poly: [[102,23],[104,22],[108,18],[107,14],[106,10],[104,10],[103,12],[102,18],[102,23]]
     },
     {
-      name: 'Thailand', color: '#556B7F', borderColor: '#6B8C9F',
-      role: 'context',
-      tooltip: { risk: 'MEDIUM', lob: 'CBI, Marine', revenue: 'EV manufacturing (Thai automotive hub)' },
+      name: 'Thailand', color: '#007A8A', borderColor: '#00E5FF',
+      role: 'opportunity',
+      tooltip: { risk: 'MEDIUM', lob: 'CBI, EV Manufacturing', revenue: '"Detroit of SE Asia" — BYD, Great Wall Motor, Honda EV plants. Gulf energy CBI uplift' },
       poly: [[97,20],[100,22],[102,18],[102,14],[100,6],[98,6],[98,10],[97,14],[97,20]]
     },
     {
