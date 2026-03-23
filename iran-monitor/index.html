@@ -3015,7 +3015,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
 
       items.forEach(function(item, i) {
         var x = marginLeft + gap + i * (barW + gap);
-        var p = Math.max(0, Math.min(1, (progress - i * 0.1) / 0.6));
+        var p = Math.max(0, Math.min(1, (progress - i * 0.1) / 0.5));
 
         if (item.type === 'base') {
           var barTop = valToY(item.value * p);
