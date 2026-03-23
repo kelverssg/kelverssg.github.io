@@ -783,6 +783,26 @@
     font-weight: 600;
     margin-bottom: 0.75rem;
   }
+
+  /* RAG capacity indicator pills */
+  .rag-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 0.5rem 0 0.25rem 0; }
+  .rag-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .rag-pill.rag-red    { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.35); }
+  .rag-pill.rag-amber  { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid rgba(210,153,34,0.35); }
+  .rag-pill.rag-green  { background: rgba(63,185,80,0.15);  color: #3fb950; border: 1px solid rgba(63,185,80,0.35); }
+  .rag-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .rag-pill.rag-red   .rag-dot { background: #f85149; box-shadow: 0 0 6px #f8514988; }
+  .rag-pill.rag-amber .rag-dot { background: #d29922; box-shadow: 0 0 6px #d2992288; }
+  .rag-pill.rag-green .rag-dot { background: #3fb950; box-shadow: 0 0 6px #3fb95088; }
+  .rag-caption { font-size: 9px; color: var(--text-muted); text-align: right; letter-spacing: 0.03em; }
+
   .gauge-wrap {
     display: flex;
     justify-content: center;
@@ -1411,13 +1431,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <li class="trigger-tag">P&I club advisories</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="35" data-color="var(--red)" data-label="Gulf Transit Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">35%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-red"><span class="rag-dot"></span> CONSTRAINED</div>
+        <div class="rag-caption">Gulf Transit Capacity</div>
       </div>
     </div>
 
@@ -1426,38 +1442,34 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       <div class="card-header">
         <div>
           <div class="card-title">Political Risk Insurance (PRI)</div>
-          <div class="card-subtitle">Sovereign, CEND, Contract Frustration</div>
+          <div class="card-subtitle">Political Violence, SRCC, CEND, Contract Frustration</div>
         </div>
         <div class="traffic-light red"><div class="traffic-dot"></div> Critical</div>
       </div>
       <div class="card-row">
         <div class="card-row-label">Pricing</div>
-        <div class="card-row-value"><span class="red-text">Hard market.</span> The soft cycle was already ending for PRI before the escalation. Now it is over. Gulf-adjacent sovereign risk has repriced 200-400%. Broader MENA exposure tightening.</div>
+        <div class="card-row-value"><span class="red-text">Hardening.</span> Political Violence and SRCC lines are under the most direct pressure — Gulf-adjacent cover has repriced materially. Broader MENA sovereign and CEND exposure also tightening, though less sharply. Brokers should lead with PV/SRCC framing before discussing traditional PRI structures.</div>
       </div>
       <div class="card-row">
         <div class="card-row-label">Capacity</div>
-        <div class="card-row-value"><strong>Pulled back sharply.</strong> Key markets (Lloyd's, Zurich, AIG) restricting new PRI for Gulf-exposed assets. Existing policies facing non-renewal or punitive terms. Soft market has no relevance here.</div>
+        <div class="card-row-value"><strong>Selective withdrawal.</strong> Key markets (Lloyd's, Zurich, AIG) are more cautious on new Political Violence and CEND cover for Gulf-exposed assets. Terms are tightening; some non-renewals on higher-risk placements. Capacity is reduced but not absent — structured dialogue with underwriters remains productive.</div>
       </div>
       <div class="card-row">
         <div class="card-row-label">APAC Impact</div>
-        <div class="card-row-value">APAC-headquartered firms with Gulf infrastructure investments (Singapore sovereign wealth, Japanese trading houses, Korean EPC firms) face coverage gaps. Cross-border contract frustration cover increasingly unavailable.</div>
+        <div class="card-row-value">APAC firms with Gulf exposure — Singapore sovereign wealth, Japanese trading houses, Korean EPC contractors — should prioritise a Political Violence and SRCC coverage review. Contract frustration cover is harder to place but not impossible; structured solutions (parametric layers, higher retentions) are available.</div>
       </div>
       <div class="card-triggers">
         <div class="card-triggers-title">Immediate Triggers</div>
         <ul class="trigger-list">
-          <li class="trigger-tag hot">Sanctions expansion</li>
-          <li class="trigger-tag hot">Asset seizure / expropriation event</li>
+          <li class="trigger-tag hot">Strike on Gulf civilian/commercial infrastructure</li>
+          <li class="trigger-tag hot">SRCC event in Gulf state capital</li>
+          <li class="trigger-tag">Sanctions expansion → asset seizure risk</li>
           <li class="trigger-tag">Sovereign credit downgrades (Gulf states)</li>
-          <li class="trigger-tag">US secondary sanctions on third-country firms</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="25" data-color="var(--red)" data-label="Gulf-Adjacent Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">25%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-red"><span class="rag-dot"></span> CONSTRAINED</div>
+        <div class="rag-caption">Gulf-Adjacent Capacity</div>
       </div>
     </div>
 
@@ -1491,13 +1503,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <li class="trigger-tag">OPEC+ supply response</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="60" data-color="var(--amber)" data-label="Energy Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--amber)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">60%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-amber"><span class="rag-dot"></span> TIGHTENING</div>
+        <div class="rag-caption">Energy Capacity</div>
       </div>
     </div>
 
@@ -1531,13 +1539,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <li class="trigger-tag">Shipping re-route adds &gt; 10 days</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="30" data-color="var(--red)" data-label="CBI Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">30%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-red"><span class="rag-dot"></span> CONSTRAINED</div>
+        <div class="rag-caption">CBI Capacity</div>
       </div>
     </div>
 
@@ -1571,13 +1575,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <li class="trigger-tag">CISA/ACSC joint advisory on Iran</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="45" data-color="var(--red)" data-label="Cyber Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">45%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-amber"><span class="rag-dot"></span> TIGHTENING</div>
+        <div class="rag-caption">Cyber Capacity</div>
       </div>
     </div>
 
@@ -1610,13 +1610,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <li class="trigger-tag">Broad economic recession (second-order effect)</li>
         </ul>
       </div>
-      <div class="gauge-wrap" data-gauge="90" data-color="var(--green)" data-label="P&C Capacity">
-        <svg width="120" height="75" viewBox="0 0 120 75">
-          <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e2435" stroke-width="10" stroke-linecap="round"/>
-          <path class="gauge-arc" d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="var(--green)" stroke-width="10" stroke-linecap="round" stroke-dasharray="157.08" stroke-dashoffset="157.08" style="transition: stroke-dashoffset 1.2s ease-out;"/>
-          <text x="60" y="62" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,sans-serif">90%</text>
-          <text x="60" y="74" text-anchor="middle" fill="var(--text-muted)" font-size="7" font-family="-apple-system,BlinkMacSystemFont,sans-serif">CAPACITY REMAINING</text>
-        </svg>
+      <div class="rag-wrap">
+        <div class="rag-pill rag-green"><span class="rag-dot"></span> AVAILABLE</div>
+        <div class="rag-caption">P&C Capacity</div>
       </div>
     </div>
   </div>
@@ -2440,6 +2436,53 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         </div>
       </div>
     </div>
+
+
+    <!-- MARKET INDICES STRIP -->
+    <div class="supply-chain-header" style="margin-top:1.5rem;">Key Market Indices &mdash; Gulf Crisis Impact</div>
+    <div style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin: 0.75rem 0 1.25rem 0;
+    ">
+      <!-- Brent Crude -->
+      <div style="background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:0.9rem 1rem;">
+        <div style="font-size:9px;color:#8b949e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Brent Crude (USD/bbl)</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#f85149;">$94&ndash;108</div>
+        <div style="font-size:9px;color:#f8514988;margin-top:2px;">&#9650; +28% since escalation</div>
+        <div style="font-size:8px;color:#8b949e;margin-top:.4rem;">Gulf supply disruption premium baked in. $120+ threshold triggers demand destruction.</div>
+      </div>
+      <!-- Baltic Dry Index -->
+      <div style="background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:0.9rem 1rem;">
+        <div style="font-size:9px;color:#8b949e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Baltic Dry Index (BDI)</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#d29922;">1,940</div>
+        <div style="font-size:9px;color:#d2992288;margin-top:2px;">&#9650; Elevated — re-routing demand</div>
+        <div style="font-size:8px;color:#8b949e;margin-top:.4rem;">Cape re-routing adding 14&ndash;21 days transit. VLCC spot rates spiking on Gulf divergence.</div>
+      </div>
+      <!-- USD/JPY -->
+      <div style="background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:0.9rem 1rem;">
+        <div style="font-size:9px;color:#8b949e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">USD / JPY</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#d29922;">&#165;152&ndash;158</div>
+        <div style="font-size:9px;color:#d2992288;margin-top:2px;">&#9660; Yen under pressure</div>
+        <div style="font-size:8px;color:#8b949e;margin-top:.4rem;">Weak yen amplifies Japan&rsquo;s USD-denominated energy import cost. Compound pressure on P&C pricing.</div>
+      </div>
+      <!-- USD/KRW -->
+      <div style="background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:0.9rem 1rem;">
+        <div style="font-size:9px;color:#8b949e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">USD / KRW</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#d29922;">&#8361;1,380&ndash;1,430</div>
+        <div style="font-size:9px;color:#d2992288;margin-top:2px;">&#9660; Won weakening on energy shock</div>
+        <div style="font-size:8px;color:#8b949e;margin-top:.4rem;">South Korea&rsquo;s 70% Gulf crude dependency means energy import bill rises sharply in KRW terms.</div>
+      </div>
+      <!-- Freight cost index note -->
+      <div style="background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:0.9rem 1rem;">
+        <div style="font-size:9px;color:#8b949e;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Gulf War Risk AP (Marine)</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#f85149;">+500&ndash;1000%</div>
+        <div style="font-size:9px;color:#f8514988;margin-top:2px;">&#9650; Structural repricing</div>
+        <div style="font-size:8px;color:#8b949e;margin-top:.4rem;">War risk additional premiums on Gulf transits. Not cyclical &mdash; structural repricing driven by active conflict zone designation.</div>
+      </div>
+    </div>
+    <div style="font-size:8px;color:#4a5a7a;margin-bottom:.5rem;">&#9432; Index levels are indicative reference ranges. Verify current prices via Bloomberg / Reuters before client conversations.</div>
 
     <!-- SUPPLY CHAIN ANALYSIS SECTION -->
     <div class="supply-chain-section">
@@ -4169,6 +4212,19 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     { lon: 50, lat: 26, icon: '!', color: '#f85149', label: 'Gulf: War risk APs' }
   ];
 
+  // Port / event markers: struck facilities and major reference ports
+  var geoPortMarkers = [
+    // Struck / threatened facilities (fire/star icon)
+    { lon: 51.57, lat: 25.90, type: 'struck', label: 'Ras Laffan', sublabel: 'Qatar LNG — struck',       tip: 'Ras Laffan Industrial City — struck. Qatar LNG export hub. 30% of global LNG supply.' },
+    { lon: 48.15, lat: 29.08, type: 'struck', label: 'Shuaiba',    sublabel: 'Kuwait refinery — struck',  tip: 'Shuaiba Industrial Area — struck. Kuwait refinery & petrochemical complex.' },
+    { lon: 56.28, lat: 27.18, type: 'struck', label: 'Bandar Abbas', sublabel: 'Iran — naval base',       tip: 'Bandar Abbas — Iran's main Gulf naval base and commercial port.' },
+    // Major reference ports (ship/anchor icon)
+    { lon: 55.02, lat: 24.99, type: 'port',   label: 'Jebel Ali',  sublabel: 'UAE — major hub',           tip: 'Port of Jebel Ali — world's largest man-made port. 70% of UAE imports.' },
+    { lon: 56.36, lat: 25.12, type: 'port',   label: 'Fujairah',   sublabel: 'UAE — tanker anchorage',    tip: 'Port of Fujairah — key tanker anchorage outside Hormuz. Oil bunkering hub.' },
+    { lon: 139.65, lat: 35.45, type: 'port',  label: 'Yokohama',   sublabel: 'Japan — energy import hub', tip: 'Yokohama / Tokyo Bay — Japan's primary LNG and crude import terminal region.' },
+    { lon: 129.05, lat: 35.10, type: 'port',  label: 'Busan',      sublabel: 'S.Korea — energy hub',      tip: 'Port of Busan — South Korea's main energy import and transshipment hub.' },
+  ];
+
   var geoRevMarkers = [
     { lon: 134, lat: -26, icon: '\u2666', color: '#2dd4bf', label: 'AU: BESS + LNG upside' },
     { lon: 104, lat: 2, icon: '\u2666', color: '#2dd4bf', label: 'SG: Alt trade hub' },
@@ -4708,6 +4764,73 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     ctx.textAlign = 'center';
     ctx.fillText('~1100 km (10\u00b0)', scaleX + degWidth/2, scaleY - 6);
 
+
+    // ── Port / event markers ─────────────────────────────────────────────────
+    for (var pi2 = 0; pi2 < geoPortMarkers.length; pi2++) {
+      var pm = geoPortMarkers[pi2];
+      var pmPt = geoXY(pm.lon, pm.lat);
+      var pmx = pmPt[0], pmy = pmPt[1];
+
+      if (pm.type === 'struck') {
+        // Flame/explosion marker for struck facilities
+        var sFlicker = 0.85 + 0.15 * Math.sin(geoTime * 8 + pi2 * 1.3);
+        ctx.beginPath();
+        ctx.arc(pmx, pmy, 6 * sFlicker, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(248,81,73,0.25)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(pmx, pmy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#f85149';
+        ctx.fill();
+        // Strike flash lines
+        var flen = 5;
+        ctx.strokeStyle = '#ffaa44';
+        ctx.lineWidth = 1.2;
+        for (var fa = 0; fa < 4; fa++) {
+          var fAngle = (fa * Math.PI / 2) + geoTime * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(pmx + Math.cos(fAngle) * 5, pmy + Math.sin(fAngle) * 5);
+          ctx.lineTo(pmx + Math.cos(fAngle) * (5 + flen), pmy + Math.sin(fAngle) * (5 + flen));
+          ctx.stroke();
+        }
+        ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = '#f85149';
+        ctx.textAlign = 'center';
+        ctx.fillText(pm.label, pmx, pmy - 11);
+        ctx.font = '7px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = '#f8514988';
+        ctx.fillText(pm.sublabel, pmx, pmy - 3);
+      } else {
+        // Anchor/port marker for reference ports
+        ctx.beginPath();
+        ctx.arc(pmx, pmy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#4a9eff55';
+        ctx.fill();
+        ctx.strokeStyle = '#4a9eff';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        // Anchor cross
+        ctx.beginPath();
+        ctx.moveTo(pmx, pmy - 3); ctx.lineTo(pmx, pmy + 3);
+        ctx.moveTo(pmx - 3, pmy); ctx.lineTo(pmx + 3, pmy);
+        ctx.strokeStyle = '#4a9effcc';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.font = 'bold 7px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillStyle = '#4a9eff';
+        ctx.textAlign = 'center';
+        ctx.fillText(pm.label, pmx, pmy - 9);
+      }
+
+      geoHitZones.push({ type: 'circle', x: pmx, y: pmy, r: 14, data: {
+        name: pm.label,
+        risk: pm.type === 'struck' ? 'high' : 'low',
+        riskLevel: pm.type === 'struck' ? 'STRUCK' : 'PORT',
+        lob: pm.tip,
+        rev: pm.sublabel
+      }});
+    }
+
     // Legend
     var legX = 14, legY = h - 50;
     ctx.font = '9px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -4716,7 +4839,8 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       { color: '#CC0000', border: '#FF3333', label: 'High Exposure' },
       { color: '#CC7700', border: '#FF9900', label: 'Transmission Risk' },
       { color: '#007A8A', border: '#00BCD4', label: 'Revenue Opportunity' },
-      { color: '#1e3a5f', border: '#2a4a6f', label: 'Context' }
+      { color: '#f85149', border: '#f85149', label: '\u25cf Struck facility' },
+      { color: '#4a9eff', border: '#4a9eff', label: '\u2295 Major port' }
     ];
     for (var lgi = 0; lgi < legItems.length; lgi++) {
       var lx2 = legX + lgi * 120;
