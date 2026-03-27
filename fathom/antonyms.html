@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz: Antonyms</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1a1a2e;min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:24px 16px 60px}
+.quiz-header{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+h1{font-size:1.4rem;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+.subtitle{font-size:.85rem;color:#6b7280}
+.controls{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:8px}
+.toggle-group{display:flex;background:#f3f4f6;border-radius:8px;padding:3px}
+.toggle-btn{padding:6px 14px;border:none;background:transparent;border-radius:6px;font-size:.8rem;cursor:pointer;color:#6b7280;transition:all .15s}
+.toggle-btn.active{background:#fff;color:#4f46e5;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.right-controls{display:flex;gap:8px;align-items:center}
+.settings-btn{padding:6px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:.8rem;color:#6b7280}
+.settings-btn:hover{background:#f9fafb}
+.ai-badge{font-size:.72rem;padding:3px 8px;border-radius:20px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;display:none}
+.ai-badge.show{display:inline-block}
+.progress-bar{height:4px;background:#e5e7eb;border-radius:2px;margin-top:16px}
+.progress-fill{height:100%;background:#4f46e5;border-radius:2px;transition:width .3s ease}
+.progress-label{font-size:.72rem;color:#9ca3af;margin-top:5px}
+.question-card{background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid transparent;transition:border-color .2s}
+.question-card.answered-correct{border-left-color:#10b981}
+.question-card.answered-incorrect{border-left-color:#ef4444}
+.question-card.answered-partial{border-left-color:#f59e0b}
+.q-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.q-num{font-size:.72rem;font-weight:600;color:#9ca3af}
+.q-level{font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:500}
+.level-recall{background:#eff6ff;color:#3b82f6}
+.level-application{background:#fdf4ff;color:#a855f7}
+.level-synthesis{background:#fff7ed;color:#f97316}
+.q-text{font-size:.975rem;line-height:1.65;color:#1a1a2e;margin-bottom:18px;font-weight:500}
+code{font-family:'SF Mono','Fira Code',monospace;background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:.875em}
+pre{background:#1e293b;border-radius:8px;padding:14px;margin:12px 0;overflow-x:auto}
+pre code{background:transparent;padding:0;color:#e2e8f0;font-size:.85em;line-height:1.6}
+.options{display:flex;flex-direction:column;gap:9px}
+.option{padding:11px 15px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:10px;font-size:.9rem;line-height:1.5}
+.option:hover:not(.disabled){border-color:#a5b4fc;background:#eef2ff}
+.option.selected{border-color:#4f46e5;background:#eef2ff}
+.option.correct{border-color:#10b981;background:#ecfdf5;color:#065f46}
+.option.incorrect{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+.option.reveal-correct{border-color:#10b981;background:#ecfdf5}
+.option.disabled{cursor:default}
+.opt-label{font-weight:700;font-size:.78rem;min-width:18px;color:#9ca3af;padding-top:1px}
+.option.selected .opt-label{color:#4f46e5}
+.option.correct .opt-label,.option.reveal-correct .opt-label{color:#10b981}
+.option.incorrect .opt-label{color:#ef4444}
+.tf-options{display:flex;gap:12px}
+.tf-btn{flex:1;padding:13px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9rem;text-align:center;transition:all .15s;background:#fff}
+.tf-btn:hover:not(.disabled){border-color:#a5b4fc;background:#eef2ff}
+.tf-btn.selected{border-color:#4f46e5;background:#eef2ff;color:#4f46e5}
+.tf-btn.correct{border-color:#10b981;background:#ecfdf5;color:#065f46}
+.tf-btn.incorrect{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+.tf-btn.reveal-correct{border-color:#10b981;background:#ecfdf5;color:#065f46}
+.tf-btn.disabled{cursor:default}
+.short-area textarea{width:100%;padding:11px 13px;border:2px solid #e5e7eb;border-radius:8px;font-size:.9rem;font-family:inherit;resize:vertical;min-height:80px;transition:border-color .15s;line-height:1.5}
+.short-area textarea:focus{outline:none;border-color:#a5b4fc}
+.short-area textarea:disabled{background:#f9fafb;color:#6b7280}
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .15s}
+.btn-primary{background:#4f46e5;color:#fff}
+.btn-primary:hover{background:#4338ca}
+.btn-sm{padding:6px 13px;font-size:.78rem}
+.btn-got-it{background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7}
+.btn-got-it:hover{background:#d1fae5}
+.btn-partial{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+.btn-partial:hover{background:#fef3c7}
+.btn-missed{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.btn-missed:hover{background:#fee2e2}
+.btn-ai{background:#f0fdf4;color:#166534;border:1px solid #86efac;font-size:.76rem;padding:5px 11px}
+.btn-ai:hover:not(:disabled){background:#dcfce7}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed}
+.action-row{display:flex;gap:9px;margin-top:13px;align-items:center;flex-wrap:wrap}
+.explanation{margin-top:15px;padding:13px 15px;background:#f8fafc;border-radius:8px;border-left:3px solid #94a3b8;font-size:.865rem;line-height:1.65;color:#475569;display:none}
+.explanation.show{display:block}
+.explanation strong{color:#1a1a2e}
+.model-answer-label{font-size:.7rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;margin-top:10px}
+.model-answer-box{padding:11px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;font-size:.875rem;line-height:1.55}
+.ai-feedback{margin-top:10px;padding:11px 13px;background:#f0fdf4;border-radius:6px;border:1px solid #86efac;font-size:.845rem;line-height:1.5;color:#166534;display:none}
+.ai-feedback.show{display:block}
+.ai-score-tag{font-weight:700;font-size:.8rem;padding:2px 7px;border-radius:4px;margin-right:6px}
+.score-0{background:#fef2f2;color:#991b1b}
+.score-1{background:#fffbeb;color:#92400e}
+.score-2{background:#ecfdf5;color:#065f46}
+.end-screen{display:none}
+.end-screen.show{display:block}
+.score-card{background:#fff;border-radius:12px;padding:36px 28px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:18px}
+.score-big{font-size:4rem;font-weight:800;color:#4f46e5;line-height:1}
+.score-denom{font-size:2rem;color:#9ca3af}
+.score-label{font-size:.95rem;color:#6b7280;margin-top:8px}
+.score-interp{margin-top:18px;padding:13px 18px;background:#f8fafc;border-radius:8px;font-size:.875rem;color:#374151;font-style:italic}
+.breakdown{margin-top:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+.bd-item{padding:13px 8px;background:#f8f9fa;border-radius:8px}
+.bd-num{font-size:1.4rem;font-weight:700;color:#1a1a2e}
+.bd-label{font-size:.7rem;color:#6b7280;margin-top:2px}
+.threshold-row{margin-top:14px;font-size:.85rem;color:#6b7280}
+.threshold-row strong{color:#1a1a2e}
+.gaps-card{background:#fff;border-radius:12px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.gaps-title{font-size:.95rem;font-weight:700;margin-bottom:14px}
+.gap-item{padding:11px 13px;border-left:3px solid #ef4444;background:#fef2f2;border-radius:0 6px 6px 0;margin-bottom:9px;font-size:.855rem;color:#374151;line-height:1.5}
+.gap-item.partial{border-left-color:#f59e0b;background:#fffbeb}
+.gap-q-num{font-size:.7rem;font-weight:600;color:#9ca3af;margin-bottom:3px}
+.no-gaps{text-align:center;padding:20px;color:#6b7280;font-size:.9rem}
+.end-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:12px;padding:26px;max-width:420px;width:90%;transform:scale(.95);transition:transform .2s}
+.modal-overlay.show .modal{transform:scale(1)}
+.modal h3{margin-bottom:7px;font-size:1rem}
+.modal p{font-size:.83rem;color:#6b7280;margin-bottom:14px;line-height:1.55}
+.modal input{width:100%;padding:9px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:.85rem;font-family:monospace;margin-bottom:14px}
+.modal input:focus{outline:none;border-color:#a5b4fc}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.hidden{display:none!important}
+@media(max-width:500px){
+  .breakdown{grid-template-columns:repeat(3,1fr);gap:6px}
+  .score-big{font-size:3rem}
+  .tf-btn{padding:11px 6px;font-size:.82rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="quiz-header">
+    <h1>Quiz: Antonyms</h1>
+    <div class="subtitle">2026-03-27 &nbsp;&middot;&nbsp; 10 questions &nbsp;&middot;&nbsp; Fathom v2.0</div>
+    <div class="controls">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btn-after" onclick="setMode('after')">After each</button>
+        <button class="toggle-btn" id="btn-end" onclick="setMode('end')">At the end</button>
+      </div>
+      <div class="right-controls">
+        <span class="ai-badge" id="ai-badge">✦ AI grading on</span>
+        <button class="settings-btn" onclick="openSettings()">⚙ API key</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">0 / 10 answered</div>
+  </div>
+  <div id="questions-area">
+    <div class="question-card" id="q-1"><div class="q-meta"><span class="q-num">Q1</span><span class="q-level level-recall">Recall</span><span class="q-threshold">🔑 </span></div><div class="q-text">Which word is the antonym of 'Ephemeral'?</div><div class="options"><div class="option" onclick="selectOption(1,0)"><span class="opt-label">A</span>Transient</div><div class="option" onclick="selectOption(1,1)"><span class="opt-label">B</span>Fleeting</div><div class="option" onclick="selectOption(1,2)"><span class="opt-label">C</span>Perpetual</div><div class="option" onclick="selectOption(1,3)"><span class="opt-label">D</span>Momentary</div></div><div class="explanation" id="expl-1"><strong>Answer: C</strong> — 'Ephemeral' means lasting for a very short time; 'Perpetual' means never ending or changing.</div></div>
+<div class="question-card" id="q-2"><div class="q-meta"><span class="q-num">Q2</span><span class="q-level level-recall">Recall</span><span class="q-threshold"></span></div><div class="q-text">What is the antonym of 'Placid'?</div><div class="options"><div class="option" onclick="selectOption(2,0)"><span class="opt-label">A</span>Serene</div><div class="option" onclick="selectOption(2,1)"><span class="opt-label">B</span>Turbulent</div><div class="option" onclick="selectOption(2,2)"><span class="opt-label">C</span>Tranquil</div><div class="option" onclick="selectOption(2,3)"><span class="opt-label">D</span>Calm</div></div><div class="explanation" id="expl-2"><strong>Answer: B</strong> — 'Placid' means calm and peaceful; 'Turbulent' means characterized by conflict, disorder, or confusion.</div></div>
+<div class="question-card" id="q-3"><div class="q-meta"><span class="q-num">Q3</span><span class="q-level level-recall">Recall</span><span class="q-threshold"></span></div><div class="q-text">Antonym of 'Benevolent'?</div><div class="options"><div class="option" onclick="selectOption(3,0)"><span class="opt-label">A</span>Altruistic</div><div class="option" onclick="selectOption(3,1)"><span class="opt-label">B</span>Malevolent</div><div class="option" onclick="selectOption(3,2)"><span class="opt-label">C</span>Generous</div><div class="option" onclick="selectOption(3,3)"><span class="opt-label">D</span>Kind</div></div><div class="explanation" id="expl-3"><strong>Answer: B</strong> — 'Benevolent' means well meaning and kindly; 'Malevolent' means having or showing a wish to do evil to others.</div></div>
+<div class="question-card" id="q-4"><div class="q-meta"><span class="q-num">Q4</span><span class="q-level level-application">Application</span><span class="q-threshold">🔑 </span></div><div class="q-text">In a legal context, if a contract is 'Equivocal', its antonymous state would be:</div><div class="options"><div class="option" onclick="selectOption(4,0)"><span class="opt-label">A</span>Ambiguous</div><div class="option" onclick="selectOption(4,1)"><span class="opt-label">B</span>Vague</div><div class="option" onclick="selectOption(4,2)"><span class="opt-label">C</span>Unambiguous</div><div class="option" onclick="selectOption(4,3)"><span class="opt-label">D</span>Conditional</div></div><div class="explanation" id="expl-4"><strong>Answer: C</strong> — 'Equivocal' means open to more than one interpretation; 'Unambiguous' means not open to more than one interpretation.</div></div>
+<div class="question-card" id="q-5"><div class="q-meta"><span class="q-num">Q5</span><span class="q-level level-recall">Recall</span><span class="q-threshold">🔑 </span></div><div class="q-text">'Nefarious' is an antonym for 'Praiseworthy'.</div><div class="tf-options"><button class="tf-btn" data-val="true" onclick="selectTF(5,true)">True</button><button class="tf-btn" data-val="false" onclick="selectTF(5,false)">False</button></div><div class="explanation" id="expl-5"><strong>Answer: True</strong> — 'Nefarious' (wicked or criminal) is indeed the opposite of 'Praiseworthy' (deserving of praise or admiration).</div></div>
+<div class="question-card" id="q-6"><div class="q-meta"><span class="q-num">Q6</span><span class="q-level level-recall">Recall</span><span class="q-threshold"></span></div><div class="q-text">The antonym of 'Lethargy' is 'Vitality'.</div><div class="tf-options"><button class="tf-btn" data-val="true" onclick="selectTF(6,true)">True</button><button class="tf-btn" data-val="false" onclick="selectTF(6,false)">False</button></div><div class="explanation" id="expl-6"><strong>Answer: True</strong> — 'Lethargy' is a lack of energy; 'Vitality' is the state of being strong and active.</div></div>
+<div class="question-card" id="q-7"><div class="q-meta"><span class="q-num">Q7</span><span class="q-level level-recall">Recall</span><span class="q-threshold"></span></div><div class="q-text">'Garrulous' is an antonym for 'Loquacious'.</div><div class="tf-options"><button class="tf-btn" data-val="true" onclick="selectTF(7,true)">True</button><button class="tf-btn" data-val="false" onclick="selectTF(7,false)">False</button></div><div class="explanation" id="expl-7"><strong>Answer: False</strong> — Both 'Garrulous' and 'Loquacious' mean talkative; they are synonyms, not antonyms.</div></div>
+<div class="question-card" id="q-8"><div class="q-meta"><span class="q-num">Q8</span><span class="q-level level-application">Application</span><span class="q-threshold">🔑 </span></div><div class="q-text">Explain the difference between a 'Synonym' and an 'Antonym' and provide one original example pair for each.</div><div class="short-area"><textarea id="ta-8" placeholder="Type your answer…" rows="3"></textarea><div class="action-row"><button class="btn btn-primary btn-sm" id="submit-8" onclick="submitShort(8)">Submit</button><button class="btn btn-ai btn-sm" id="ai-btn-8" onclick="getAIFeedback(8)" style="display:none">✦ Get AI feedback</button></div></div><div class="explanation" id="expl-8"><div class="model-answer-label">Model answer</div><div class="model-answer-box">A synonym is a word that means the same or nearly the same as another word (e.g., 'fast' and 'quick'). An antonym is a word that means the opposite of another word (e.g., 'fast' and 'slow').</div><div class="action-row" style="margin-top:10px"><button class="btn btn-sm btn-got-it grade-btn" onclick="selfGrade(8,2)">✓ Got it</button><button class="btn btn-sm btn-partial grade-btn" onclick="selfGrade(8,1)">~ Partial</button><button class="btn btn-sm btn-missed grade-btn" onclick="selfGrade(8,0)">✗ Missed</button></div><div class="ai-feedback" id="ai-fb-8"></div></div></div>
+<div class="question-card" id="q-9"><div class="q-meta"><span class="q-num">Q9</span><span class="q-level level-application">Application</span><span class="q-threshold"></span></div><div class="q-text">What is the antonym of 'Candid' and how does it apply to a social interaction?</div><div class="short-area"><textarea id="ta-9" placeholder="Type your answer…" rows="3"></textarea><div class="action-row"><button class="btn btn-primary btn-sm" id="submit-9" onclick="submitShort(9)">Submit</button><button class="btn btn-ai btn-sm" id="ai-btn-9" onclick="getAIFeedback(9)" style="display:none">✦ Get AI feedback</button></div></div><div class="explanation" id="expl-9"><div class="model-answer-label">Model answer</div><div class="model-answer-box">The antonym is 'Evasive' or 'Guarded'. In a social interaction, a candid person is open and honest, whereas an evasive person withholds information or is intentionally vague.</div><div class="action-row" style="margin-top:10px"><button class="btn btn-sm btn-got-it grade-btn" onclick="selfGrade(9,2)">✓ Got it</button><button class="btn btn-sm btn-partial grade-btn" onclick="selfGrade(9,1)">~ Partial</button><button class="btn btn-sm btn-missed grade-btn" onclick="selfGrade(9,0)">✗ Missed</button></div><div class="ai-feedback" id="ai-fb-9"></div></div></div>
+<div class="question-card" id="q-10"><div class="q-meta"><span class="q-num">Q10</span><span class="q-level level-synthesis">Synthesis</span><span class="q-threshold"></span></div><div class="q-text">Synthesise an antonymous relationship for the concept of 'Stability' as applied to code vs economic systems.</div><div class="short-area"><textarea id="ta-10" placeholder="Type your answer…" rows="3"></textarea><div class="action-row"><button class="btn btn-primary btn-sm" id="submit-10" onclick="submitShort(10)">Submit</button><button class="btn btn-ai btn-sm" id="ai-btn-10" onclick="getAIFeedback(10)" style="display:none">✦ Get AI feedback</button></div></div><div class="explanation" id="expl-10"><div class="model-answer-label">Model answer</div><div class="model-answer-box">In code, the antonym of stability might be 'Volatility' or 'Fragility' (frequent crashes/bugs). In an economic system, the antonym is often 'Instability' or 'Turbulence', reflecting fluctuating markets or hyperinflation.</div><div class="action-row" style="margin-top:10px"><button class="btn btn-sm btn-got-it grade-btn" onclick="selfGrade(10,2)">✓ Got it</button><button class="btn btn-sm btn-partial grade-btn" onclick="selfGrade(10,1)">~ Partial</button><button class="btn btn-sm btn-missed grade-btn" onclick="selfGrade(10,0)">✗ Missed</button></div><div class="ai-feedback" id="ai-fb-10"></div></div></div>
+  </div>
+  <div id="submit-all-row" class="hidden" style="text-align:center;margin-bottom:20px">
+    <button class="btn btn-primary" onclick="revealAll()">Show results</button>
+  </div>
+  <div class="end-screen" id="end-screen">
+    <div class="score-card">
+      <div class="score-big" id="final-score">0</div>
+      <div class="score-label">out of 10 points</div>
+      <div class="score-interp" id="score-interp"></div>
+      <div class="breakdown">
+        <div class="bd-item"><div class="bd-num" id="bd-mc">—</div><div class="bd-label">Multiple choice</div></div>
+        <div class="bd-item"><div class="bd-num" id="bd-tf">—</div><div class="bd-label">True / False</div></div>
+        <div class="bd-item"><div class="bd-num" id="bd-sh">—</div><div class="bd-label">Short answer</div></div>
+      </div>
+      <div class="threshold-row">Threshold concepts 🔑: <strong id="threshold-score">—</strong></div>
+    </div>
+    <div class="gaps-card">
+      <div class="gaps-title">Gaps to revisit</div>
+      <div id="gaps-list"></div>
+    </div>
+    <div class="end-actions">
+      <button class="btn btn-primary" onclick="window.location.reload()">Retake quiz</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal" onclick="closeSettings(event)">
+  <div class="modal">
+    <h3>OpenRouter API key</h3>
+    <p>Used only for short answer semantic grading. Stored in your browser (localStorage). Never sent anywhere except openrouter.ai.</p>
+    <input type="password" id="api-key-input" placeholder="sk-or-..." />
+    <div class="modal-actions">
+      <button class="btn btn-sm" style="background:#f3f4f6;border:1px solid #e5e7eb" onclick="clearKey()">Clear</button>
+      <button class="btn btn-sm btn-primary" onclick="saveKey()">Save</button>
+    </div>
+  </div>
+</div>
+<script>
+const QUIZ = {"topic": "Antonyms", "date": "2026-03-27", "questions": [{"id": 1, "type": "mc", "level": "recall", "threshold": true, "text": "Which word is the antonym of 'Ephemeral'?", "options": ["Transient", "Fleeting", "Perpetual", "Momentary"], "answer": 2, "explanation": "'Ephemeral' means lasting for a very short time; 'Perpetual' means never ending or changing."}, {"id": 2, "type": "mc", "level": "recall", "threshold": false, "text": "What is the antonym of 'Placid'?", "options": ["Serene", "Turbulent", "Tranquil", "Calm"], "answer": 1, "explanation": "'Placid' means calm and peaceful; 'Turbulent' means characterized by conflict, disorder, or confusion."}, {"id": 3, "type": "mc", "level": "recall", "threshold": false, "text": "Antonym of 'Benevolent'?", "options": ["Altruistic", "Malevolent", "Generous", "Kind"], "answer": 1, "explanation": "'Benevolent' means well meaning and kindly; 'Malevolent' means having or showing a wish to do evil to others."}, {"id": 4, "type": "mc", "level": "application", "threshold": true, "text": "In a legal context, if a contract is 'Equivocal', its antonymous state would be:", "options": ["Ambiguous", "Vague", "Unambiguous", "Conditional"], "answer": 2, "explanation": "'Equivocal' means open to more than one interpretation; 'Unambiguous' means not open to more than one interpretation."}, {"id": 5, "type": "tf", "level": "recall", "threshold": true, "text": "'Nefarious' is an antonym for 'Praiseworthy'.", "answer": true, "explanation": "'Nefarious' (wicked or criminal) is indeed the opposite of 'Praiseworthy' (deserving of praise or admiration)."}, {"id": 6, "type": "tf", "level": "recall", "threshold": false, "text": "The antonym of 'Lethargy' is 'Vitality'.", "answer": true, "explanation": "'Lethargy' is a lack of energy; 'Vitality' is the state of being strong and active."}, {"id": 7, "type": "tf", "level": "recall", "threshold": false, "text": "'Garrulous' is an antonym for 'Loquacious'.", "answer": false, "explanation": "Both 'Garrulous' and 'Loquacious' mean talkative; they are synonyms, not antonyms."}, {"id": 8, "type": "short", "level": "application", "threshold": true, "text": "Explain the difference between a 'Synonym' and an 'Antonym' and provide one original example pair for each.", "model_answer": "A synonym is a word that means the same or nearly the same as another word (e.g., 'fast' and 'quick'). An antonym is a word that means the opposite of another word (e.g., 'fast' and 'slow').", "grading_rubric": "Key points: (1) Synonyms mean the same/similar; (2) Antonyms mean the opposite; (3) Relevant example provided for both."}, {"id": 9, "type": "short", "level": "application", "threshold": false, "text": "What is the antonym of 'Candid' and how does it apply to a social interaction?", "model_answer": "The antonym is 'Evasive' or 'Guarded'. In a social interaction, a candid person is open and honest, whereas an evasive person withholds information or is intentionally vague.", "grading_rubric": "Key points: (1) Correct antonym (evasive/guarded/deceptive); (2) Functional distinction in social context (honesty vs withholding)."}, {"id": 10, "type": "short", "level": "synthesis", "threshold": false, "text": "Synthesise an antonymous relationship for the concept of 'Stability' as applied to code vs economic systems.", "model_answer": "In code, the antonym of stability might be 'Volatility' or 'Fragility' (frequent crashes/bugs). In an economic system, the antonym is often 'Instability' or 'Turbulence', reflecting fluctuating markets or hyperinflation.", "grading_rubric": "Key points: (1) Stability vs Volatility/Fragility in code; (2) Stability vs Turbulence/Instability in economics; (3) Conceptual connection maintained."}]};
+let feedbackMode = localStorage.getItem('fathom_quiz_mode') || 'after';
+let answers = {};
+let shortScores = {};
+let answered = new Set();
+(function init() {
+  if (feedbackMode === 'end') {
+    document.getElementById('btn-after').classList.remove('active');
+    document.getElementById('btn-end').classList.add('active');
+    document.getElementById('submit-all-row').classList.remove('hidden');
+  }
+  if (localStorage.getItem('openrouter_key')) {
+    document.getElementById('ai-badge').classList.add('show');
+    document.querySelectorAll('.btn-ai').forEach(b => b.style.display = 'inline-block');
+  } else {
+    document.querySelectorAll('.btn-ai').forEach(b => b.style.display = 'none');
+  }
+})();
+function setMode(m) {
+  feedbackMode = m;
+  localStorage.setItem('fathom_quiz_mode', m);
+  document.getElementById('btn-after').classList.toggle('active', m === 'after');
+  document.getElementById('btn-end').classList.toggle('active', m === 'end');
+  document.getElementById('submit-all-row').classList.toggle('hidden', m !== 'end');
+}
+function updateProgress() {
+  const n = QUIZ.questions.length;
+  const done = answered.size;
+  document.getElementById('progress').style.width = (done/n*100) + '%';
+  document.getElementById('progress-label').textContent = done + ' / ' + n + ' answered';
+  if (done === n) setTimeout(showEndScreen, feedbackMode === 'after' ? 600 : 0);
+}
+function selectOption(qid, idx) {
+  const q = QUIZ.questions.find(q => q.id === qid);
+  if (answered.has(qid)) return;
+  if (feedbackMode === 'end') {
+    answers[qid] = idx;
+    const card = document.getElementById('q-' + qid);
+    card.querySelectorAll('.option').forEach((o, i) => { o.classList.toggle('selected', i === idx); });
+    markAnswered(qid, null);
+    return;
+  }
+  answers[qid] = idx;
+  const correct = idx === q.answer;
+  const card = document.getElementById('q-' + qid);
+  card.querySelectorAll('.option').forEach((o, i) => {
+    o.classList.add('disabled');
+    if (i === idx) o.classList.add(correct ? 'correct' : 'incorrect');
+    if (!correct && i === q.answer) o.classList.add('reveal-correct');
+  });
+  markAnswered(qid, correct ? 2 : 0);
+  showExplanation(qid);
+}
+function selectTF(qid, val) {
+  const q = QUIZ.questions.find(q => q.id === qid);
+  if (answered.has(qid)) return;
+  if (feedbackMode === 'end') {
+    answers[qid] = val;
+    const card = document.getElementById('q-' + qid);
+    card.querySelectorAll('.tf-btn').forEach(b => { b.classList.toggle('selected', b.dataset.val === String(val)); });
+    markAnswered(qid, null);
+    return;
+  }
+  answers[qid] = val;
+  const correct = val === q.answer;
+  const card = document.getElementById('q-' + qid);
+  card.querySelectorAll('.tf-btn').forEach(b => {
+    b.classList.add('disabled');
+    const bval = b.dataset.val === 'true';
+    if (bval === val) b.classList.add(correct ? 'correct' : 'incorrect');
+    if (!correct && bval === q.answer) b.classList.add('reveal-correct');
+  });
+  markAnswered(qid, correct ? 2 : 0);
+  showExplanation(qid);
+}
+function submitShort(qid) {
+  if (answered.has(qid)) return;
+  const ta = document.getElementById('ta-' + qid);
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.disabled = true;
+  document.getElementById('submit-' + qid).style.display = 'none';
+  showExplanation(qid);
+  answers[qid] = text;
+  markAnswered(qid, null);
+  if (localStorage.getItem('openrouter_key')) {
+    document.getElementById('ai-btn-' + qid).style.display = 'inline-block';
+  }
+}
+function selfGrade(qid, score) {
+  shortScores[qid] = score;
+  const card = document.getElementById('q-' + qid);
+  card.classList.remove('answered-partial','answered-correct','answered-incorrect');
+  if (score === 2) card.classList.add('answered-correct');
+  else if (score === 1) card.classList.add('answered-partial');
+  else card.classList.add('answered-incorrect');
+  card.querySelectorAll('.grade-btn').forEach(b => b.disabled = true);
+  updateProgress();
+}
+async function getAIFeedback(qid) {
+  const q = QUIZ.questions.find(q => q.id === qid);
+  const key = localStorage.getItem('openrouter_key');
+  if (!key) return;
+  const btn = document.getElementById('ai-btn-' + qid);
+  btn.disabled = true; btn.textContent = 'Grading…';
+  const fb = document.getElementById('ai-fb-' + qid);
+  fb.classList.add('show'); fb.textContent = 'Asking Claude…';
+  try {
+    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'HTTP-Referer': 'https://fathom.ai',
+        'X-Title': 'Fathom Quizmaker'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash-001',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: `Grade this short answer on a scale of 0-2. Be concise.
+
+Question: ${q.text}
+Model answer: ${q.model_answer}
+Grading rubric: ${q.grading_rubric}
+Student answer: ${answers[qid]}
+
+Respond in exactly this format:
+SCORE: [0/1/2]
+FEEDBACK: [1-2 sentences explaining what they got right or wrong]`
+        }]
+      })
+    });
+    const data = await resp.json();
+    if (data.error || !data.choices || !data.choices[0]) {
+      throw new Error(data.error?.message || data.error?.code || 'API error — check key');
+    }
+    const raw = data.choices[0].message.content || data.choices[0].message.refusal || '';
+    if (!raw) throw new Error('Model returned empty content');
+    const sm = raw.match(/SCORE:\s*(\d)/);
+    const fm = raw.match(/FEEDBACK:\s*(.+)/s);
+    const aiScore = sm ? parseInt(sm[1]) : null;
+    const aiText = fm ? fm[1].trim() : raw;
+    let tag = '';
+    if (aiScore !== null) { tag = '<span class="ai-score-tag score-'+aiScore+'">'+['Missed','Partial','Got it'][aiScore]+'</span>'; selfGrade(qid, aiScore); }
+    fb.innerHTML = tag + aiText;
+    btn.textContent = '✓ Graded';
+  } catch(e) {
+    fb.textContent = 'Error: ' + (e.message||'check API key');
+    btn.disabled = false; btn.textContent = 'Get AI feedback';
+  }
+}
+function showExplanation(qid) { document.getElementById('expl-' + qid).classList.add('show'); }
+function markAnswered(qid, score) {
+  answered.add(qid);
+  const card = document.getElementById('q-' + qid);
+  if (score !== null) { card.classList.add(score > 0 ? 'answered-correct' : 'answered-incorrect'); }
+  if (feedbackMode === 'after') updateProgress();
+}
+function revealAll() {
+  QUIZ.questions.forEach(q => {
+    if (answered.has(q.id)) return;
+    if (q.type === 'mc') {
+      const sel = answers[q.id];
+      if (sel !== undefined) {
+        const correct = sel === q.answer;
+        const card = document.getElementById('q-' + q.id);
+        card.querySelectorAll('.option').forEach((o,i) => {
+          o.classList.add('disabled');
+          if (i === sel) o.classList.add(correct ? 'correct' : 'incorrect');
+          if (!correct && i === q.answer) o.classList.add('reveal-correct');
+        });
+        markAnswered(q.id, correct ? 2 : 0); showExplanation(q.id);
+      }
+    } else if (q.type === 'tf') {
+      const sel = answers[q.id];
+      if (sel !== undefined) {
+        const correct = sel === q.answer;
+        const card = document.getElementById('q-' + q.id);
+        card.querySelectorAll('.tf-btn').forEach(b => {
+          b.classList.add('disabled');
+          const bval = b.dataset.val === 'true';
+          if (bval === sel) b.classList.add(correct ? 'correct' : 'incorrect');
+          if (!correct && bval === q.answer) b.classList.add('reveal-correct');
+        });
+        markAnswered(q.id, correct ? 2 : 0); showExplanation(q.id);
+      }
+    }
+  });
+  document.getElementById('submit-all-row').classList.add('hidden');
+  updateProgress();
+}
+function showEndScreen() {
+  let total=0,maxTotal=0,mcRight=0,mcTotal=0,tfRight=0,tfTotal=0,shTotal=0,shRight=0,threshRight=0,threshTotal=0;
+  const gaps=[];
+  QUIZ.questions.forEach(q => {
+    let pts=0;
+    if (q.type==='mc'||q.type==='tf') {
+      const correct = answers[q.id] === q.answer;
+      pts = correct ? 2 : 0;
+      if (q.type==='mc') { mcRight+=correct?1:0; mcTotal++; } else { tfRight+=correct?1:0; tfTotal++; }
+      if (!correct) gaps.push({id:q.id,level:q.level,text:q.text,partial:false,threshold:q.threshold});
+    } else {
+      pts = shortScores[q.id]??0;
+      shTotal++; shRight+=pts;
+      if (pts<2) gaps.push({id:q.id,level:q.level,text:q.text,partial:pts===1,threshold:q.threshold});
+    }
+    total+=pts; maxTotal+=2;
+    if (q.threshold) { threshRight+=pts===2?1:0; threshTotal++; }
+  });
+  const pct = Math.round(total/maxTotal*10);
+  document.getElementById('final-score').textContent = pct;
+  document.getElementById('bd-mc').textContent = mcTotal ? mcRight+'/'+mcTotal : '—';
+  document.getElementById('bd-tf').textContent = tfTotal ? tfRight+'/'+tfTotal : '—';
+  document.getElementById('bd-sh').textContent = shTotal ? shRight+'/'+(shTotal*2)+' pts' : '—';
+  document.getElementById('threshold-score').textContent = threshRight+' / '+threshTotal+' \u{1F511}';
+  const interps=[[9,10,'Strong grasp. Proceed to application.'],[6,8,'Solid foundation. Review the questions you missed.'],[3,5,'Gaps in core concepts — revisit the Jupyter notebook.'],[0,2,'Start with the overview again. Fundamentals need more work.']];
+  const interp = interps.find(([lo,hi]) => pct>=lo && pct<=hi);
+  document.getElementById('score-interp').textContent = interp ? interp[2] : '';
+  const gapsEl = document.getElementById('gaps-list');
+  if (gaps.length===0) { gapsEl.innerHTML='<div class="no-gaps">No gaps &mdash; perfect score! 🎉</div>'; }
+  else { gapsEl.innerHTML=gaps.map(g=>'<div class="gap-item'+(g.partial?' partial':'')+'"><div class="gap-q-num">Q'+g.id+(g.threshold?' 🔑':'')+' &middot; '+g.level+'</div>'+g.text+'</div>').join(''); }
+  document.querySelector('.end-screen').classList.add('show');
+  document.querySelector('.end-screen').scrollIntoView({behavior:'smooth'});
+}
+function openSettings() {
+  document.getElementById('api-key-input').value = localStorage.getItem('openrouter_key')||'';
+  document.getElementById('modal').classList.add('show');
+}
+function closeSettings(e) { if (e.target===document.getElementById('modal')) document.getElementById('modal').classList.remove('show'); }
+function saveKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (k) {
+    localStorage.setItem('openrouter_key',k);
+    document.getElementById('ai-badge').classList.add('show');
+    document.querySelectorAll('.btn-ai').forEach(b=>b.style.display='inline-block');
+  }
+  document.getElementById('modal').classList.remove('show');
+}
+function clearKey() {
+  localStorage.removeItem('openrouter_key');
+  document.getElementById('ai-badge').classList.remove('show');
+  document.querySelectorAll('.btn-ai').forEach(b=>b.style.display='none');
+  document.getElementById('api-key-input').value='';
+}
+</script>
+</body>
+</html>
