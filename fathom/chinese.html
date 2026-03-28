@@ -1,149 +1,92 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测评: 小学华文生字词测评 (P1-5)</title>
     <style>
         :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f8fafc; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif; background: var(--bg); color: #1e293b; line-height: 1.6; padding: 40px 20px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #1e293b; line-height: 1.6; padding: 40px 20px; }
         .container { max-width: 800px; margin: 0 auto; }
-        .header { background: var(--primary); color: #fff; padding: 48px; border-radius: 24px; margin-bottom: 32px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        h1 { font-size: 2rem; margin-bottom: 8px; }
-        .subtitle { opacity: 0.8; font-size: 0.9rem; }
+        .header { background: var(--primary); color: #fff; padding: 40px; border-radius: 24px; margin-bottom: 30px; }
         .q-card { background: #fff; border-radius: 20px; padding: 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 6px solid #e2e8f0; }
-        .q-card.active { border-left-color: var(--accent); }
-        .q-num { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 12px; }
-        .q-text { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin-bottom: 24px; }
-        .options { display: grid; gap: 12px; }
-        .option { padding: 16px 20px; border: 2px solid #f1f5f9; border-radius: 12px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:12px; font-size:1.05rem; }
-        .option:hover { background: #f8fafc; border-color: #e2e8f0; }
-        .option.selected { border-color: var(--accent); background: #eff6ff; }
-        .btn { padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; font-size: 0.9rem; }
+        .q-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; color: var(--primary); }
+        .option { padding: 16px; border: 2px solid #f1f5f9; border-radius:12px; cursor:pointer; margin-bottom:10px; display:flex; gap:10px; align-items:center; }
+        .option:hover { border-color: #cbd5e1; }
+        .option.selected { border-color: var(--accent); background:#eff6ff; }
+        .option.correct { border-color: #10b981; background:#ecfdf5; }
+        .option.incorrect { border-color: #ef4444; background:#fef2f2; }
+        .btn { padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; }
         .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: #2563eb; }
-        .expl { margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 12px; display: none; border: 1px dashed #cbd5e1; font-size: 0.95rem; }
-        .score-card { background: #fff; border-radius: 32px; padding: 60px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); display: none; }
-        .score-val { font-size: 5rem; font-weight: 900; color: var(--accent); }
-        #sync-box { width: 100%; height: 120px; margin-top: 16px; padding: 12px; font-family: monospace; font-size: 0.75rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; }
-        textarea { width: 100%; padding: 16px; border-radius:12px; border: 2px solid #f1f5f9; font-size: 1rem; margin-bottom: 12px; font-family: inherit; }
+        .expl { margin-top:20px; padding:20px; background:#f8fafc; border-radius:12px; display:none; }
+        .score-card { background: #fff; border-radius: 32px; padding: 40px; text-align: center; box-shadow:0 10px 30px rgba(0,0,0,0.1); display:none; }
+        #sync-box { width: 100%; height: 100px; margin-top: 15px; font-family:monospace; font-size:0.8rem; border-radius:8px; }
     </style>
 </head>
 <body>
     <div class="container" id="main-ui">
         <div class="header">
             <h1>小学华文生字词测评 (P1-5)</h1>
-            <p class="subtitle">2026-03-28 · PSLE 冲刺测评 (基础与高华结合)</p>
-            <div style="margin-top:24px; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
-                <div id="p-bar" style="width:0; height:100%; background:var(--accent); transition:width 0.4s ease;"></div>
-            </div>
+            <p style="opacity:0.8;">PSLE 冲刺测评 · 2026-03-28</p>
         </div>
         <div id="q-list"></div>
         <div style="text-align:center; margin-top:40px;">
-            <button id="end-btn" class="btn btn-primary" style="display:none;" onclick="finish()">提交测评 & 查看数据</button>
+            <p style="font-size:0.9rem; color:#64748b; margin-bottom:12px;">注：短答题可线下手写，无需在此输入。</p>
+            <button class="btn btn-primary" onclick="finish()">提交已答题目 (MCQ/是非题)</button>
         </div>
     </div>
     <div class="container" id="score-ui" style="display:none;">
         <div class="score-card">
-            <div class="score-val" id="score-text">0</div>
-            <h2 style="margin-top:20px;">测评完成！太棒了。</h2>
-            <p style="color:#64748b; margin-top:16px;">请复制下方同步代码发送给 <b>Antigravity</b>。</p>
+            <h2>🎉 同步数据已生成</h2>
+            <p style="margin-top:10px;">复制下方代码发送给 <b>Antigravity</b> 即可记录进度。</p>
             <textarea id="sync-box" readonly></textarea>
-            <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="copyData()">复制同步数据</button>
-            <button class="btn" style="width:100%; margin-top:12px; background:#f1f5f9;" onclick="location.reload()">重新作答</button>
+            <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="copyData()">复制同步数据</button>
+            <button class="btn" style="width:100%; margin-top:10px;" onclick="location.reload()">重新作答</button>
         </div>
     </div>
 <script>
 const quiz = {"topic": "\u5c0f\u5b66\u534e\u6587\u751f\u5b57\u8bcd\u6d4b\u8bc4 (P1-5)", "date": "2026-03-28", "questions": [{"id": 1, "type": "mc", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u201c\u89c2\u4f17\u201d \u7684\u6b63\u786e\u610f\u601d\u662f\u4ec0\u4e48\uff1f", "options": ["\u53c2\u4e0e\u6d3b\u52a8\u7684\u4eba", "\u89c2\u770b\u6bd4\u8d5b\u6216\u8868\u6f14\u7684\u4eba", "\u9886\u5bfc\u6d3b\u52a8\u7684\u4eba", "\u81ea\u613f\u63d0\u4f9b\u670d\u52a1\u7684\u4eba"], "answer": 1, "expl": "\u2018\u89c2\u4f17\u2019 (gu\u0101n zh\u00f2ng) refers to the audience watching a show or match."}, {"id": 2, "type": "mc", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u201c\u73cd\u60dc\u201d (to cherish) \u7684\u62fc\u97f3\u662f\u4ec0\u4e48\uff1f", "options": ["zh\u0113n x\u00ed", "zh\u00e8ng x\u012b", "zh\u0113n x\u012b", "zh\u0113n q\u00ec"], "answer": 2, "expl": "\u2018\u73cd\u60dc\u2019 (zh\u0113n x\u012b) means to treasure or cherish."}, {"id": 3, "type": "mc", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u4e0b\u5217\u54ea\u4e00\u4e2a\u6c49\u5b57\u8868\u793a \u201cbrave\u201d (\u52c7\u6562)\uff1f", "options": ["\u52c7", "\u6c38", "\u7528", "\u62e5"], "answer": 0, "expl": "\u2018\u52c7\u2019 as in \u52c7\u6562 (y\u01d2ng g\u01cen)."}, {"id": 4, "type": "mc", "level": "\u80fd\u529b\u8fd0\u7528", "text": "\u201c\u7981\u6b62\u201d \u7684\u53cd\u4e49\u8bcd\uff08opposite\uff09\u6700\u63a5\u8fd1\u54ea\u4e00\u4e2a\uff1f", "options": ["\u5141\u8bb8", "\u505c\u6b62", "\u9732\u8425", "\u5f02\u5e38"], "answer": 0, "expl": "\u2018\u7981\u6b62\u2019 (Prohibit) vs \u2018\u5141\u8bb8\u2019 (Allow)."}, {"id": 5, "type": "tf", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u201c\u7cbe\u5f69\u201d (j\u012bng c\u01cei) \u53ea\u80fd\u7528\u6765\u5f62\u5bb9\u7535\u5f71\uff0c\u4e0d\u80fd\u7528\u6765\u5f62\u5bb9\u6bd4\u8d5b\u3002", "answer": false, "expl": "\u9519\u8bef\u3002\u6211\u4eec\u53ef\u4ee5\u8bf4 \u2018\u7cbe\u5f69\u7684\u7cbe\u5f69\u6bd4\u8d5b\u2019 (Wonderful match)."}, {"id": 6, "type": "tf", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u201c\u9732\u8425\u201d \u6307\u7684\u662f\u5728\u6237\u5916\u5e10\u7bf7\u4e2d\u8fc7\u591c\u7684\u6d3b\u52a8\u3002", "answer": true, "expl": "\u6b63\u786e\u3002\u2018\u9732\u8425\u2019 \u5c31\u662f camping\u3002"}, {"id": 7, "type": "tf", "level": "\u57fa\u7840\u8bb0\u5fc6", "text": "\u201c\u8d23\u4efb\u201d \u4e2d\u7684 \u2018\u4efb\u2019 \u5ff5\u4f5c r\u00e8n\u3002", "answer": true, "expl": "\u6b63\u786e\u3002\u8bfb\u97f3\u662f z\u00e9 r\u00e8n\u3002"}, {"id": 8, "type": "short", "level": "\u80fd\u529b\u8fd0\u7528", "text": "\u8bf7\u5199\u51fa \u201cz\u00e9 r\u00e8n\u201d \u7684\u6c49\u5b57\uff0c\u5e76\u5199\u51fa\u5b83\u5728\u5b66\u6821\u4e2d\u7684\u4e00\u79cd\u8868\u73b0\u3002", "model": "\u8d23\u4efb\u3002\u4f8b\u5982\uff1a\u6211\u8eab\u4e3a\u73ed\u957f\uff0c\u6709\u8d23\u4efb\u7ef4\u6301\u73ed\u4e0a\u7684\u79e9\u5e8f\u3002", "rubric": "1. \u6c49\u5b57\u6b63\u786e (\u8d23\u4efb). 2. \u60c5\u5883\u63cf\u8ff0\u51c6\u786e\u3002"}, {"id": 9, "type": "short", "level": "\u7efc\u5408\u5206\u6790", "text": "\u201c\u73cd\u60dc\u201d (cherish) \u548c \u201c\u6d6a\u8d39\u201d (waste) \u662f\u4ec0\u4e48\u5173\u7cfb\uff1f\u8bf7\u7528 \u201c\u65f6\u95f4\u201d \u4e3e\u4e00\u4e2a\u4f8b\u5b50\u3002", "model": "\u5b83\u4eec\u662f\u53cd\u4e49\u8bcd\u3002\u6211\u4eec\u8981\u73cd\u60dc\u65f6\u95f4\u590d\u4e60\uff0c\u4e0d\u8981\u6d6a\u8d39\u65f6\u95f4\u73a9\u624b\u673a\u6e38\u620f\u3002", "rubric": "1. \u5173\u7cfb\u8bc6\u522b\u6b63\u786e. 2. \u4f8b\u5b50\u7ed3\u5408\u65f6\u95f4\u3002"}, {"id": 10, "type": "short", "level": "\u7efc\u5408\u5206\u6790", "text": "\uff08\u9ad8\u7ea7\u534e\u6587\uff09\u89e3\u91ca\u6210\u8bed \u201c\u72fc\u541e\u864e\u54bd\u201d \u7684\u610f\u601d\uff0c\u5e76\u9020\u4e00\u4e2a\u53e5\u5b50\u3002", "model": "\u89e3\u91ca\uff1a\u5403\u4e1c\u897f\u53c8\u5feb\u53c8\u6025\u3002\u9020\u53e5\uff1a\u4ed6\u997f\u6781\u4e86\uff0c\u996d\u83dc\u4e00\u4e0a\u684c\u5c31\u5f00\u59cb\u72fc\u541e\u864e\u54bd\u5730\u5403\u4e86\u8d77\u6765\u3002", "rubric": "1. \u89e3\u91ca\u6b63\u786e. 2. \u53e5\u5b50\u901a\u987a\u3002"}]};
 let answers = {};
-let finished = 0;
 
 function render() {
     const list = document.getElementById('q-list');
     quiz.questions.forEach(q => {
-        const card = document.createElement('div');
-        card.className = 'q-card'; card.id = 'q-' + q.id;
-        card.innerHTML = `<div class="q-num">第 ${q.id} 题 · ${q.level}</div><div class="q-text">${q.text}</div>`;
-        
+        const card = document.createElement('div'); card.className = 'q-card'; card.id = 'q-' + q.id;
+        card.innerHTML = `<div style="font-size:0.8rem; font-weight:700; color:#64748b; margin-bottom:10px;">题 ${q.id} · ${q.level}</div><div class="q-text">${q.text}</div>`;
         const body = document.createElement('div');
         if(q.type === 'mc') {
             q.options.forEach((o, i) => {
-                const opt = document.createElement('div');
-                opt.className = 'option'; opt.innerHTML = `<b>${String.fromCharCode(65+i)}</b> ${o}`;
-                opt.onclick = () => { if(!answers[q.id]) { answers[q.id]=i; opt.classList.add('selected'); done(q.id); } };
+                const opt = document.createElement('div'); opt.className = 'option'; opt.innerHTML = `<b>${String.fromCharCode(65+i)}</b> ${o}`;
+                opt.onclick = () => { if(answers[q.id]===undefined) { answers[q.id]=i; opt.classList.add('selected'); document.getElementById('expl-'+q.id).style.display='block'; } };
                 body.appendChild(opt);
             });
         } else if(q.type === 'tf') {
-            const row = document.createElement('div'); row.style.display='flex'; row.style.gap='12px';
             [true, false].forEach(v => {
-                const btn = document.createElement('button'); btn.className='btn'; btn.style.flex='1'; btn.style.background='#f1f5f9';
-                btn.innerText = v ? '正确 正确 (True)' : '错误 错误 (False)';
-                btn.onclick = () => { if(!answers[q.id]) { answers[q.id]=v; btn.style.background='#bfdbfe'; done(q.id); } };
-                row.appendChild(btn);
+                const b = document.createElement('button'); b.className='btn'; b.style.marginRight='10px'; b.innerText=v?'正确':'错误';
+                b.onclick = () => { if(answers[q.id]===undefined) { answers[q.id]=v; b.style.background='#bfdbfe'; document.getElementById('expl-'+q.id).style.display='block'; } };
+                body.appendChild(b);
             });
-            body.appendChild(row);
         } else {
-            const ta = document.createElement('textarea'); ta.placeholder='请用中文作答...';
-            const btn = document.createElement('button'); btn.className='btn btn-primary'; btn.innerText='提交答案';
-            btn.onclick = () => { if(!answers[q.id]) { answers[q.id]=ta.value.trim(); ta.disabled=true; btn.style.display='none'; done(q.id, true); } };
-            body.appendChild(ta); body.appendChild(btn);
+            body.innerHTML = `<p style="font-style:italic; color:#64748b;">(请线下手写此题)</p>`;
         }
         card.appendChild(body);
-        
         const expl = document.createElement('div'); expl.className='expl'; expl.id='expl-'+q.id;
-        if(q.type === 'short') {
-            expl.innerHTML = `<p><b>参考答案:</b> ${q.model}</p><p style="margin-top:10px; font-size:0.85rem; color:#64748b;">(English meaning: ${q.rubric})</p>` +
-                             `<div style="margin-top:16px; display:flex; gap:8px;">` +
-                             `<button class="btn" style="flex:1; background:#ecfdf5; color:#065f46;" onclick="score(${q.id}, 2)">完全正确</button>` +
-                             `<button class="btn" style="flex:1; background:#fefce8; color:#854d0e;" onclick="score(${q.id}, 1)">部分正确</button>` +
-                             `<button class="btn" style="flex:1; background:#fef2f2; color:#991b1b;" onclick="score(${q.id}, 0)">不正确</button></div>`;
-        } else {
-            const ansStr = q.type==='mc' ? String.fromCharCode(65+q.answer) : (q.answer?'正确':'错误');
-            expl.innerHTML = `<p><b>正确选项:</b> ${ansStr}</p><p style="margin-top:8px;">${q.expl}</p>`;
-        }
-        card.appendChild(expl);
+        expl.innerHTML = `<p><b>答案:</b> ${q.type==='mc'?String.fromCharCode(65+q.answer):(q.answer?'正确':'错误')}</p><p>${q.expl||''}</p>`;
+        if(q.type !== 'short') card.appendChild(expl);
         list.appendChild(card);
     });
 }
 
-function done(qid, isShort=false) {
-    document.getElementById('expl-'+qid).style.display = 'block';
-    if(!isShort) {
-        const q = quiz.questions.find(x => x.id===qid);
-        const correct = answers[qid] === q.answer;
-        answers[qid+'_score'] = correct ? 2 : 0;
-        document.getElementById('q-'+qid).style.borderLeftColor = correct ? '#10b981' : '#ef4444';
-        inc();
-    }
-}
-
-function score(qid, pts) {
-    answers[qid+'_score'] = pts;
-    document.getElementById('q-'+qid).style.borderLeftColor = pts === 2 ? '#10b981' : (pts===1 ? '#f59e0b' : '#ef4444');
-    inc();
-}
-
-function inc() {
-    finished++;
-    document.getElementById('p-bar').style.width = (finished / quiz.questions.length * 100) + '%';
-    if(finished === quiz.questions.length) document.getElementById('end-btn').style.display = 'block';
-}
-
 function finish() {
-    let total = 0;
-    quiz.questions.forEach(q => total += (answers[q.id+'_score'] || 0));
-    const scoreVal = Math.round(total / (quiz.questions.length * 2) * 10);
     document.getElementById('main-ui').style.display = 'none';
     document.getElementById('score-ui').style.display = 'block';
-    document.getElementById('score-text').innerText = scoreVal;
-    document.getElementById('sync-box').value = JSON.stringify({ topic:quiz.topic, date:quiz.date, score:scoreVal, answers:answers });
-    window.scrollTo(0,0);
+    document.getElementById('sync-box').value = JSON.stringify({topic:quiz.topic, date:quiz.date, answers:answers, note:"Short answers offline"});
 }
 
 function copyData() {
-    const box = document.getElementById('sync-box'); box.select();
-    document.execCommand('copy'); alert('数据已复制！请粘贴给 Antigravity。');
+    document.getElementById('sync-box').select();
+    document.execCommand('copy');
+    alert('已复制！');
 }
 
 render();
