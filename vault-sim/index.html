@@ -179,8 +179,8 @@ const PICO_ANCHOR_X = 113; // pico visual-centre x within trimmed 231px frame (w
 const BEAST_SPR = {
   // Camel: tight per-frame source rects — each cell has label text on the left and bleed-over
   // from adjacent frames, so we crop to just the camel art.
-  camelFrameX: [1840, 2157, 2445],    // tight art-only sx per frame [stand, walk1, walk2] — walk1 +2 to skip border
-  camelFrameW: [189, 215, 272],        // per-frame width to cell-end — stand +2 for full snout, walk1 -2 to match
+  camelFrameX: [1845, 2162, 2450],    // Shifted right to skip the weird vertical black line from grid border
+  camelFrameW: [199, 225, 282],        // Widened slightly to include the full snout
   CAMEL_AX: 95,                        // body-centre anchor within tight frame
   camel: { SY: 1148, FH: 168, FEET_Y: 167 },
 
