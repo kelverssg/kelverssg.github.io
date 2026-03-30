@@ -2079,12 +2079,12 @@ function drawCaravanTrail() {
 // Entities with y >= TOWER_BASE_Y, OR already offloaded, are in front — draw after it.
 function drawCaravanBehind() {
   if (!caravanActive) return;
-  const behind = caravanEntities.filter(c => c.y < TOWER_BASE_Y && !c.offloaded).sort((a, b) => a.y - b.y);
+  const behind = caravanEntities.filter(c => c.y < TOWER_BASE_Y).sort((a, b) => a.y - b.y);
   for (const c of behind) c.draw();
 }
 function drawCaravanFront() {
   if (!caravanActive) return;
-  const front = caravanEntities.filter(c => c.y >= TOWER_BASE_Y || c.offloaded).sort((a, b) => a.y - b.y);
+  const front = caravanEntities.filter(c => c.y >= TOWER_BASE_Y).sort((a, b) => a.y - b.y);
   for (const c of front) c.draw();
 }
 
