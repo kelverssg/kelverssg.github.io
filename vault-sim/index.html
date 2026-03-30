@@ -1756,6 +1756,10 @@ class CaravanAnimal {
         const _edgeFade = Math.min(_snoutIn, _tailOut);
         if (_edgeFade > 0) {
           ctx.globalAlpha = _edgeFade;
+          // Shadow (grounded)
+          ctx.fillStyle = 'rgba(0,0,0,0.18)';
+          ctx.fillRect(px - 25, py + 18, 50, 4);
+          
           ctx.save();
           ctx.scale(-1, 1);
           ctx.drawImage(charSheet, sx, bspr.SY, fw, bspr.FH, ax - px - dw, sprTopY, dw, dh);
@@ -1776,9 +1780,9 @@ class CaravanAnimal {
         if (_dFade > 0) {
           ctx.globalAlpha = _dFade;
           const fy = py;
-          // Shadow
+          // Shadow (grounded)
           ctx.fillStyle = 'rgba(0,0,0,0.18)';
-          ctx.fillRect(px - 14, fy - 1, 32, 3);
+          ctx.fillRect(px - 14, fy + 12, 32, 3);
           // --- Tail ---
           ctx.fillStyle = '#7A6040';
           ctx.fillRect(px + 17, fy - 24, 4, 8);
@@ -1873,6 +1877,9 @@ class CaravanAnimal {
         ctx.fillStyle = EGA.YELLOW;
         ctx.fillRect(px - 6, py - 10, 6, 4);
       }
+      // Shadow (fallback)
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(px - 12, py + 8, 24, 3);
     } else {
       ctx.fillStyle = EGA.DGRAY;
       ctx.fillRect(px - 8, py - 2, 16, 6);  // Body
@@ -1891,6 +1898,9 @@ class CaravanAnimal {
         ctx.fillStyle = EGA.YELLOW;
         ctx.fillRect(px, py - 10, 4, 2);
       }
+      // Shadow (fallback)
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(px - 10, py + 6, 20, 2);
     }
   }
 }
