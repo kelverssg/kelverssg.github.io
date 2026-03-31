@@ -2514,6 +2514,16 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       <div class="supply-chart-wrap">
         <canvas id="cvsFuelDep"></canvas>
       </div>
+      <div style="margin-top:0.5rem;padding:0.5rem 0.75rem;background:#0d1117;border-left:3px solid #30363d;border-radius:0 4px 4px 0;">
+        <p style="margin:0;font-size:0.72rem;color:#636c76;line-height:1.6;">
+          <strong style="color:#8b949e;">Sources &amp; methodology:</strong>
+          Gulf segment = Middle East crude imports (Saudi Arabia, UAE, Kuwait, Iraq, Qatar) as % of total crude supply.
+          Data: IEA Country Energy Profiles (2023&ndash;2024); BP Statistical Review of World Energy (2024); EIA International Energy Statistics.
+          Substitution ratings reflect assessed ability to redirect to non-Gulf supply sources within 0&ndash;24 months,
+          accounting for refinery configuration constraints, long-term supply contracts, and available alternative crude grades.
+          Figures are indicative averages; country-level import mix varies year to year.
+        </p>
+      </div>
 
       <!-- Chart B: Substitution & Green Pivot Analysis -->
       <div class="supply-chain-header" style="margin-top:1.25rem;">APAC Fossil Fuel Gulf Dependency &amp; Substitution Analysis</div>
@@ -4899,15 +4909,11 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     ctx.lineWidth = 14;
     ctx.lineCap = 'round';
     ctx.stroke();
-    // Percentage text
-    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, sans-serif';
+    // Status label only (no percentage number)
+    ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillStyle = color;
     ctx.textAlign = 'center';
-    ctx.fillText(Math.round(pct * 100) + '%', cx, cy - 18);
-    // Status
-    ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillStyle = '#e6edf3';
-    ctx.fillText(status, cx, cy - 2);
+    ctx.fillText(status, cx, cy - 10);
   }
 
   // ═══════════════════════════════════════
