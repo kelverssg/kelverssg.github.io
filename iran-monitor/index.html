@@ -46,15 +46,19 @@
   .header {
     background: linear-gradient(135deg, var(--bg-secondary) 0%, #1a1a2e 100%);
     border-bottom: 2px solid var(--aon-red);
-    padding: 1.25rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    padding: 1.25rem 2rem 0 2rem;
+    display: block;
     position: sticky;
     top: 0;
     z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.75rem;
   }
 
   .header-left h1 {
@@ -1080,7 +1084,7 @@
   .refresh-bar {
     background: rgba(13,17,23,0.6);
     border-top: 1px solid var(--border);
-    margin: 0.75rem -2rem -1.25rem -2rem;
+    margin: 0 -2rem;
     padding: 0.4rem 2rem;
     display: flex;
     align-items: center;
@@ -1298,12 +1302,14 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-left">
-    <h1><span>Iran War Monitor</span> — Risk for APAC</h1>
-  </div>
-  <div class="severity-badge">
-    <div class="severity-dot"></div>
-    SEVERITY: CRITICAL — 4 LINES RED | HORMUZ TRICKLE UNDER THREAT | DAY 31
+  <div class="header-top">
+    <div class="header-left">
+      <h1><span>Iran War Monitor</span> — Risk for APAC</h1>
+    </div>
+    <div class="severity-badge">
+      <div class="severity-dot"></div>
+      SEVERITY: CRITICAL — 4 LINES RED | HORMUZ TRICKLE UNDER THREAT | DAY 31
+    </div>
   </div>
   <!-- REFRESH STATUS BAR -->
   <!-- DATA: last_refresh -->
