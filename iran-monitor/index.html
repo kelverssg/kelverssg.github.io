@@ -1914,7 +1914,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="growth-card-subtitle">Most direct commission uplift mechanism</div>
         <div class="growth-row">
           <div class="growth-row-label">Uplift</div>
-          <div class="growth-row-value"><span class="amber-text">500-1000% spike</span> on Gulf transit war risk APs. Commission paid on full AP amount. For clients with regular Gulf cargo movements, this adds 15-25% to total marine programme premium.</div>
+          <div class="growth-row-value"><span class="amber-text">500-1000% spike</span> on Gulf transit war risk APs <span style="font-size:0.78em;color:#636c76;">(Lloyd's List, 2026 — seven-day Gulf cover up ~10× pre-conflict levels)</span>. Commission paid on full AP amount. For clients with regular Gulf cargo movements, this adds 15-25% to total marine programme premium.</div>
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Volume</div>
@@ -2446,14 +2446,14 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <div class="geo-gauge-item">
             <canvas id="cvsGaugeHormuz" width="180" height="110"></canvas>
             <div class="geo-gauge-label">Strait of Hormuz</div>
-            <div class="geo-gauge-status" style="color:var(--red);">ELEVATED — 75%</div>
-            <div class="geo-gauge-label">20% global oil transit at risk</div>
+            <div class="geo-gauge-status" style="color:var(--red);">ELEVATED</div>
+            <div class="geo-gauge-label">~20% global oil transit at risk <span style="font-size:0.7em;color:#636c76;">(EIA, 2024)</span></div>
           </div>
           <div class="geo-gauge-item">
             <canvas id="cvsGaugeMalacca" width="180" height="110"></canvas>
             <div class="geo-gauge-label">Strait of Malacca</div>
-            <div class="geo-gauge-status" style="color:var(--amber);">WATCH — 30%</div>
-            <div class="geo-gauge-label">25% global shipping if diverted</div>
+            <div class="geo-gauge-status" style="color:var(--amber);">WATCH</div>
+            <div class="geo-gauge-label">~25% global shipping if diverted <span style="font-size:0.7em;color:#636c76;">(World Bank / IMO)</span></div>
           </div>
         </div>
       </div>
@@ -2525,7 +2525,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <div class="supply-col-body">
             <div class="supply-card">
               <div class="supply-card-title">Japan</div>
-              <p>Cannot. 90% of refineries configured for Arabian Medium/Heavy. Switching crude grade = refinery capex of $2&ndash;5B per plant. Only option: pay the war risk AP or shut down capacity.</p>
+              <p>Cannot. ~90% of refineries configured for Arabian Medium/Heavy <span style="font-size:0.78em;color:#636c76;">(IEA Japan Energy Review, 2024)</span>. Switching crude grade = refinery capex of $2&ndash;5B per plant. Only option: pay the war risk AP or shut down capacity.</p>
               <p class="supply-card-impl"><strong>Client implication:</strong> captive demand for whatever capacity remains &mdash; pay any price.</p>
             </div>
             <div class="supply-card">
@@ -2540,7 +2540,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             </div>
             <div class="supply-card">
               <div class="supply-card-title">Thailand</div>
-              <p>Partially exposed. Thailand imports ~20% of its crude from Gulf sources for industrial and petrochemical use. The automotive manufacturing sector — now transitioning rapidly to EV — depends on Gulf energy for plant operations. BYD, Great Wall Motor, and Honda EV plants under construction create new energy demand exactly as Gulf supply is disrupted.</p>
+              <p>Partially exposed. Thailand imports ~20% of its crude from Gulf sources for industrial and petrochemical use <span style="font-size:0.78em;color:#636c76;">(IEA / EPPO Thailand, 2023)</span>. The automotive manufacturing sector — now transitioning rapidly to EV — depends on Gulf energy for plant operations. BYD, Great Wall Motor, and Honda EV plants under construction create new energy demand exactly as Gulf supply is disrupted.</p>
               <p class="supply-card-impl"><strong>Client implication:</strong> CBI uplift on automotive supply chains is immediate; new EV plant construction risk is the 12-month pipeline play.</p>
             </div>
             <div class="supply-card">
@@ -2573,7 +2573,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             </div>
             <div class="supply-card">
               <div class="supply-card-title">India</div>
-              <p>Stated ambition is largest green pivot in the world (500GW renewable by 2030). Reality: coal still ~75% of power generation. Solar scaling fast. Gulf crude dependency for transportation + petrochemicals persists a decade.</p>
+              <p>Stated ambition is largest green pivot in the world (500GW renewable by 2030). Reality: coal still ~75% of power generation <span style="font-size:0.78em;color:#636c76;">(IEA / CEA India, 2024)</span>. Solar scaling fast. Gulf crude dependency for transportation + petrochemicals persists a decade.</p>
               <p class="supply-card-impl"><strong>Insurance implication:</strong> solar construction risk (Adani, Tata, NTPC renewables arms) = one of the largest new client opportunities in APAC.</p>
             </div>
           </div>
@@ -2880,10 +2880,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       for (var g = -30; g <= 50; g += 10) {
         var gx = valToX(g);
         ctx.beginPath(); ctx.moveTo(gx, marginTop); ctx.lineTo(gx, h - marginBottom); ctx.stroke();
-        ctx.fillStyle = '#636c76';
-        ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText((g > 0 ? '+' : '') + g + '%', gx, h - marginBottom + 14);
+        // x-axis labels removed — directional chart only
       }
       // Zero line
       ctx.strokeStyle = '#e6edf3';
@@ -2917,15 +2914,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         ctx.roundRect(wx, cy + 1, ww, barH/2 - 1, 2);
         ctx.fill();
 
-        // Net label
-        if (progress > 0.8) {
-          var netVal = d.warAdj;
-          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
-          ctx.fillStyle = colors[d.severity];
-          ctx.textAlign = 'left';
-          var labelX = Math.max(valToX(d.warAdj * p), valToX(d.baseline * p)) + 6;
-          ctx.fillText('Net: ' + (netVal > 0 ? '+' : '') + netVal + '%', labelX, cy + 4);
-        }
+        // Bar end labels removed — directional chart only
       });
 
       if (progress < 1) {
@@ -3434,10 +3423,10 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
   }
 
   function getNextRefreshSGT() {
-    // Daily cron fires at 07:33 SGT
+    // Daily cron fires at 05:00 SGT
     var sgt = getSGTNow();
     var next = new Date(sgt);
-    next.setHours(7, 33, 0, 0);
+    next.setHours(5, 0, 0, 0);
     if (next <= sgt) next.setDate(next.getDate() + 1);
     return next;
   }
