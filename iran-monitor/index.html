@@ -1425,6 +1425,10 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="card-row-value"><strong>Severely constrained.</strong> Lloyd's JWC listed area expanded. Multiple syndicates pulling back from Strait of Hormuz transits. Facultative placement difficulty rising weekly.</div>
       </div>
       <div class="card-row">
+        <div class="card-row-label">P&amp;I Watch</div>
+        <div class="card-row-value"><strong>Actuarial warfare risk.</strong> Scenario modelling (Gulf crisis stress-test, Apr 2026) identifies full P&amp;I club withdrawal of war risk cover for Gulf-transiting vessels as the next-order escalation: no insurance &rarr; no cargo financing &rarr; no port entry clearance &mdash; the Strait closes <em>financially</em> before it closes physically. Current position: cover remains available at 7-day premiums ~10&times; pre-conflict levels (Lloyd's / LMA). Full withdrawal is the trigger to watch.</div>
+      </div>
+      <div class="card-row">
         <div class="card-row-label">APAC Impact</div>
         <div class="card-row-value">Japanese and Korean energy importers most exposed. Singapore-based commodity traders with Gulf cargo flows facing immediate cost spikes. Any client with Gulf-origin supply chains needs urgent review.</div>
       </div>
@@ -1561,14 +1565,14 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       </div>
       <div class="card-row">
         <div class="card-row-label">APAC Impact</div>
-        <div class="card-row-value">Manufacturing hubs (Vietnam, Thailand, Malaysia) with Gulf-origin raw material dependency. Japanese automotive with multi-tier Gulf supply exposure. Any client without mapped Tier 2-3 suppliers is flying blind.</div>
+        <div class="card-row-value">Manufacturing hubs (Vietnam, Thailand, Malaysia) with Gulf-origin raw material dependency. Japanese automotive with multi-tier Gulf supply exposure. Any client without mapped Tier 2-3 suppliers is flying blind. <strong>Emerging vector:</strong> Qatar's Ras Laffan LNG shutdown threatens ~65% of South Korea's helium supply &mdash; helium is a critical consumable in semiconductor fab (Samsung, SK Hynix). A sustained Ras Laffan outage propagates tech-sector CBI exposure with no direct Gulf footprint in the policy wording.</div>
       </div>
       <div class="card-triggers">
         <div class="card-triggers-title">Immediate Triggers</div>
         <ul class="trigger-list">
           <li class="trigger-tag hot">Hormuz closure &gt; 72 hrs</li>
           <li class="trigger-tag">Major CBI claim filed</li>
-          <li class="trigger-tag">Semiconductor supply chain disruption (energy input)</li>
+          <li class="trigger-tag hot">Semiconductor CBI chain &mdash; helium pathway (Ras Laffan &rarr; Samsung / SK Hynix)</li>
           <li class="trigger-tag">Shipping re-route adds &gt; 10 days</li>
         </ul>
       </div>
@@ -1846,6 +1850,18 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <div class="intel-card-footer">Source: Lloyd's List / LMA / The Guardian — 2026-04-03</div>
         </div>
 
+        <!-- STATIC — persists across 5am refresh (outside DATA markers) -->
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <span class="intel-card-title">Mine Clearance Gap &mdash; US Decommissioned Avenger-Class Minesweepers in 2025</span>
+            <span class="intel-status alert">Structural Risk</span>
+          </div>
+          <div class="intel-card-body">
+            The US Navy decommissioned its dedicated Avenger-class minesweepers in 2025 without a theatre-ready replacement. Any post-conflict Strait of Hormuz mine-clearance operation would fall to coalition partners (UK, France, Japan MSDF) with limited MCM assets &mdash; scenario analysis estimates months, not days, to sweep and reopen. This creates a structural tail risk: even after active hostilities cease, the Strait may remain functionally closed due to mine hazard, prolonging war risk AP elevation and capacity constraints well beyond the conflict itself.
+          </div>
+          <div class="intel-card-footer">Source: Scenario analysis &mdash; Gulf crisis stress-test, Apr 2026</div>
+        </div>
+
                                                                                                                                                             </section>
   </div>
 
@@ -2035,7 +2051,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Volume</div>
-          <div class="growth-row-value">Broad base of manufacturing clients across APAC. Per-client amounts are smaller ($5K-$15K incremental commission) but high volume. Vietnam, Thailand, Malaysia manufacturing hubs most affected.</div>
+          <div class="growth-row-value">Broad base of manufacturing clients across APAC. Per-client amounts are smaller ($5K-$15K incremental commission) but high volume. Vietnam, Thailand, Malaysia manufacturing hubs most affected. <strong>Emerging exposure:</strong> South Korea semiconductor firms (Samsung, SK Hynix) face indirect CBI risk via helium supply &mdash; ~65% of Korean helium transits Qatar's Ras Laffan LNG hub. Any client in the APAC tech supply chain with unnamed-supplier CBI wording should be audited for this exposure now.</div>
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Risk</div>
@@ -2227,7 +2243,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Target Mkts</div>
-          <div class="growth-row-value">Japan (JOGMEC, INPEX), India (ISPRL, Petronet LNG), South Korea (KNOC), Vietnam (PetroVietnam LNG terminals), Australia (undersea cable projects, Northern Territory gas infrastructure), Philippines (first LNG import terminal).</div>
+          <div class="growth-row-value">Japan (JOGMEC, INPEX), India (ISPRL, Petronet LNG), South Korea (KNOC), Vietnam (PetroVietnam LNG terminals), Australia (undersea cable projects, Northern Territory gas infrastructure), Philippines (first LNG import terminal &mdash; accelerated by energy rationing; 4-day work week imposed at peak shortage), Bangladesh (Moheshkhali LNG terminal expansion &mdash; cooking gas rationing triggered political urgency; government committed to fast-track completion).</div>
         </div>
         <div class="aon-position">
           <div class="traffic-light amber"><div class="traffic-dot"></div> Parity</div>
@@ -4317,7 +4333,9 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     { lon: 138, lat: 36, icon: '!', color: '#f85149', label: 'Japan: 90% Gulf-sourced crude' },
     { lon: 128, lat: 36, icon: '!', color: '#f85149', label: 'S.Korea: 70% Gulf-sourced crude' },
     { lon: 79, lat: 22, icon: '!', color: '#d29922', label: 'India: Refinery exposure' },
-    { lon: 50, lat: 26, icon: '!', color: '#f85149', label: 'Gulf: War risk APs' }
+    { lon: 50, lat: 26, icon: '!', color: '#f85149', label: 'Gulf: War risk APs' },
+    { lon: 121.0, lat: 14.6, icon: '!', color: '#d29922', label: 'PH: LNG import / coal fleet', tip: 'Philippines — first LNG import terminal under development. Coal fleet at capacity. LPG/cooking gas rationing risk under extended Gulf closure.' },
+    { lon: 90.4, lat: 23.8, icon: '!', color: '#d29922', label: 'BD: LNG import dependency', tip: 'Bangladesh — energy rationing risk under Gulf closure scenario. Cooking gas shortage driving LNG terminal urgency. Advisory opportunity for CAR/property on terminal construction.' }
   ];
 
   // Port / event markers: struck facilities and major reference ports
@@ -4331,6 +4349,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
     { lon: 56.36, lat: 25.12, type: 'port',   label: 'Fujairah',   sublabel: 'UAE — tanker anchorage',    tip: 'Port of Fujairah — key tanker anchorage outside Hormuz. Oil bunkering hub.' },
     { lon: 139.65, lat: 35.45, type: 'port',  label: 'Yokohama',   sublabel: 'Japan — energy import hub', tip: 'Yokohama / Tokyo Bay — Japan&#39;s primary LNG and crude import terminal region.' },
     { lon: 129.05, lat: 35.10, type: 'port',  label: 'Busan',      sublabel: 'S.Korea — energy hub',      tip: 'Port of Busan — South Korea&#39;s main energy import and transshipment hub.' },
+    { lon: 50.32, lat: 29.23, type: 'struck', label: 'Kharg',      sublabel: 'Iran — 90% crude exports',  tip: 'Kharg Island — Iran&#39;s primary oil export terminal, handling ~90% of crude exports. Key strategic target in escalation scenarios; seizure would cut off Iranian export revenues entirely.' },
   ];
 
   var geoRevMarkers = [
