@@ -1522,11 +1522,16 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="card-row-label">APAC Impact</div>
         <div class="card-row-value">APAC refiners dependent on Gulf crude (India, Japan, South Korea, Singapore) are the immediate concern. Australian LNG operators may see contagion pricing as reinsurers aggregate all "energy + geopolitical" exposure.</div>
       </div>
+      <div class="card-row">
+        <div class="card-row-label">Coal Extension</div>
+        <div class="card-row-value"><span class="amber-text">Hidden gap exposure.</span> Five APAC markets have lifted coal plant caps or restarted decommissioned units — Japan (old plants now at 100%, previously capped at 50%), South Korea (&gt;80% capacity unlocked), Philippines, Thailand (Mae Moh restart), and India (max output ordered). Machinery breakdown and BI policies priced for limited operation may now be materially underinsured. (CNA / CSIS, 3 Apr 2026)</div>
+      </div>
       <div class="card-triggers">
         <div class="card-triggers-title">Immediate Triggers</div>
         <ul class="trigger-list">
           <li class="trigger-tag hot">Oil price above $110/bbl</li>
           <li class="trigger-tag hot">Mid-year 2026 reinsurance renewals</li>
+          <li class="trigger-tag">Coal fleet overextension (Japan, S.Korea, Philippines, Thailand, India)</li>
           <li class="trigger-tag">Physical infrastructure strike</li>
           <li class="trigger-tag">OPEC+ supply response</li>
         </ul>
@@ -1739,12 +1744,22 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         </li>
         <li class="action-item priority-2">
           <span class="action-priority p2">P2</span>
+          <span class="action-text"><strong>Coal fleet overextension gap review.</strong> Japan, South Korea, Philippines, Thailand and India are running old coal plants at max capacity — previously capped at 50% or decommissioned. Machinery breakdown and BI policies may be materially underinsured. Identify utility and industrial power clients in these markets and initiate a coverage adequacy conversation before a loss event triggers it. (CNA / CSIS, 3 Apr 2026)</span>
+          <span class="action-status not-started" onclick="cycleStatus(this)">Not Started</span>
+        </li>
+        <li class="action-item priority-2">
+          <span class="action-priority p2">P2</span>
           <span class="action-text"><strong>CBI supply chain mapping.</strong> Work with key manufacturing clients to map Tier 2-3 Gulf supply dependencies. Stress-test CBI wordings against Hormuz scenario.</span>
           <span class="action-status not-started" onclick="cycleStatus(this)">Not Started</span>
         </li>
         <li class="action-item priority-2">
           <span class="action-priority p2">P2</span>
           <span class="action-text"><strong>Client communication — market update.</strong> Draft APAC-wide client advisory covering line-by-line impact. Honest assessment, not boilerplate. The broker that tells the truth first captures the advisory relationship.</span>
+          <span class="action-status not-started" onclick="cycleStatus(this)">Not Started</span>
+        </li>
+        <li class="action-item priority-3">
+          <span class="action-priority p3">P3</span>
+          <span class="action-text"><strong>Nuclear advisory positioning.</strong> Singapore commissioned three nuclear feasibility studies (Mar 2026); Japan–Indonesia agreed on West Kalimantan plant. Construction placements are 5–10 years out, but feasibility advisory PI and regulatory risk advisory are available now. Brief global nuclear practice on the APAC pipeline and identify which clients are engaged at feasibility stage.</span>
           <span class="action-status not-started" onclick="cycleStatus(this)">Not Started</span>
         </li>
         <li class="action-item priority-3">
@@ -1960,6 +1975,33 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       </div>
 
       <!-- PRI -->
+      <!-- Coal Fleet Life Extension -->
+      <div class="growth-card border-amber">
+        <span class="mechanism-label advisory-fee">Coverage Gap Advisory</span>
+        <div class="growth-card-title">Coal Fleet Life Extension &mdash; Machinery Breakdown &amp; BI Gap</div>
+        <div class="growth-card-subtitle">Five APAC markets running old coal plants beyond design parameters</div>
+        <div class="growth-row">
+          <div class="growth-row-label">Context</div>
+          <div class="growth-row-value">Japan, South Korea, Philippines, Thailand and India have lifted coal plant caps or restarted decommissioned units in response to Gulf supply disruption. Japan&rsquo;s older plants (previously limited to 50%) will run at full capacity for a year. Thailand restarted two decommissioned Mae Moh units. South Korea unlocked &gt;80% of installed capacity. (CNA / Jane Nakano, CSIS, 3 Apr 2026)</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">The Gap</div>
+          <div class="growth-row-value">Machinery breakdown, boiler &amp; machinery, and BI policies were underwritten at limited-operation assumptions. Plants now running at 100% or restarted after decommissioning create underinsurance the client almost certainly does not know exists. Environmental liability is also elevated &mdash; older, less efficient plants carry higher pollution risk under stress conditions.</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">Lines</div>
+          <div class="growth-row-value">Machinery breakdown / boiler &amp; machinery. Property / BI. Environmental liability. Employers liability (restart workforce risks). CAR if refurbishment required.</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">Target Mkts</div>
+          <div class="growth-row-value">Japanese utilities (JERA, TEPCO, Chubu — old plants at 100%). Korean power companies (KEPCO subsidiaries). Philippine utilities (Meralco, ACEN). Thai generators (EGAT Mae Moh restart). Indian state utilities at max output.</div>
+        </div>
+        <div class="aon-position">
+          <div class="traffic-light green"><div class="traffic-dot"></div> Advisory Lead</div>
+          <span style="color: var(--text-secondary); font-size: 0.78rem;">Same motion as the cyber war exclusion audit &mdash; broker-led gap review positions as value-add, leads to placement. Most clients are unaware their policies were structured for limited-capacity operation. A structured coverage adequacy conversation has no competition right now.</span>
+        </div>
+      </div>
+
       <div class="growth-card border-amber">
         <span class="mechanism-label premium-uplift">Premium Uplift</span>
         <div class="growth-card-title">Political Risk Insurance Repricing</div>
@@ -2073,7 +2115,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Catalyst</div>
-          <div class="growth-row-value">Energy security + grid stability requirements are pushing BESS deployment faster. Iran War-driven energy price volatility makes storage economics more compelling. Australia's grid instability (renewables intermittency) is the proof case.</div>
+          <div class="growth-row-value">Energy security + grid stability requirements are pushing BESS deployment faster. Iran War-driven energy price volatility makes storage economics more compelling. Governments are now explicitly pivoting to battery-backed renewables as the energy diversification strategy of choice &mdash; a direct government mandate effect on deployment pace (CSIS, Apr 2026). Australia's grid instability (renewables intermittency) is the proof case.</div>
         </div>
         <div class="growth-row">
           <div class="growth-row-label">Target Mkts</div>
@@ -2194,6 +2236,33 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       </div>
 
     </div>
+
+      <!-- Nuclear Pipeline -->
+      <div class="growth-card border-teal">
+        <span class="mechanism-label new-client">New Market &mdash; Long Cycle</span>
+        <div class="growth-card-title">Nuclear Energy &mdash; Early Advisory Pipeline</div>
+        <div class="growth-card-subtitle">Singapore feasibility studies; Japan&ndash;Indonesia West Kalimantan project</div>
+        <div class="growth-row">
+          <div class="growth-row-label">Signals</div>
+          <div class="growth-row-value">Singapore commissioned three nuclear safety and environmental impact studies (Mar 2026). Japan and Indonesia agreed to cooperate on a new plant in West Kalimantan. All three experts (CSIS / RSIS / CSEA) cited nuclear as the primary long-term beneficiary of the Hormuz crisis &mdash; the only baseload alternative that is low-carbon and domestically controllable. (CNA, 3 Apr 2026)</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">Timeline</div>
+          <div class="growth-row-value">Construction placements are 5&ndash;10 years out, but feasibility advisory, owner&rsquo;s engineer PI, and regulatory risk advisory are available <strong>now</strong>. Nuclear construction is the highest-premium specialty line &mdash; a single project can represent $5&ndash;20M in annual premium. First-mover technical credibility is the prerequisite.</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">Lines</div>
+          <div class="growth-row-value">Nuclear liability (Nuclear Risk Insurers pool). CAR (nuclear-rated). Professional indemnity (owner&rsquo;s engineer, feasibility consultants). Political risk (host government change, regulatory reversal). Delay in start-up / DSU.</div>
+        </div>
+        <div class="growth-row">
+          <div class="growth-row-label">Target Mkts</div>
+          <div class="growth-row-value">Singapore (EMA nuclear study consortiums). Indonesia (PLN, West Kalimantan project). South Korea (KEPCO &mdash; active nuclear export programme). Philippines (BNPP revival discussions). Japan (TEPCO/Hitachi APAC export partnerships).</div>
+        </div>
+        <div class="aon-position">
+          <div class="traffic-light amber"><div class="traffic-dot"></div> Long Cycle / High Value</div>
+          <span style="color: var(--text-secondary); font-size: 0.78rem;">Not a near-term revenue play, but the broker who builds capability now owns the mandates when projects move. Marsh and WTW both have global nuclear practice groups. The question is whether the APAC team can credibly engage at feasibility stage &mdash; which means bringing in global nuclear specialists now, not when the project is shovel-ready.</span>
+        </div>
+      </div>
 
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- MECHANISM 3: ADVISORY FEE REVENUE                      -->
@@ -2555,7 +2624,7 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             <div class="supply-card">
               <div class="supply-card-title">Thailand</div>
               <p>Partially exposed. Thailand imports ~20% of its crude from Gulf sources for industrial and petrochemical use <span style="font-size:0.78em;color:#636c76;">(IEA / EPPO Thailand, 2023)</span>. The automotive manufacturing sector — now transitioning rapidly to EV — depends on Gulf energy for plant operations. BYD, Great Wall Motor, and Honda EV plants under construction create new energy demand exactly as Gulf supply is disrupted.</p>
-              <p class="supply-card-impl"><strong>Client implication:</strong> CBI uplift on automotive supply chains is immediate; new EV plant construction risk is the 12-month pipeline play.</p>
+              <p class="supply-card-impl"><strong>Client implication:</strong> CBI uplift on automotive supply chains is immediate; new EV plant construction risk is the 12-month pipeline play. Mae Moh coal restart (two decommissioned units reactivated) = machinery breakdown / BI underinsurance review opportunity.</p>
             </div>
             <div class="supply-card">
               <div class="supply-card-title">China</div>
@@ -2573,12 +2642,12 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
             <div class="supply-card">
               <div class="supply-card-title">Japan</div>
               <p>Most credible green pivot in APAC. Government hydrogen strategy, offshore wind buildout, ammonia co-firing in coal plants. But timeline is 10&ndash;15 years, not 2&ndash;5. In the interim: maximum Gulf dependency vulnerability.</p>
-              <p class="supply-card-impl"><strong>Insurance implication:</strong> green infrastructure (offshore wind, hydrogen terminals) = new construction risk clients emerging 2026&ndash;2028.</p>
+              <p class="supply-card-impl"><strong>Insurance implication:</strong> green infrastructure (offshore wind, hydrogen terminals) = new construction risk clients emerging 2026&ndash;2028. Coal fleet: older plants now at 100% (50% cap lifted) &mdash; machinery breakdown and BI gap advisory. Nuclear: feasibility partnerships with Indonesia signal long-cycle pipeline building now.</p>
             </div>
             <div class="supply-card">
               <div class="supply-card-title">South Korea</div>
-              <p>KEPCO nuclear restart + offshore wind + hydrogen. Faster than Japan on nuclear. Gulf crude dependency persists for petrochemicals (Samsung, LG Chem, SK Innovation are not going green).</p>
-              <p class="supply-card-impl"><strong>Insurance implication:</strong> split story &mdash; power sector greening, industrial sector stays fossil-dependent.</p>
+              <p>KEPCO nuclear restart + offshore wind + hydrogen. Faster than Japan on nuclear. Coal capacity cap lifted (&gt;80% permitted) as emergency measure &mdash; industrial sector fossil dependency deepening short-term. Gulf crude dependency persists for petrochemicals (Samsung, LG Chem, SK Innovation are not going green).</p>
+              <p class="supply-card-impl"><strong>Insurance implication:</strong> split story &mdash; power sector greening (nuclear revival accelerated by Iran War), industrial sector stays fossil-dependent. Coal fleet overextension adds machinery breakdown gap advisory angle.</p>
             </div>
             <div class="supply-card">
               <div class="supply-card-title">Australia</div>
@@ -2645,6 +2714,20 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
               <div>
                 <div class="supply-card-title">Thailand &mdash; EV manufacturing CBI</div>
                 <p><em>3 months.</em> BYD, Great Wall Motor, and Honda EV plants are being built now. Thai automotive is the &ldquo;Detroit of Southeast Asia&rdquo; pivot story. Gulf-linked CBI on component supply chains (Gulf petrochemical inputs for plastics, rubber, electronics) is under-placed. First broker to run a structured CBI review across the Bangkok-Eastern Seaboard corridor wins this book.</p>
+              </div>
+            </div>
+            <div class="supply-card supply-priority">
+              <div class="supply-priority-badge p2">P2</div>
+              <div>
+                <div class="supply-card-title">Japan / South Korea &mdash; Coal fleet gap review</div>
+                <p><em>4 weeks.</em> Old coal plants now at 100% capacity (previously capped at 50% in Japan, &gt;80% in Korea). Machinery breakdown and BI policies were priced for limited operation. This is a structured advisory conversation with no competing broker offering it. Run the coverage adequacy review, own the remediation placement.</p>
+              </div>
+            </div>
+            <div class="supply-card supply-priority">
+              <div class="supply-priority-badge p3">P3</div>
+              <div>
+                <div class="supply-card-title">Singapore / Indonesia &mdash; Nuclear advisory positioning</div>
+                <p><em>6 months.</em> Singapore has commissioned three nuclear feasibility studies (Mar 2026). Japan&ndash;Indonesia agreed on West Kalimantan plant cooperation. Construction is 5&ndash;10 years out but feasibility advisory mandates are available now. Brief global nuclear practice and identify which APAC clients are engaged at feasibility stage. First-mover credibility is built here, not at financial close.</p>
               </div>
             </div>
           </div>
