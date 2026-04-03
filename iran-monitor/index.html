@@ -5136,5 +5136,16 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
   })();
 </script>
 
+
+<!-- Page view analytics (silent) -->
+<script>
+(function() {
+  var GS = 'https://script.google.com/macros/s/AKfycbxubSoHQQzYXornnHTXAkTVI8YKRqZNgRtY6iq7zng0sr8aCf8mgfVN2_1BtLnIiy8dwg/exec';
+  var params = '?p=' + encodeURIComponent(window.location.pathname)
+             + '&r=' + encodeURIComponent(document.referrer || 'direct')
+             + '&u=' + encodeURIComponent((navigator.userAgent || '').substring(0, 120));
+  fetch(GS + params, { mode: 'no-cors' }).catch(function(){});
+})();
+</script>
 </body>
 </html>
