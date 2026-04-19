@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMSMA Guide — Water Seepage | Kovan Melody</title>
+<style>
+  :root {
+    --navy: #1a2744;
+    --red: #c0392b;
+    --gold: #b8860b;
+    --bg: #f8f7f4;
+    --bg-card: #ffffff;
+    --border: #e0ddd8;
+    --text: #1a1a1a;
+    --text-sec: #4a4a4a;
+    --text-muted: #888;
+    --green: #27ae60;
+    --amber: #d35400;
+    --teal: #16a085;
+    --pill-key: #7c3aed;
+    --pill-key-bg: #f3f0ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* Header */
+  .site-header {
+    background: var(--navy);
+    color: #fff;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .site-header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em; }
+  .site-header .meta { font-size: 0.78rem; opacity: 0.65; }
+  .site-header a { color: #a0c4f8; text-decoration: none; font-size: 0.82rem; font-weight: 600; border: 1px solid rgba(160,196,248,0.4); padding: 0.3rem 0.8rem; border-radius: 4px; }
+  .site-header a:hover { background: rgba(160,196,248,0.15); }
+
+  /* Banner */
+  .banner {
+    background: linear-gradient(135deg, #1a2744 0%, #2c3e6b 100%);
+    color: #fff;
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+  .banner h2 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .banner p { font-size: 0.9rem; opacity: 0.75; max-width: 600px; margin: 0 auto; }
+  .banner .case-ref {
+    display: inline-block;
+    margin-top: 1rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  /* Layout */
+  .layout {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 1.5rem;
+    height: fit-content;
+  }
+
+  .sidebar-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text-sec);
+    font-size: 0.82rem;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover { background: var(--bg); }
+  .sidebar-link.key { color: var(--pill-key); font-weight: 600; }
+
+  .sidebar-link .num {
+    background: var(--navy);
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar-link.key .num { background: var(--pill-key); }
+
+  .flash-btn {
+    display: block;
+    background: var(--navy);
+    color: #fff;
+    text-align: center;
+    padding: 0.65rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .flash-btn:hover { background: #2c3e6b; }
+
+  /* Content */
+  .content {}
+
+  /* Field Map */
+  .field-map {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 1.25rem;
+  }
+
+  .arch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .arch-table th {
+    text-align: left;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .arch-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .arch-table tr:last-child td { border-bottom: none; }
+  .arch-table tr:hover td { background: var(--bg); }
+
+  .comp-num {
+    background: var(--navy);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .comp-num.key { background: var(--pill-key); }
+
+  .badge-key {
+    display: inline-block;
+    background: var(--pill-key-bg);
+    color: var(--pill-key);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  .dep-path {
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-top: 1.25rem;
+    font-size: 0.83rem;
+  }
+
+  .dep-path strong { color: var(--navy); }
+
+  .crit-path {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .crit-arrow { color: var(--text-muted); font-size: 1rem; }
+
+  .crit-pill {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .crit-pill.key { background: var(--pill-key); }
+
+  /* Component sections */
+  .component {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    scroll-margin-top: 1rem;
+  }
+
+  .component-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .comp-num-lg {
+    background: var(--navy);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .comp-num-lg.key { background: var(--pill-key); }
+
+  .comp-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.3;
+  }
+
+  .comp-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+  }
+
+  .comp-body {
+    font-size: 0.9rem;
+    color: var(--text-sec);
+    line-height: 1.75;
+  }
+
+  .comp-body p { margin-bottom: 0.85rem; }
+  .comp-body p:last-child { margin-bottom: 0; }
+
+  .analogy-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 6px 6px 0;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.87rem;
+    color: #0e4c6a;
+  }
+
+  .analogy-box .label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    margin-bottom: 0.3rem;
+  }
+
+  .portal-box {
+    background: var(--pill-key-bg);
+    border-left: 3px solid var(--pill-key);
+    border-radius: 0 6px 6px 0;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.87rem;
+    color: #3b1f7a;
+  }
+
+  .portal-box .label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pill-key);
+    margin-bottom: 0.3rem;
+  }
+
+  .case-box {
+    background: #fffbf0;
+    border: 1px solid #e8d87a;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+  }
+
+  .case-box .case-title {
+    font-weight: 700;
+    color: var(--gold);
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .kelvin-tag {
+    display: inline-block;
+    background: #fef3e2;
+    color: var(--amber);
+    border: 1px solid rgba(211,84,0,0.2);
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.45rem;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  /* Rebuttal paths */
+  .rebuttal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .rebuttal-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem;
+  }
+
+  .rebuttal-card.active { border-color: var(--green); background: #f0faf4; }
+
+  .rebuttal-card .path-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .rebuttal-card.active .path-label { color: var(--green); }
+
+  .rebuttal-card .path-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--navy); }
+  .rebuttal-card .path-desc { font-size: 0.8rem; color: var(--text-sec); }
+
+  .active-badge {
+    display: inline-block;
+    background: var(--green);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.3rem;
+  }
+
+  /* Case law section */
+  .case-law {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .case-entry {
+    padding: 1rem;
+    border-left: 3px solid var(--border);
+    margin-bottom: 1rem;
+    background: var(--bg);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .case-entry.landmark { border-left-color: var(--red); }
+  .case-entry.stb { border-left-color: var(--gold); }
+
+  .case-entry .cite { font-weight: 700; font-size: 0.9rem; color: var(--navy); }
+  .case-entry .type-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+  }
+  .case-entry.landmark .type-badge { background: #fee; color: var(--red); }
+  .case-entry.stb .type-badge { background: #fffbf0; color: var(--gold); }
+
+  .case-entry .holding { font-size: 0.86rem; color: var(--text-sec); margin-top: 0.4rem; line-height: 1.6; }
+  .case-entry .kelvin-imp { font-size: 0.82rem; color: var(--amber); margin-top: 0.4rem; font-style: italic; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .rebuttal-grid { grid-template-columns: 1fr; }
+    .banner h2 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <div class="h1">BMSMA — Water Seepage Guide</div>
+    <div class="meta">Kovan Melody · MCST 3245 · Block 21 Unit #11-14</div>
+  </div>
+  <a href="flashcards.html">⚡ Flashcards →</a>
+</header>
+
+<div class="banner">
+  <h2>Building Maintenance & Strata Management Act</h2>
+  <p>A practical crash course on your rights, MCST's obligations, and how the water seepage framework operates under Singapore law.</p>
+  <div class="case-ref">Prepared 19 April 2026 · Fathom v2.0 · Claude Code</div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-box">
+      <div class="sidebar-title">Field Map</div>
+      <a class="sidebar-link key" href="#c1"><span class="num key">1</span> Common Property (s.2)</a>
+      <a class="sidebar-link key" href="#c2"><span class="num key">2</span> MCST Duty (s.29)</a>
+      <a class="sidebar-link key" href="#c3"><span class="num key">3</span> Presumption (s.101)</a>
+      <a class="sidebar-link key" href="#c4"><span class="num key">4</span> Rebuttal (s.101(8))</a>
+      <a class="sidebar-link" href="#c5"><span class="num">5</span> Insurance (Part VI)</a>
+      <a class="sidebar-link" href="#c6"><span class="num">6</span> SP Rights (s.63)</a>
+      <a class="sidebar-link" href="#c7"><span class="num">7</span> STB Orders (s.108)</a>
+    </div>
+    <div class="sidebar-box">
+      <div class="sidebar-title">Case Law</div>
+      <a class="sidebar-link" href="#cases"><span class="num">⚖</span> Key Cases</a>
+    </div>
+    <a class="flash-btn" href="flashcards.html">⚡ Open Flashcards</a>
+  </nav>
+
+  <!-- Main content -->
+  <main class="content">
+
+    <!-- Field Map -->
+    <div class="field-map">
+      <div class="section-label">Overview</div>
+      <div class="section-title">Field Map — BMSMA Architecture</div>
+      <table class="arch-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Component</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="comp-num key">1</span></td>
+            <td><strong>Common Property (s.2)</strong> <span class="badge-key">🔑 Threshold</span></td>
+            <td>Defines the boundary between MCST's world and yours</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num key">2</span></td>
+            <td><strong>MCST Maintenance Duty (s.29)</strong> <span class="badge-key">🔑 Threshold</span></td>
+            <td>Strict liability for common property upkeep — no due diligence defence</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num key">3</span></td>
+            <td><strong>Water Seepage Presumption (s.101)</strong> <span class="badge-key">🔑 Threshold</span></td>
+            <td>Rebuttable presumption against the upper floor owner</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num key">4</span></td>
+            <td><strong>Rebuttal Mechanics (s.101(8))</strong> <span class="badge-key">🔑 Threshold</span></td>
+            <td>How the presumption is displaced and what evidence counts at STB</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num">5</span></td>
+            <td><strong>MCST Insurance (Part VI, s.70–75)</strong></td>
+            <td>Mandatory building insurance; basis for your disclosure request</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num">6</span></td>
+            <td><strong>Subsidiary Proprietor Rights (s.63)</strong></td>
+            <td>Statutory standing to demand records and documents</td>
+          </tr>
+          <tr>
+            <td><span class="comp-num">7</span></td>
+            <td><strong>STB Orders &amp; Remedies (s.101, s.108)</strong></td>
+            <td>What the Strata Titles Board can actually order</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="dep-path">
+        <strong>Critical path (master in this order):</strong>
+        <div class="crit-path">
+          <span class="crit-pill key">1 Common Property</span>
+          <span class="crit-arrow">→</span>
+          <span class="crit-pill key">2 MCST Duty</span>
+          <span class="crit-arrow">→</span>
+          <span class="crit-pill key">3 Presumption</span>
+          <span class="crit-arrow">→</span>
+          <span class="crit-pill key">4 Rebuttal</span>
+          <span class="crit-arrow">→</span>
+          <span class="crit-pill">7 STB Orders</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Component 1 -->
+    <div class="component" id="c1">
+      <div class="component-header">
+        <div class="comp-num-lg key">1</div>
+        <div>
+          <div class="comp-title">Common Property Definition <span class="badge-key">🔑 Threshold</span></div>
+          <div class="comp-subtitle">BMSMA s.2 · The boundary that determines everything</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>Under s.2 BMSMA, <strong>common property</strong> is everything in the strata development that is not within the boundary of any lot — including <strong>external walls, facades, bay window frames, sealant joints, weepholes, and structural elements</strong> of the building. The <em>subsidiary strata title plan</em> is the authoritative document: it draws the exact boundary. Bay window frames and the external facade are almost invariably common property; only the glass pane, internal reveal, and internal sill may sometimes be lot property depending on how the plan was drawn.</p>
+        <p>Why this matters for your case: the seepage location — the bay window area of Unit #10-14 — is directly adjacent to the external facade. <strong>That facade is MCST's property to maintain, not yours.</strong></p>
+      </div>
+      <div class="analogy-box">
+        <div class="label">Analogy — Insurance lens</div>
+        This is the policy schedule — it defines the insured perimeter precisely. Everything outside that schedule is MCST's problem; everything inside is yours. The strata title plan is the schedule.
+      </div>
+      <div class="portal-box">
+        <div class="label">Why this is a threshold concept</div>
+        Once you understand that the facade is common property by statute, MCST's posture as a passive observer until your balcony is tested collapses — they have an <em>affirmative legal duty</em> to maintain it.
+      </div>
+    </div>
+
+    <!-- Component 2 -->
+    <div class="component" id="c2">
+      <div class="component-header">
+        <div class="comp-num-lg key">2</div>
+        <div>
+          <div class="comp-title">MCST Maintenance Duty <span class="badge-key">🔑 Threshold</span></div>
+          <div class="comp-subtitle">BMSMA s.29(1) · Strict liability — no due diligence defence</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>Section 29(1) imposes a statutory duty on the MCST to <strong>properly maintain, and keep in a state of good and serviceable repair, the common property</strong>. The landmark development: <strong>[2021] SGHC 260</strong> held this is a <em>strict liability</em> obligation. The MCST is not absolved even if it was unaware of the defect, even if it had acted reasonably, and even if the defect was caused by a third party contractor. This is not negligence — there is no due diligence defence.</p>
+        <p>Critically for your case: MCST's response that "the repainting contractor did the work" is legally irrelevant to their duty under s.29. They engaged the contractor; they own the outcome.</p>
+      </div>
+      <div class="analogy-box">
+        <div class="label">Analogy — Insurance product liability</div>
+        Think product liability, not professional negligence. The manufacturer doesn't escape liability because a subcontractor made the defective component. MCST is the manufacturer of the common property maintenance obligation.
+      </div>
+      <div class="portal-box">
+        <div class="label">Why this is a threshold concept</div>
+        Strict liability means MCST cannot hide behind contractor fault, lack of notice, or reasonable management. Their only path is to prove the defect is not in common property — which is exactly why the facade spray test matters so much to them.
+      </div>
+    </div>
+
+    <!-- Component 3 -->
+    <div class="component" id="c3">
+      <div class="component-header">
+        <div class="comp-num-lg key">3</div>
+        <div>
+          <div class="comp-title">Water Seepage Presumption <span class="badge-key">🔑 Threshold</span></div>
+          <div class="comp-subtitle">BMSMA s.101 · The hurdle you must cross</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>Section 101 creates a statutory presumption: where water penetrates from a higher lot into a lower lot, <strong>the defect causing penetration is presumed to be located in the higher lot</strong>. The presumption fires as soon as there is <em>any</em> evidence of dampness or moisture in the lower unit. Once it fires, the burden shifts to the upper lot owner to rebut it. MCST needs to prove nothing initially — the statute hands them a presumption.</p>
+        <p>Key framing: the presumption goes to the <em>location of the defect</em>, not simply to responsibility. It presumes the defect is in your lot — not that you caused it deliberately or negligently. Rebutting it means showing the defect is elsewhere (facade, riser, downstairs renovation, adjacent unit).</p>
+      </div>
+      <div class="analogy-box">
+        <div class="label">Analogy — Insurance claims</div>
+        Like a standard policy exclusion that applies automatically. The insurer doesn't prove the exclusion — the policyholder must prove the exception to escape it. The statute has handed MCST a claims exclusion; your job is to bring the factual exception.
+      </div>
+      <div class="portal-box">
+        <div class="label">Why this is a threshold concept</div>
+        You cannot win by arguing the conclusion ("it's not my balcony"). You must lead with evidence that <em>displaces the presumption</em> before the factual debate begins. The spray test is the mechanism; the PE report is the weapon.
+      </div>
+    </div>
+
+    <!-- Component 4 -->
+    <div class="component" id="c4">
+      <div class="component-header">
+        <div class="comp-num-lg key">4</div>
+        <div>
+          <div class="comp-title">Rebuttal Mechanics <span class="badge-key">🔑 Threshold</span></div>
+          <div class="comp-subtitle">BMSMA s.101(8) · What actually works at STB</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>The presumption is rebuttable — but STB case law is clear on what counts. <em>Bare assertions</em> never work. From <strong>Aspen Heights STB</strong>: "any reasonable proprietor that wished to rebut the statutory presumption would do so by engaging a water seepage specialist to investigate the issue." From <strong>Eastvale STB (2017)</strong>: the Board rejected "bare assertion evidence… that it was impossible for the water leakage in the Applicants' unit to have come from the Respondents' unit."</p>
+        <p>Three viable rebuttal paths — all require specialist evidence:</p>
+      </div>
+      <div class="rebuttal-grid">
+        <div class="rebuttal-card active">
+          <div class="path-label">Path A <span class="active-badge">YOUR PLAY</span></div>
+          <div class="path-title">Exclusionary Spray Test</div>
+          <div class="path-desc">Negative PE spray test result on the facade formally excludes external source. If facade fails the test, presumption is rebutted.</div>
+        </div>
+        <div class="rebuttal-card active">
+          <div class="path-label">Path B <span class="active-badge">YOUR PLAY</span></div>
+          <div class="path-title">Physical Pathway Impossibility</div>
+          <div class="path-desc">PE evidence that water cannot physically travel from your balcony to the seepage location. Your three-concrete-panels argument — needs PE confirmation.</div>
+        </div>
+        <div class="rebuttal-card">
+          <div class="path-label">Path C</div>
+          <div class="path-title">Positive Source Identification</div>
+          <div class="path-desc">PE positively identifies external source (facade failure, riser defect, renovation damage in #10-14, adjacent unit ingress).</div>
+        </div>
+      </div>
+      <div class="comp-body" style="margin-top:1rem;">
+        <p>The key tactical sequencing: Path A (spray test) forces MCST to either confirm the facade is sound or reveal the source. If the facade fails, you win the presumption argument without needing Paths B or C.</p>
+      </div>
+      <div class="portal-box">
+        <div class="label">Why this is a threshold concept</div>
+        Understanding rebuttal mechanics tells you exactly what to spend money on and in what order. The spray test is not a courtesy — it is the <em>standard mechanism recognised by STB</em> to displace the presumption, and MCST knows it.
+      </div>
+    </div>
+
+    <!-- Component 5 -->
+    <div class="component" id="c5">
+      <div class="component-header">
+        <div class="comp-num-lg">5</div>
+        <div>
+          <div class="comp-title">MCST Insurance Obligations</div>
+          <div class="comp-subtitle">BMSMA Part VI (ss.70–75) · The insurance tower</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>MCST must insure the building under Part VI of the BMSMA. The policy covers the building (including common property) against damage. If the facade is confirmed as the source of seepage, this policy is the mechanism through which MCST funds remediation of the common property defect and any consequential damage to Unit #10-14.</p>
+        <p><strong>Why you requested disclosure:</strong> Knowing MCST's insurer lets you (a) monitor whether MCST has notified their insurer (a reservation of rights letter is an early warning); (b) coordinate with your own insurer on subrogation if applicable; (c) signal to MCST that you understand the full liability picture — experienced MCSTs read this as a signal that you are not going away.</p>
+      </div>
+    </div>
+
+    <!-- Component 6 -->
+    <div class="component" id="c6">
+      <div class="component-header">
+        <div class="comp-num-lg">6</div>
+        <div>
+          <div class="comp-title">Subsidiary Proprietor Rights</div>
+          <div class="comp-subtitle">BMSMA s.63, s.47 · Your standing to demand records</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>Section 63 gives subsidiary proprietors the right to inspect and obtain copies of MCST records, including maintenance records, contractor invoices, defect notices, and correspondence. MCST cannot simply decline — refusal is a breach of statutory duty. The strata title plan is a public document filed with the Singapore Land Authority and must be produced on request.</p>
+        <p><strong>Why the strata title plan matters specifically:</strong> It determines definitively what is common vs lot property for this building. MCST's entire case rests on the assumption that the seepage originates in your lot. The plan may show that even the internal bay window reveal is common property — removing the argument entirely.</p>
+      </div>
+    </div>
+
+    <!-- Component 7 -->
+    <div class="component" id="c7">
+      <div class="component-header">
+        <div class="comp-num-lg">7</div>
+        <div>
+          <div class="comp-title">STB Orders &amp; Remedies</div>
+          <div class="comp-subtitle">BMSMA s.101, s.108 · What the Board can actually do</div>
+        </div>
+      </div>
+      <div class="comp-body">
+        <p>The Strata Titles Board can order: MCST to carry out works on common property (s.108); an upper lot owner to carry out waterproofing works; or a combination. Filing fee is approximately S$500 — accessible to individual subsidiary proprietors. The Board has a mediation-first approach and appoints its own independent assessors if parties cannot agree on an expert.</p>
+        <p><strong>Practical leverage:</strong> The threat to apply to STB is credible and low-cost for you. Experienced MCSTs know that STB proceedings are relatively fast and that an order under s.108 is enforceable. Your letter's 14-day deadline and reservation of rights clause is not a bluff — it is standard pre-STB positioning.</p>
+        <p><strong>Cost orders:</strong> STB cost awards are available but modest and not routine. This is not a costs-rich environment — the value is in the <em>order to remediate</em>, not in recovering legal fees.</p>
+      </div>
+    </div>
+
+    <!-- Case Law -->
+    <div class="case-law" id="cases">
+      <div class="section-label">Precedents</div>
+      <div class="section-title">Key Case Law</div>
+
+      <div class="case-entry landmark">
+        <div class="cite">[2021] SGHC 260 <span class="type-badge">High Court</span></div>
+        <div class="holding"><strong>Holding:</strong> MCST's duty under s.29(1)(b) is <em>strict liability</em>. The MCST is not absolved even if unaware of the defect, even if it acted reasonably, and even if a third party contractor caused the defect. The High Court followed the Australian authority <em>Seiwa Pty Ltd v Owners Strata Plan 35042</em> [2006] NSWSC 1157.</div>
+        <div class="kelvin-imp">↳ Your position: even if MCST argues the repainting contractor was at fault, MCST remains strictly liable under s.29. The contractor argument is irrelevant to MCST's duty.</div>
+      </div>
+
+      <div class="case-entry stb">
+        <div class="cite">Aspen Heights <span class="type-badge">STB</span></div>
+        <div class="holding"><strong>Holding:</strong> To rebut the s.101 presumption, the respondent must engage a water seepage specialist to investigate. Mr Wang (expert) accepted in cross-examination that any reasonable proprietor wishing to rebut the presumption would do so by specialist investigation — <em>not</em> bare assertion.</div>
+        <div class="kelvin-imp">↳ Your position: your demand for an independent PE spray test is precisely the mechanism STB expects. MCST's use of a non-independent contractor (who painted the building) does not meet this standard.</div>
+      </div>
+
+      <div class="case-entry stb">
+        <div class="cite">East Bay Gardens <span class="type-badge">STB</span></div>
+        <div class="holding"><strong>Holding:</strong> Pursuant to s.101(8) BMSMA, the respondent has the onus to rebut the statutory presumption <em>so long as there is any evidence of dampness, moisture or water penetration</em> in the lower unit. The threshold for firing the presumption is low.</div>
+        <div class="kelvin-imp">↳ Your position: the presumption has fired — Fraser has evidence of seepage. Your job is rebuttal. The spray test result is your evidence.</div>
+      </div>
+
+      <div class="case-entry stb">
+        <div class="cite">Eastvale STB (STB-52 of 2017) <span class="type-badge">STB</span></div>
+        <div class="holding"><strong>Holding:</strong> The Board does not accept "bare assertion evidence" that it was impossible for water leakage to have come from the respondent's unit. Two possible sources were identified; the Board found the respondent could not simply assert impossibility without specialist evidence.</div>
+        <div class="kelvin-imp">↳ Your position: your physical pathway impossibility argument (three concrete panels diagonal traverse) is strong — <em>but it must be backed by a PE's confirmation</em>, not just your assertion. Commission a PE to confirm this in writing.</div>
+      </div>
+
+      <div class="case-entry stb">
+        <div class="cite">Florence Regency <span class="type-badge">STB</span></div>
+        <div class="holding"><strong>Holding:</strong> Once the expert confirmed there was a leak originating from the upper lot, respondents were deemed responsible under s.101(8). The expert's confirmation was sufficient to trigger the s.101 presumption conclusively in the absence of adequate rebuttal evidence.</div>
+        <div class="kelvin-imp">↳ Lesson: if MCST's (non-independent) contractor confirms seepage from "your" balcony without a prior facade test, that could be used against you. This is why the spray test must happen first — to protect the sequence of evidence.</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  BMSMA Water Seepage Guide · Prepared for Kelvin &amp; Diana Tan · Kovan Melody Unit #11-14 · 19 April 2026<br>
+  <em>This guide is for educational purposes. Consult a Singapore-qualified lawyer before taking legal action.</em>
+</footer>
+
+</body>
+</html>
