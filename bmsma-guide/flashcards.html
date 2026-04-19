@@ -7,7 +7,6 @@
 <style>
   :root {
     --navy: #1a2744;
-    --red: #c0392b;
     --pill-key: #7c3aed;
     --pill-key-bg: #f3f0ff;
     --bg: #f8f7f4;
@@ -20,9 +19,7 @@
     --teal: #16a085;
     --gold: #b8860b;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
@@ -32,70 +29,60 @@
     flex-direction: column;
   }
 
+  /* Header */
   .site-header {
     background: var(--navy);
     color: #fff;
-    padding: 1rem 2rem;
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-
   .site-header h1 { font-size: 1rem; font-weight: 700; }
-  .site-header .meta { font-size: 0.75rem; opacity: 0.6; }
-  .site-header a { color: #a0c4f8; text-decoration: none; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(160,196,248,0.4); padding: 0.25rem 0.7rem; border-radius: 4px; }
+  .site-header .meta { font-size: 0.72rem; opacity: 0.55; }
+  .site-header a {
+    color: #a0c4f8; text-decoration: none; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid rgba(160,196,248,0.35); padding: 0.25rem 0.7rem; border-radius: 4px;
+  }
 
+  /* Filter bar */
   .controls {
     background: #fff;
     border-bottom: 1px solid var(--border);
-    padding: 1rem 2rem;
+    padding: 0.75rem 1.5rem;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
     align-items: center;
   }
-
   .filter-btn {
-    padding: 0.35rem 0.85rem;
+    padding: 0.3rem 0.8rem;
     border-radius: 20px;
     border: 1px solid var(--border);
     background: var(--bg);
     color: var(--text-sec);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s;
+    white-space: nowrap;
   }
-
   .filter-btn:hover { border-color: var(--navy); color: var(--navy); }
   .filter-btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
   .filter-btn.key.active { background: var(--pill-key); border-color: var(--pill-key); }
-
-  .progress-bar {
+  .progress-wrap {
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 0.8rem;
+    gap: 0.6rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
+    white-space: nowrap;
   }
-
-  .prog-track {
-    width: 120px;
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .prog-fill {
-    height: 100%;
-    background: var(--green);
-    border-radius: 3px;
-    transition: width 0.3s;
-  }
+  .prog-track { width: 100px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s; }
 
   /* Card area */
   .card-area {
@@ -104,206 +91,218 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem 1rem;
   }
 
   .card-counter {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
-    margin-bottom: 1.25rem;
     font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: 0.03em;
   }
 
-  /* Flashcard */
-  .flashcard-wrap {
-    perspective: 1000px;
+  /* The card */
+  .card-wrap {
     width: 100%;
-    max-width: 640px;
+    max-width: 620px;
     cursor: pointer;
+    user-select: none;
   }
 
-  .flashcard {
-    position: relative;
-    width: 100%;
-    min-height: 320px;
-    transform-style: preserve-3d;
-    transition: transform 0.5s ease;
-  }
-
-  .flashcard.flipped { transform: rotateY(180deg); }
-
-  .card-face {
-    position: absolute;
-    width: 100%;
-    min-height: 320px;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+  .card {
+    background: var(--navy);
     border-radius: 14px;
     padding: 2rem;
+    min-height: 260px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    will-change: transform;
   }
 
-  .card-front {
-    background: var(--navy);
-    color: #fff;
-    border: none;
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.16); }
+  .card.is-answer { background: #ffffff; border: 1px solid var(--border); }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
   }
 
-  .card-back {
-    background: #fff;
-    border: 1px solid var(--border);
-    transform: rotateY(180deg);
-    color: var(--text);
-  }
-
-  .card-category {
+  .cat-pill {
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    opacity: 0.6;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.09em;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
   }
 
-  .card-front .card-category { color: #fff; }
-  .card-back .card-category { color: var(--text-muted); }
+  .card.is-answer .cat-pill {
+    background: var(--bg);
+    color: var(--text-muted);
+  }
 
-  .card-threshold {
-    display: inline-block;
-    background: rgba(124,58,237,0.2);
-    color: #c4b5fd;
-    border-radius: 3px;
-    font-size: 0.65rem;
+  .thresh-pill {
+    font-size: 0.63rem;
     font-weight: 700;
-    padding: 0.1rem 0.4rem;
-    margin-left: 0.5rem;
-    vertical-align: middle;
+    background: rgba(167,139,250,0.25);
+    color: #c4b5fd;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
   }
+
+  .card.is-answer .thresh-pill {
+    background: var(--pill-key-bg);
+    color: var(--pill-key);
+  }
+
+  .card-body { flex: 1; display: flex; align-items: center; }
 
   .card-question {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    line-height: 1.5;
-    flex: 1;
-    display: flex;
-    align-items: center;
+    color: #fff;
+    line-height: 1.55;
   }
 
-  .card-front .card-question { color: #fff; }
-
-  .card-hint {
-    font-size: 0.75rem;
-    opacity: 0.5;
-    margin-top: 1.5rem;
-    text-align: center;
-  }
-
-  .card-answer {
-    font-size: 0.92rem;
-    line-height: 1.7;
+  .card-answer-text {
+    font-size: 0.88rem;
     color: var(--text-sec);
-    flex: 1;
+    line-height: 1.75;
   }
 
-  .card-answer strong { color: var(--text); }
+  .card-answer-text strong { color: var(--text); }
 
-  .card-answer .key-point {
+  .card-answer-text .key-point {
     background: var(--pill-key-bg);
     border-left: 3px solid var(--pill-key);
     padding: 0.5rem 0.75rem;
     border-radius: 0 4px 4px 0;
-    margin: 0.75rem 0;
-    font-size: 0.87rem;
+    margin: 0.65rem 0;
+    font-size: 0.84rem;
     color: #3b1f7a;
   }
 
-  .card-answer .case-ref {
+  .card-answer-text .case-ref {
     display: inline-block;
     background: #fffbf0;
     color: var(--gold);
     border: 1px solid #e8d87a;
     border-radius: 3px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.1rem 0.45rem;
-    margin: 0.1rem;
+    padding: 0.1rem 0.4rem;
+    margin: 0.15rem 0.1rem;
   }
 
-  .card-answer .kelvin-tag {
+  .card-answer-text .kelvin-tag {
+    display: inline-block;
     background: #fef3e2;
     color: var(--amber);
     border: 1px solid rgba(211,84,0,0.2);
     border-radius: 3px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    padding: 0.1rem 0.45rem;
-    display: inline-block;
-    margin-bottom: 0.4rem;
+    padding: 0.1rem 0.4rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .card-bottom {
+    margin-top: 1.25rem;
+    font-size: 0.72rem;
+    text-align: center;
+    color: rgba(255,255,255,0.35);
+  }
+
+  .card.is-answer .card-bottom { color: var(--text-muted); }
+
+  /* Flip animation class */
+  .card.flipping {
+    animation: flipOut 0.18s ease forwards;
+  }
+
+  @keyframes flipOut {
+    0%   { transform: scaleY(1); opacity: 1; }
+    100% { transform: scaleY(0); opacity: 0; }
   }
 
   /* Navigation */
   .card-nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
     flex-wrap: wrap;
     justify-content: center;
   }
 
   .nav-btn {
-    padding: 0.6rem 1.4rem;
+    padding: 0.55rem 1.2rem;
     border-radius: 8px;
     border: none;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s;
   }
-
-  .nav-btn.prev { background: var(--bg); border: 1px solid var(--border); color: var(--text-sec); }
-  .nav-btn.prev:hover { background: #eee; }
-  .nav-btn.flip { background: var(--navy); color: #fff; }
-  .nav-btn.flip:hover { background: #2c3e6b; }
+  .nav-btn.prev { background: #fff; border: 1px solid var(--border); color: var(--text-sec); }
+  .nav-btn.prev:hover:not(:disabled) { background: var(--bg); }
+  .nav-btn.flip-btn { background: var(--navy); color: #fff; }
+  .nav-btn.flip-btn:hover { background: #2c3e6b; }
   .nav-btn.next { background: var(--green); color: #fff; }
-  .nav-btn.next:hover { background: #219a52; }
-
-  .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .nav-btn.next:hover:not(:disabled) { background: #219a52; }
+  .nav-btn:disabled { opacity: 0.32; cursor: not-allowed; }
 
   .shuffle-btn {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.4rem 0.8rem;
-    cursor: pointer;
-    transition: all 0.15s;
+    font-size: 0.77rem; color: var(--text-muted); background: none;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.38rem 0.75rem; cursor: pointer; transition: all 0.15s;
   }
   .shuffle-btn:hover { background: var(--bg); color: var(--text); }
 
-  /* Complete state */
-  .complete-msg {
+  /* Keyboard hint */
+  .kb-hint {
+    margin-top: 0.75rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
     text-align: center;
-    padding: 3rem 2rem;
+  }
+  .kb {
+    background: var(--border); color: var(--text-sec); padding: 0.1rem 0.35rem;
+    border-radius: 3px; font-family: monospace; font-size: 0.68rem;
+  }
+
+  /* Complete */
+  .complete-msg {
+    display: none;
+    text-align: center;
+    padding: 2.5rem 2rem;
     background: #fff;
     border-radius: 14px;
     border: 1px solid var(--border);
-    max-width: 480px;
+    max-width: 420px;
     width: 100%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  .complete-msg .emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .complete-msg h3 { font-size: 1.15rem; color: var(--navy); margin-bottom: 0.4rem; }
+  .complete-msg p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+  .complete-msg button {
+    background: var(--navy); color: #fff; border: none;
+    padding: 0.6rem 1.4rem; border-radius: 8px; font-size: 0.85rem;
+    font-weight: 600; cursor: pointer;
   }
 
-  .complete-msg .emoji { font-size: 3rem; margin-bottom: 1rem; }
-  .complete-msg h3 { font-size: 1.25rem; color: var(--navy); margin-bottom: 0.5rem; }
-  .complete-msg p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem; }
-  .complete-msg button { background: var(--navy); color: #fff; border: none; padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
-
   footer {
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.73rem;
-    color: var(--text-muted);
+    text-align: center; padding: 0.85rem 1rem;
+    font-size: 0.7rem; color: var(--text-muted);
     border-top: 1px solid var(--border);
   }
 </style>
@@ -319,15 +318,15 @@
 </header>
 
 <div class="controls">
-  <button class="filter-btn active" onclick="filterCards('all', this)">All (30)</button>
-  <button class="filter-btn key" onclick="filterCards('threshold', this)">🔑 Threshold (12)</button>
-  <button class="filter-btn" onclick="filterCards('s2', this)">s.2 Common Property</button>
-  <button class="filter-btn" onclick="filterCards('s29', this)">s.29 MCST Duty</button>
-  <button class="filter-btn" onclick="filterCards('s101', this)">s.101 Presumption</button>
-  <button class="filter-btn" onclick="filterCards('rebuttal', this)">Rebuttal</button>
-  <button class="filter-btn" onclick="filterCards('cases', this)">Case Law</button>
-  <button class="filter-btn" onclick="filterCards('tactics', this)">Tactics</button>
-  <div class="progress-bar">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All (30)</button>
+  <button class="filter-btn key" onclick="setFilter('threshold',this)">🔑 Threshold (12)</button>
+  <button class="filter-btn" onclick="setFilter('s2',this)">s.2 Common Property</button>
+  <button class="filter-btn" onclick="setFilter('s29',this)">s.29 MCST Duty</button>
+  <button class="filter-btn" onclick="setFilter('s101',this)">s.101 Presumption</button>
+  <button class="filter-btn" onclick="setFilter('rebuttal',this)">Rebuttal</button>
+  <button class="filter-btn" onclick="setFilter('cases',this)">Case Law</button>
+  <button class="filter-btn" onclick="setFilter('tactics',this)">Tactics</button>
+  <div class="progress-wrap">
     <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     <span id="progText">0 / 0</span>
   </div>
@@ -336,295 +335,313 @@
 <div class="card-area">
   <div class="card-counter" id="cardCounter">Card 1 of 30</div>
 
-  <div class="flashcard-wrap" onclick="flipCard()">
-    <div class="flashcard" id="flashcard">
-      <div class="card-face card-front" id="cardFront">
-        <div class="card-category" id="cardCategory">—</div>
-        <div class="card-question" id="cardQuestion">Loading…</div>
-        <div class="card-hint">Tap to reveal answer</div>
+  <div class="card-wrap" id="cardWrap" onclick="doFlip()">
+    <div class="card" id="theCard">
+      <div class="card-top">
+        <span class="cat-pill" id="catPill">—</span>
+        <span class="thresh-pill" id="threshPill" style="display:none">🔑 Threshold</span>
       </div>
-      <div class="card-face card-back" id="cardBack">
-        <div class="card-category" id="cardCategoryBack">—</div>
-        <div class="card-answer" id="cardAnswer">—</div>
+      <div class="card-body">
+        <div id="cardContent" class="card-question">Loading…</div>
       </div>
+      <div class="card-bottom" id="cardHint">Tap to reveal answer</div>
     </div>
   </div>
 
-  <div id="completeMsg" class="complete-msg" style="display:none;">
+  <div class="complete-msg" id="completeMsg">
     <div class="emoji">🎓</div>
     <h3>Deck complete!</h3>
-    <p>You've reviewed all cards in this set. Shuffle and go again?</p>
-    <button onclick="restartDeck()">Shuffle & Restart</button>
+    <p>You've reviewed all cards in this set.</p>
+    <button onclick="restart()">Shuffle &amp; Restart</button>
   </div>
 
   <div class="card-nav">
-    <button class="nav-btn prev" id="prevBtn" onclick="prevCard()">← Prev</button>
-    <button class="nav-btn flip" onclick="flipCard()">Flip</button>
-    <button class="nav-btn next" id="nextBtn" onclick="nextCard()">Next →</button>
-    <button class="shuffle-btn" onclick="shuffleDeck()">🔀 Shuffle</button>
+    <button class="nav-btn prev" id="prevBtn" onclick="go(-1)">← Prev</button>
+    <button class="nav-btn flip-btn" onclick="doFlip()">Flip</button>
+    <button class="nav-btn next" id="nextBtn" onclick="go(1)">Next →</button>
+    <button class="shuffle-btn" onclick="shuffle()">🔀 Shuffle</button>
+  </div>
+  <div class="kb-hint">
+    <span class="kb">Space</span> flip &nbsp;·&nbsp;
+    <span class="kb">←</span><span class="kb">→</span> navigate
   </div>
 </div>
 
-<footer>BMSMA Flashcards · Prepared for Kelvin &amp; Diana Tan · 19 April 2026 · For educational purposes only.</footer>
+<footer>BMSMA Flashcards · Kelvin &amp; Diana Tan · Kovan Melody #11-14 · 19 Apr 2026 · Educational purposes only.</footer>
 
 <script>
-const ALL_CARDS = [
-  // s.2 Common Property
-  {
-    cat: 's2', threshold: true,
-    q: 'What does BMSMA s.2 define as "common property"?',
-    a: '<strong>Everything in the development not within any lot boundary.</strong> This includes external walls, facades, bay window <em>frames</em>, sealant joints, weepholes, and structural elements. The subsidiary strata title plan is the authoritative document. <div class="key-point">🔑 Bay window frames and the external facade are almost invariably common property — only the internal glass, sill, or reveal may be lot property.</div>'
-  },
-  {
-    cat: 's2', threshold: true,
-    q: 'Why is the s.2 definition a "threshold concept" — what changes once you understand it?',
-    a: 'Once you understand the facade is common property by statute, <strong>MCST's role shifts from passive observer to active duty-bearer</strong>. They have an affirmative legal obligation to maintain the facade — not an option to wait for you to disprove your balcony is the source. <div class="key-point">MCST cannot take a neutral position. s.2 + s.29 together make them a defendant, not a referee.</div>'
-  },
-  {
-    cat: 's2',
-    q: 'What document definitively determines the common property boundary for a specific development?',
-    a: 'The <strong>subsidiary strata title plan</strong>, filed with the Singapore Land Authority. This plan draws the exact lot boundary for each unit. <div class="kelvin-tag">Kelvin's action</div> Request a certified copy in your letter (s.63 right) — the plan may show even more is common property than MCST admits.'
-  },
-  {
-    cat: 's2',
-    q: 'Are the weepholes in the bay window frame common property or lot property?',
-    a: '<strong>Common property.</strong> Weepholes are part of the external wall drainage system — they are structural elements of the facade designed to drain water from the frame cavity. MCST is responsible for ensuring they are clear and functional. Blocked weepholes are a classic facade failure mode that causes bay window seepage.'
-  },
+// ─── CARD DATA (inline JS object) ────────────────────────────────────────────
+const CARDS = [
+  // s.2 Common Property (4)
+  { cat:'s2', threshold:true,
+    q:'What does BMSMA s.2 define as "common property"?',
+    a:'<strong>Everything in the development not within any lot boundary</strong> — external walls, facades, bay window <em>frames</em>, sealant joints, weepholes, and structural elements. The subsidiary strata title plan is the authoritative boundary document.<div class="key-point">🔑 Bay window frames and the external facade are almost invariably common property. Only internal glass, sill, or reveal may sometimes be lot property.</div>' },
 
-  // s.29 MCST Duty
-  {
-    cat: 's29', threshold: true,
-    q: 'What standard of liability does BMSMA s.29(1) impose on MCST for common property?',
-    a: '<strong>Strict liability.</strong> Per [2021] SGHC 260, the MCST is not absolved even if: (a) it was unaware of the defect, (b) it had acted reasonably, or (c) a third party contractor caused the defect. <div class="case-ref">[2021] SGHC 260</div> <div class="key-point">This is not negligence. There is no due diligence defence. MCST owns the outcome of everything on common property.</div>'
-  },
-  {
-    cat: 's29', threshold: true,
-    q: 'MCST says "the repainting contractor, not us, is responsible for the facade defect." Is this a valid defence?',
-    a: '<strong>No — not under s.29.</strong> [2021] SGHC 260 explicitly held MCST is not absolved even if a third party contractor caused the defect. MCST engaged the contractor; they inherit the liability. <div class="key-point">The contractor argument is a claim MCST may have <em>against</em> the contractor — but it does not relieve MCST of their duty to you.</div>'
-  },
-  {
-    cat: 's29',
-    q: 'What does "serviceable repair" mean under s.29(1)? Does it require perfect condition?',
-    a: '"<strong>Good and serviceable repair</strong>" means fit for its intended purpose — not necessarily new or perfect. For an external facade: sealant that prevents water ingress, weepholes that drain correctly, rendering without open cracks. The test is functional, not cosmetic. If facade sealant has deteriorated and water is entering, it is not in serviceable repair.'
-  },
-  {
-    cat: 's29',
-    q: 'If MCST was unaware the facade sealant had failed, does that excuse them under s.29?',
-    a: '<strong>No.</strong> Strict liability under s.29(1) means ignorance is not a defence. MCST has an obligation to <em>proactively maintain</em> common property, including regular inspections. Failure to discover a defect does not excuse the failure to remedy it. <div class="case-ref">[2021] SGHC 260</div>'
-  },
+  { cat:'s2', threshold:true,
+    q:'Why is the s.2 definition a "threshold concept" — what changes once you understand it?',
+    a:'MCST\'s role shifts from <strong>passive observer to active duty-bearer</strong>. They have an affirmative legal obligation to maintain the facade — not an option to wait while you disprove your balcony is the source.<div class="key-point">s.2 + s.29 together make MCST a defendant, not a referee.</div>' },
 
-  // s.101 Presumption
-  {
-    cat: 's101', threshold: true,
-    q: 'What does the s.101 BMSMA presumption say — and when does it fire?',
-    a: 'When water penetrates from a higher lot into a lower lot, <strong>the defect causing penetration is presumed to be located in the higher lot</strong>. It fires as soon as there is <em>any</em> evidence of dampness, moisture, or water penetration in the lower unit — the threshold is deliberately low. <div class="case-ref">East Bay Gardens STB</div>'
-  },
-  {
-    cat: 's101', threshold: true,
-    q: 'What exactly does the s.101 presumption presume — responsibility, or location of defect?',
-    a: 'It presumes the <strong>location of the defect</strong> — specifically that the defect is <em>in your lot</em>. It does not say you caused it intentionally or negligently. Rebutting it means showing the defect is elsewhere: in the common property facade, a riser, the downstairs lot, or an adjacent unit. <div class="key-point">This framing matters: you are not defending your conduct — you are challenging the location presumption.</div>'
-  },
-  {
-    cat: 's101',
-    q: 'Does MCST need to prove anything before the s.101 presumption applies?',
-    a: '<strong>No.</strong> MCST needs only to establish that there is evidence of seepage in the lower unit. The statute then does the work for them — the presumption shifts the burden to the upper lot owner. MCST does not need to identify the source, conduct tests, or hire an expert before the presumption fires.'
-  },
-  {
-    cat: 's101',
-    q: 'If MCST's contractors have tried and failed to fix the seepage from Unit #10-14 multiple times, what does that suggest about the presumption?',
-    a: 'It is <strong>evidence supporting rebuttal</strong>. If the source were a simple internal defect in your lot, remediation of the downstairs unit from within would fix it. Repeated failure suggests the source has not been found — consistent with an external source (facade) that was never investigated. <div class="kelvin-tag">In your letter</div> This is para 2(b) of your letter — MCST's own admission weaponised.'
-  },
+  { cat:'s2',
+    q:'What document definitively determines the common property boundary for Kovan Melody?',
+    a:'The <strong>subsidiary strata title plan</strong>, filed with the Singapore Land Authority. It draws the exact lot boundary for each unit.<div class="kelvin-tag">Kelvin\'s action</div> Para 7(g) of your letter requests a certified copy under s.63 rights. It may show even more is common property than MCST claims.' },
 
-  // Rebuttal
-  {
-    cat: 'rebuttal', threshold: true,
-    q: 'What standard of evidence does STB require to rebut the s.101 presumption?',
-    a: '<strong>Specialist evidence — bare assertion is never enough.</strong> Per Aspen Heights STB: "any reasonable proprietor that wished to rebut the statutory presumption would do so by engaging a water seepage specialist." Per Eastvale STB: the Board rejected bare assertion that water ingress was "impossible." <div class="case-ref">Aspen Heights STB</div><div class="case-ref">Eastvale STB 2017</div>'
-  },
-  {
-    cat: 'rebuttal', threshold: true,
-    q: 'What are the three viable rebuttal paths under s.101(8)?',
-    a: '<strong>A — Exclusionary spray test:</strong> negative PE facade spray test result formally excludes the external source. If facade fails the test, presumption is rebutted. <br><br><strong>B — Physical pathway impossibility:</strong> PE evidence that water cannot physically travel from your balcony to the seepage location. <br><br><strong>C — Positive source identification:</strong> PE positively identifies the external source (facade failure, riser, renovation damage downstairs, adjacent unit). <div class="key-point">Path A is your primary play — it forces MCST to either confirm the facade or reveal the source.</div>'
-  },
-  {
-    cat: 'rebuttal', threshold: true,
-    q: 'Why must the facade spray test be done by an independent PE — why not MCST\'s regular contractor?',
-    a: 'Two reasons: <strong>(1) STB admissibility</strong> — a contractor who previously worked on the facade cannot be independent; their report on their own workmanship has no evidential weight (Aspen Heights: specialist required). <strong>(2) Conflict of interest</strong> — the repainting contractor may have caused the defect; they are being asked to assess their own work. <div class="kelvin-tag">In your letter</div> Para 9(c) explicitly objects to this and reserves the right to challenge such a report at STB.'
-  },
-  {
-    cat: 'rebuttal',
-    q: 'Kelvin argues water from his balcony would need to cross three concrete panels diagonally to reach the seepage site. Is this a valid rebuttal?',
-    a: 'Yes — this is a <strong>physical pathway impossibility argument (Path B)</strong>. It is strong in principle, but <em>must be confirmed by a PE in writing</em>. Per Eastvale STB, bare assertion of impossibility (without specialist evidence) was rejected. Commission a PE to inspect and certify the structural layout and confirm the impossibility in a written report.'
-  },
-  {
-    cat: 'rebuttal',
-    q: 'The efflorescence (white mineral streaking) on the external bay window ledge was photographed by Fraser. How does this help Kelvin?',
-    a: 'Efflorescence is caused by water evaporating and leaving mineral deposits — it is a <strong>visual marker of chronic water movement through the external surface</strong>. Crucially, this evidence was provided by Fraser (the complainant downstairs) — making it the complainant\'s own observations undermining MCST\'s theory. <div class="key-point">In your letter: "the complainant\'s own photographic observations of the external structure" — this is para 2(c).</div>'
-  },
+  { cat:'s2',
+    q:'Are the weepholes in the bay window frame common property or lot property?',
+    a:'<strong>Common property.</strong> Weepholes are part of the external wall drainage system — structural elements designed to drain water from the frame cavity. MCST is responsible for keeping them clear. Blocked weepholes are a classic facade failure mode causing bay window seepage.' },
 
-  // Case Law
-  {
-    cat: 'cases', threshold: true,
-    q: 'What did [2021] SGHC 260 establish about MCST liability under s.29?',
-    a: '<strong>Strict liability.</strong> The High Court held that s.29(1)(b) imposes strict liability — MCST is not absolved even if unaware of the defect, even if it acted reasonably, and even if a third party caused it. Followed the Australian authority Seiwa Pty Ltd v Owners Strata Plan 35042 [2006] NSWSC 1157. <div class="case-ref">[2021] SGHC 260</div> <div class="key-point">This is the most important case for your argument that MCST cannot hide behind the contractor.</div>'
-  },
-  {
-    cat: 'cases',
-    q: 'What happened in Aspen Heights STB? What was the key principle?',
-    a: 'The Board required specialist investigation (not bare assertion) to rebut s.101. The expert witness accepted in cross-examination that a reasonable proprietor wishing to rebut the presumption would engage a <strong>water seepage specialist</strong>. The Board rejected assertion-only evidence. <div class="kelvin-tag">Your position</div> Your demand for an independent PE spray test is precisely what Aspen Heights requires.'
-  },
-  {
-    cat: 'cases',
-    q: 'What was the key ruling in East Bay Gardens STB on s.101(8)?',
-    a: 'Under s.101(8), <strong>the respondent bears the onus to rebut the presumption so long as there is any evidence of dampness, moisture, or water penetration</strong> in the lower unit. The threshold for firing the presumption is deliberately low — any evidence of seepage is sufficient. <div class="case-ref">East Bay Gardens STB</div>'
-  },
-  {
-    cat: 'cases',
-    q: 'What did Eastvale STB (2017) say about "bare assertion" evidence?',
-    a: 'The Board <strong>rejected bare assertion evidence</strong> that it was "impossible" for water to have come from the respondent\'s unit. The Board identified two possible sources and required proper specialist investigation. Assertion without expert backup carries no weight. <div class="case-ref">Eastvale STB-52 of 2017</div> <div class="key-point">Lesson: Kelvin\'s physical impossibility argument must be backed by a PE\'s written confirmation, not just his own statement.</div>'
-  },
-  {
-    cat: 'cases',
-    q: 'What was the outcome in Florence Regency STB? What is the lesson for Kelvin?',
-    a: 'Once the expert confirmed water originated from the upper lot, respondents were deemed responsible under s.101(8) — <strong>in the absence of adequate rebuttal evidence</strong>. Lesson: if MCST\'s contractor (even a conflicted one) "confirms" seepage from your balcony before a facade test, that finding may be used against you. <div class="key-point">This is why the facade spray test must happen first — to protect the evidentiary sequence.</div>'
-  },
+  // s.29 MCST Duty (4)
+  { cat:'s29', threshold:true,
+    q:'What standard of liability does BMSMA s.29(1) impose on MCST for common property?',
+    a:'<strong>Strict liability.</strong> Per [2021] SGHC 260, MCST is not absolved even if: (a) unaware of the defect, (b) it acted reasonably, or (c) a third-party contractor caused the defect.<div class="case-ref">[2021] SGHC 260</div><div class="key-point">No due diligence defence. MCST owns the outcome of everything on common property.</div>' },
 
-  // Tactics
-  {
-    cat: 'tactics', threshold: true,
-    q: 'What is the correct sequencing of investigations — and why does it matter strategically?',
-    a: '<strong>Facade spray test FIRST, ponding test only if facade is ruled out.</strong> Why: (1) the spray test cost is MCST\'s to bear (common property); (2) a positive facade result completely displaces the presumption; (3) allowing MCST\'s contractor to test your balcony first could generate adverse evidence before the facade is even examined. <div class="key-point">The sequence is not courtesy — it is the evidentiary framework that determines who bears the next burden.</div>'
-  },
-  {
-    cat: 'tactics',
-    q: 'Whose obligation is it to pay for the facade spray test?',
-    a: '<strong>MCST\'s.</strong> The test concerns common property that MCST is obliged to maintain under s.29(1). The cost of investigating the condition of common property is properly borne by MCST out of the management fund. <div class="kelvin-tag">In your letter</div> Para 4 explicitly states this. If MCST refuses, this refusal itself supports a STB application.'
-  },
-  {
-    cat: 'tactics',
-    q: 'Why did Kelvin\'s letter offer "simultaneous non-destructive access" to his unit during the facade test?',
-    a: 'Two reasons: (1) <strong>demonstrates cooperation</strong> — removes any argument that Kelvin is obstructing MCST\'s statutory right of entry; (2) <strong>limits scope</strong> — "non-destructive" and "simultaneous with facade test" means the access is conditional and bounded. MCST cannot use a cooperative access offer as a blank cheque for invasive testing. <div class="key-point">Gemini\'s steelman contribution: the offer neutralises the obstruction argument without conceding invasive access.</div>'
-  },
-  {
-    cat: 'tactics',
-    q: 'Why request MCST\'s maintenance records for the past 5 years?',
-    a: 'Four tactical reasons: (1) reveals whether the facade was ever properly inspected — absence of records = failure of s.29 duty; (2) shows prior complaints from #10-14, establishing the seepage history; (3) may reveal the repainting contractor\'s scope — confirming whether sealant was addressed; (4) creates a documentary base for any STB filing. <div class="kelvin-tag">In your letter</div> Para 7(a)–(d) requests these under s.63 rights.'
-  },
-  {
-    cat: 'tactics',
-    q: 'What is the tactical value of requesting the contractor\'s PI/E&O insurance details?',
-    a: 'If the facade spray test reveals defective workmanship from the 2-year-old repainting contract, the contractor\'s PI/E&O policy is the liability source — not Kelvin. Knowing the insurer: (1) signals to MCST that you understand the full liability chain; (2) allows direct notification to the contractor\'s insurer; (3) puts MCST on notice that their warranty claim against the contractor is a live option they may be forfeiting by not pursuing it.'
-  },
-  {
-    cat: 'tactics',
-    q: 'What is the Strata Titles Board, how much does it cost to file, and what can it order?',
-    a: '<strong>STB</strong> is Singapore\'s specialist tribunal for strata property disputes under BMSMA. Filing fee ~S$500. It can order: MCST to carry out common property repairs (s.108); an upper lot owner to waterproof; or both. Mediation-first approach; appoints its own independent assessors. <div class="key-point">Low-cost and credible — experienced MCSTs know an STB application is not idle. Your 14-day deadline is standard pre-STB positioning.</div>'
-  },
-  {
-    cat: 'tactics',
-    q: 'Why does Kelvin\'s letter include a "document preservation" request?',
-    a: 'Standard pre-litigation protocol. Requests that MCST and the managing agent preserve all documents, emails, WhatsApp messages, contractor communications, photos, and inspection records from the date of first complaint. <strong>Two purposes:</strong> (1) prevents destruction or "losing" of inconvenient records; (2) signals to MCST that you are prepared to litigate and that spoliation of evidence would itself be an issue at STB.'
-  },
-  {
-    cat: 'tactics',
-    q: 'Why should the strata title plan be specifically requested in the document list?',
-    a: 'The strata title plan determines definitively what is common vs lot property for <em>this specific building</em>. MCST\'s entire case assumes your balcony / bay window reveal is lot property. The plan may show: (1) even the internal bay window reveal is common property; (2) the exact lot boundary at the seepage location favours your position. Most owners never request it. It is a public document MCST must produce under s.63. <div class="kelvin-tag">Opus 4.7 addition</div>'
-  },
+  { cat:'s29', threshold:true,
+    q:'MCST says "the repainting contractor, not us, caused the facade defect." Is this a valid defence?',
+    a:'<strong>No.</strong> [2021] SGHC 260 explicitly held MCST is not absolved even if a third party caused the defect. MCST engaged the contractor — they inherit the liability.<div class="key-point">The contractor argument is a claim MCST has <em>against</em> the contractor. It does not relieve MCST of their duty to you.</div>' },
+
+  { cat:'s29',
+    q:'Does "good and serviceable repair" under s.29(1) require the facade to be in perfect condition?',
+    a:'"Good and serviceable repair" means <strong>fit for its intended purpose</strong> — not new or perfect. For a facade: sealant that prevents water ingress, functioning weepholes, rendering without open cracks. If facade sealant has deteriorated and water is entering, it is not in serviceable repair regardless of age.' },
+
+  { cat:'s29',
+    q:'If MCST was unaware the facade sealant had failed, does that excuse them under s.29?',
+    a:'<strong>No.</strong> Strict liability means ignorance is not a defence. MCST has an obligation to <em>proactively maintain</em> common property — including regular inspections. Failure to discover a defect does not excuse the failure to remedy it.<div class="case-ref">[2021] SGHC 260</div>' },
+
+  // s.101 Presumption (4)
+  { cat:'s101', threshold:true,
+    q:'What does the s.101 BMSMA presumption say, and when does it fire?',
+    a:'When water penetrates from a higher lot into a lower lot, <strong>the defect is presumed to be located in the higher lot</strong>. It fires as soon as there is <em>any</em> evidence of dampness, moisture, or water penetration in the lower unit — the threshold is deliberately low.<div class="case-ref">East Bay Gardens STB</div>' },
+
+  { cat:'s101', threshold:true,
+    q:'Does s.101 presume "responsibility" or "location of defect"? Why does the distinction matter?',
+    a:'It presumes the <strong>location of the defect</strong> — that the defect is in your lot. Not that you caused it intentionally or negligently. Rebutting it means showing the defect is elsewhere: the facade, a riser, the downstairs renovation, or an adjacent unit.<div class="key-point">You are not defending your conduct. You are challenging the presumed location.</div>' },
+
+  { cat:'s101',
+    q:'Does MCST need to prove anything before the s.101 presumption applies?',
+    a:'<strong>No.</strong> MCST needs only to establish evidence of seepage in the lower unit. The statute then shifts the burden to the upper lot owner automatically. MCST does not need to identify the source or hire an expert before the presumption fires.' },
+
+  { cat:'s101',
+    q:'MCST\'s contractors tried and failed to fix the seepage from Unit #10-14 multiple times. What does that suggest?',
+    a:'It is <strong>evidence supporting rebuttal</strong>. If the source were an internal defect in your lot, remediation from the downstairs side would fix it. Repeated failure suggests an external source (facade) that was never investigated.<div class="kelvin-tag">In your letter</div> Para 2(b) weaponises MCST\'s own admission from their Oct 2025 letter.' },
+
+  // Rebuttal (6)
+  { cat:'rebuttal', threshold:true,
+    q:'What standard of evidence does STB require to rebut the s.101 presumption?',
+    a:'<strong>Specialist evidence — bare assertion is never enough.</strong><div class="case-ref">Aspen Heights STB</div> "Any reasonable proprietor wishing to rebut the presumption would do so by engaging a water seepage specialist."<div class="case-ref">Eastvale STB 2017</div> Board rejected bare assertion that water ingress was "impossible."' },
+
+  { cat:'rebuttal', threshold:true,
+    q:'What are the three viable paths to rebut the s.101 presumption?',
+    a:'<strong>A — Exclusionary spray test</strong>: negative PE facade test formally excludes external source. Facade failure = presumption rebutted.<br><br><strong>B — Physical impossibility</strong>: PE confirms water cannot physically travel from your balcony to the seepage site (e.g. three concrete panels diagonal).<br><br><strong>C — Positive source ID</strong>: PE identifies the actual external source.<div class="key-point">Path A is your primary play — forces MCST to either clear the facade or reveal the source.</div>' },
+
+  { cat:'rebuttal', threshold:true,
+    q:'Why must the facade spray test be done by an independent PE — not MCST\'s usual contractor?',
+    a:'Two reasons: <strong>(1) STB admissibility</strong> — Aspen Heights requires a specialist. A contractor assessing their own workmanship has no independent evidential weight.<br><strong>(2) Conflict of interest</strong> — the repainting contractor may have caused the defect; asking them to assess it is inherently compromised.<div class="kelvin-tag">In your letter</div> Para 9(c) objects explicitly and reserves the right to challenge such a report at STB.' },
+
+  { cat:'rebuttal',
+    q:'Kelvin argues water from his balcony would need to cross three concrete panels diagonally to reach the seepage site. Is this a valid rebuttal?',
+    a:'Yes — this is the <strong>physical pathway impossibility argument (Path B)</strong>. Strong in principle, but <em>must be confirmed by a PE in writing</em>. Eastvale STB rejected bare assertion of impossibility. Commission a PE to inspect the structural layout and certify the impossibility.<div class="case-ref">Eastvale STB 2017</div>' },
+
+  { cat:'rebuttal',
+    q:'The efflorescence (white mineral streaking) on the bay window ledge was photographed by Fraser (downstairs). How does this help?',
+    a:'Efflorescence marks <strong>chronic water movement through the external surface</strong>. Crucially, it was provided by Fraser — the <em>complainant\'s own photographic evidence</em> undermines MCST\'s theory.<div class="key-point">Para 2(c) of your letter: "the complainant\'s own observations of the external structure" supporting facade failure.</div>' },
+
+  { cat:'rebuttal',
+    q:'Why must the spray test happen before any ponding test on Kelvin\'s balcony?',
+    a:'<strong>Sequence protects the evidentiary framework.</strong> If MCST\'s contractor tests your balcony first and "finds" a problem (even without basis), that adverse finding enters the record before the facade has been examined. Florence Regency STB shows how expert confirmation is used against the respondent in the absence of prior rebuttal evidence.<div class="case-ref">Florence Regency STB</div>' },
+
+  // Case Law (5)
+  { cat:'cases', threshold:true,
+    q:'What did [2021] SGHC 260 establish about MCST liability under s.29?',
+    a:'<strong>Strict liability.</strong> MCST not absolved even if: unaware of the defect, acted reasonably, or third-party contractor caused it. Followed Australian authority Seiwa Pty Ltd v Owners Strata Plan 35042 [2006] NSWSC 1157.<div class="case-ref">[2021] SGHC 260</div><div class="key-point">Most important case for the argument that MCST cannot hide behind the contractor.</div>' },
+
+  { cat:'cases',
+    q:'What happened in Aspen Heights STB? What was the key principle?',
+    a:'Board required specialist investigation (not bare assertion) to rebut s.101. Expert accepted in cross-examination that a reasonable proprietor wishing to rebut would engage a <strong>water seepage specialist</strong>. Assertion-only evidence rejected.<div class="kelvin-tag">Your position</div> Your demand for an independent PE spray test is exactly what Aspen Heights requires.' },
+
+  { cat:'cases',
+    q:'What was the key ruling in East Bay Gardens STB on s.101(8)?',
+    a:'Under s.101(8), <strong>the respondent bears the onus to rebut the presumption so long as there is any evidence of dampness, moisture, or water penetration</strong> in the lower unit. The threshold is low — any evidence of seepage is sufficient to engage the presumption.<div class="case-ref">East Bay Gardens STB</div>' },
+
+  { cat:'cases',
+    q:'What did Eastvale STB (2017) say about "bare assertion" evidence?',
+    a:'Board <strong>rejected bare assertion</strong> that it was impossible for water to have come from the respondent\'s unit. Two possible sources identified; respondent needed proper specialist investigation, not assertion.<div class="case-ref">Eastvale STB-52/2017</div><div class="key-point">Kelvin\'s three-concrete-panels argument must be backed by a PE\'s written confirmation — not just his own statement.</div>' },
+
+  { cat:'cases',
+    q:'What was the lesson from Florence Regency STB for Kelvin?',
+    a:'Once the expert confirmed water originated from the upper lot, respondents were deemed responsible under s.101(8) — <strong>in the absence of adequate rebuttal evidence</strong>. The lesson: if MCST\'s contractor "confirms" seepage from your balcony before a facade test, that finding may be used against you.<div class="key-point">Facade spray test first — to protect the sequence of evidence.</div>' },
+
+  // Tactics (7)
+  { cat:'tactics', threshold:true,
+    q:'What is the correct sequencing of investigations — and why does it matter strategically?',
+    a:'<strong>Facade spray test FIRST, ponding test only if facade is definitively ruled out.</strong><br>(1) Spray test cost is MCST\'s to bear — common property.<br>(2) Positive facade result completely displaces the presumption.<br>(3) Allowing MCST\'s contractor to test your balcony first risks adverse evidence before the facade is examined.<div class="key-point">Sequence determines who bears the next burden of proof.</div>' },
+
+  { cat:'tactics',
+    q:'Whose obligation is it to pay for the facade spray test?',
+    a:'<strong>MCST\'s</strong> — out of the management fund. The test concerns common property that MCST is statutorily obliged to maintain under s.29(1). Investigating the condition of common property is properly MCST\'s cost.<div class="kelvin-tag">In your letter</div> Para 4 states this explicitly. MCST refusal supports a STB application.' },
+
+  { cat:'tactics',
+    q:'Why did the letter offer "simultaneous non-destructive access" during the facade test?',
+    a:'<strong>(1) Demonstrates cooperation</strong> — removes any obstruction argument against Kelvin.<br><strong>(2) Limits scope</strong> — "non-destructive" and "simultaneous with facade test" means access is conditional and bounded. MCST cannot convert a cooperative offer into a blank cheque for invasive testing.<div class="kelvin-tag">Gemini\'s steelman contribution</div>' },
+
+  { cat:'tactics',
+    q:'Why request MCST\'s maintenance records for the past 5 years?',
+    a:'(1) Reveals whether the facade was ever properly inspected — absence of records = s.29 breach.<br>(2) Shows prior complaints from #10-14 and the seepage history.<br>(3) May reveal whether the repainting contractor addressed sealant.<br>(4) Creates a documentary base for any STB filing.<div class="kelvin-tag">In your letter</div> Para 7(a)–(d) under s.63 rights.' },
+
+  { cat:'tactics',
+    q:'What is the tactical value of requesting the contractor\'s PI/E&O insurance details?',
+    a:'If the facade test reveals defective workmanship from the 2-year-old repainting, the contractor\'s PI/E&O policy is the liability source. Knowing the insurer: (1) signals you understand the full liability chain; (2) allows direct notification; (3) puts MCST on notice that a warranty claim against the contractor is a live option they may be forfeiting.' },
+
+  { cat:'tactics',
+    q:'What is the STB, what does it cost to file, and what can it order?',
+    a:'<strong>Strata Titles Board</strong> — Singapore\'s specialist strata dispute tribunal. Filing fee ~S$500. Can order: MCST to carry out common property repairs (s.108); upper lot owner to waterproof; or both. Mediation-first; appoints its own independent assessors.<div class="key-point">Low-cost and credible. Experienced MCSTs know an STB application is not idle. Your 14-day deadline is standard pre-STB positioning.</div>' },
+
+  { cat:'tactics',
+    q:'Why include a "document preservation" request in the letter?',
+    a:'Standard pre-litigation protocol: preserves all documents, emails, WhatsApp messages, contractor communications, photos, and inspection records from date of first complaint.<br><strong>(1)</strong> Prevents destruction or "loss" of inconvenient records.<br><strong>(2)</strong> Signals to MCST that you are prepared to litigate — spoliation of evidence would itself be an issue at STB.' },
+
+  { cat:'tactics',
+    q:'Why specifically request the strata title plan in the document list?',
+    a:'The plan determines definitively what is common vs lot property <em>for this specific building</em>. MCST\'s case assumes your balcony is lot property. The plan may show: (1) even the internal bay window reveal is common property; (2) the exact lot boundary at the seepage location favours your position. Most owners never request it — MCST must produce it under s.63.<div class="kelvin-tag">Opus 4.7 addition</div>' }
 ];
+// ─────────────────────────────────────────────────────────────────────────────
 
-let deck = [...ALL_CARDS];
-let currentIdx = 0;
-let flipped = false;
+const CAT_LABELS = {
+  s2: 's.2 Common Property',
+  s29: 's.29 MCST Duty',
+  s101: 's.101 Presumption',
+  rebuttal: 'Rebuttal Mechanics',
+  cases: 'Case Law',
+  tactics: 'Tactics & Strategy'
+};
+
+let deck = [...CARDS];
+let idx = 0;
+let showingAnswer = false;
 let seen = new Set();
-let activeFilter = 'all';
 
-function filterCards(cat, btn) {
+function renderCard() {
+  const c = deck[idx];
+  if (!c) return;
+
+  const card = document.getElementById('theCard');
+  const content = document.getElementById('cardContent');
+  const catPill = document.getElementById('catPill');
+  const threshPill = document.getElementById('threshPill');
+  const hint = document.getElementById('cardHint');
+
+  // Reset to question side
+  card.classList.remove('is-answer');
+  content.className = 'card-question';
+  content.innerHTML = c.q;
+  catPill.textContent = CAT_LABELS[c.cat] || c.cat;
+  threshPill.style.display = c.threshold ? 'inline-block' : 'none';
+  hint.textContent = 'Tap to reveal answer';
+
+  showingAnswer = false;
+
+  document.getElementById('cardCounter').textContent =
+    'Card ' + (idx + 1) + ' of ' + deck.length;
+  document.getElementById('prevBtn').disabled = idx === 0;
+  document.getElementById('nextBtn').disabled = idx === deck.length - 1;
+
+  document.getElementById('cardWrap').style.display = 'block';
+  document.getElementById('completeMsg').style.display = 'none';
+
+  updateProgress();
+}
+
+function doFlip() {
+  const c = deck[idx];
+  const card = document.getElementById('theCard');
+  const content = document.getElementById('cardContent');
+  const hint = document.getElementById('cardHint');
+
+  // Quick scale animation
+  card.style.transition = 'transform 0.12s ease, opacity 0.12s';
+  card.style.transform = 'scaleY(0)';
+  card.style.opacity = '0';
+
+  setTimeout(() => {
+    if (!showingAnswer) {
+      card.classList.add('is-answer');
+      content.className = 'card-answer-text';
+      content.innerHTML = c.a;
+      hint.textContent = 'Tap to see question again';
+      seen.add(idx);
+    } else {
+      card.classList.remove('is-answer');
+      content.className = 'card-question';
+      content.innerHTML = c.q;
+      hint.textContent = 'Tap to reveal answer';
+    }
+    showingAnswer = !showingAnswer;
+    card.style.transform = 'scaleY(1)';
+    card.style.opacity = '1';
+    updateProgress();
+  }, 120);
+}
+
+function go(dir) {
+  const next = idx + dir;
+  if (next < 0 || next > deck.length) return;
+  if (next === deck.length) {
+    document.getElementById('cardWrap').style.display = 'none';
+    document.getElementById('completeMsg').style.display = 'block';
+    return;
+  }
+  // Slide animation
+  const card = document.getElementById('theCard');
+  card.style.transition = 'transform 0.1s ease, opacity 0.1s';
+  card.style.transform = 'translateX(' + (dir > 0 ? '-40px' : '40px') + ')';
+  card.style.opacity = '0';
+  setTimeout(() => {
+    idx = next;
+    card.style.transition = 'none';
+    card.style.transform = 'translateX(' + (dir > 0 ? '40px' : '-40px') + ')';
+    renderCard();
+    requestAnimationFrame(() => {
+      card.style.transition = 'transform 0.15s ease, opacity 0.15s';
+      card.style.transform = 'translateX(0)';
+      card.style.opacity = '1';
+    });
+  }, 100);
+}
+
+function setFilter(cat, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  activeFilter = cat;
-  if (cat === 'all') deck = [...ALL_CARDS];
-  else if (cat === 'threshold') deck = ALL_CARDS.filter(c => c.threshold);
-  else deck = ALL_CARDS.filter(c => c.cat === cat);
-  currentIdx = 0;
+  deck = cat === 'all' ? [...CARDS]
+       : cat === 'threshold' ? CARDS.filter(c => c.threshold)
+       : CARDS.filter(c => c.cat === cat);
+  idx = 0;
   seen = new Set();
-  flipped = false;
-  showCard();
-  updateProgress();
+  showingAnswer = false;
+  // Reset card styles
+  const card = document.getElementById('theCard');
+  card.style.transition = '';
+  card.style.transform = '';
+  card.style.opacity = '1';
+  renderCard();
 }
 
-function showCard() {
-  const card = deck[currentIdx];
-  if (!card) return;
-  document.getElementById('flashcard').classList.remove('flipped');
-  flipped = false;
-
-  const catLabels = {
-    's2': 's.2 Common Property',
-    's29': 's.29 MCST Duty',
-    's101': 's.101 Presumption',
-    'rebuttal': 'Rebuttal Mechanics',
-    'cases': 'Case Law',
-    'tactics': 'Tactics & Strategy'
-  };
-
-  const label = catLabels[card.cat] || card.cat;
-  const thresh = card.threshold ? '<span style="color:#c4b5fd;font-size:0.65rem;font-weight:700;margin-left:0.4rem;">🔑 THRESHOLD</span>' : '';
-
-  document.getElementById('cardCategory').innerHTML = label + thresh;
-  document.getElementById('cardCategoryBack').innerHTML = label + thresh;
-  document.getElementById('cardQuestion').textContent = card.q;
-  document.getElementById('cardAnswer').innerHTML = card.a;
-  document.getElementById('cardCounter').textContent = `Card ${currentIdx + 1} of ${deck.length}`;
-
-  document.getElementById('prevBtn').disabled = currentIdx === 0;
-  document.getElementById('nextBtn').disabled = currentIdx === deck.length - 1;
-
-  document.getElementById('flashcard').parentElement.style.display = 'block';
-  document.getElementById('completeMsg').style.display = 'none';
-}
-
-function flipCard() {
-  flipped = !flipped;
-  document.getElementById('flashcard').classList.toggle('flipped', flipped);
-  if (flipped) seen.add(currentIdx);
-  updateProgress();
-}
-
-function nextCard() {
-  if (currentIdx < deck.length - 1) {
-    currentIdx++;
-    flipped = false;
-    showCard();
-  } else {
-    document.getElementById('flashcard').parentElement.style.display = 'none';
-    document.getElementById('completeMsg').style.display = 'block';
-  }
-}
-
-function prevCard() {
-  if (currentIdx > 0) {
-    currentIdx--;
-    flipped = false;
-    showCard();
-  }
-}
-
-function shuffleDeck() {
+function shuffle() {
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
-  currentIdx = 0;
+  idx = 0;
   seen = new Set();
-  flipped = false;
-  showCard();
-  updateProgress();
+  showingAnswer = false;
+  const card = document.getElementById('theCard');
+  card.style.transition = '';
+  card.style.transform = '';
+  card.style.opacity = '1';
+  renderCard();
 }
 
-function restartDeck() {
-  shuffleDeck();
+function restart() {
+  shuffle();
+  document.getElementById('cardWrap').style.display = 'block';
   document.getElementById('completeMsg').style.display = 'none';
-  document.getElementById('flashcard').parentElement.style.display = 'block';
 }
 
 function updateProgress() {
@@ -633,15 +650,15 @@ function updateProgress() {
   document.getElementById('progText').textContent = seen.size + ' / ' + deck.length;
 }
 
-// Keyboard nav
+// Keyboard
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextCard();
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevCard();
-  if (e.key === ' ') { e.preventDefault(); flipCard(); }
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); doFlip(); }
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
 });
 
-showCard();
-updateProgress();
+// Init
+renderCard();
 </script>
 </body>
 </html>
