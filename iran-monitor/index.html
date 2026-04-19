@@ -1479,6 +1479,17 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
           <div class="intel-card-footer">Source: Lloyd's List / LMA — 19 Apr 2026 / 23 Mar 2026</div>
         </div>
 
+        <div class="intel-card">
+          <div class="intel-card-header">
+            <div class="intel-card-title">Cost-Push Inflation Cascade</div>
+            <div class="intel-status watching">Watch</div>
+          </div>
+          <div class="intel-card-body">
+            <strong>Full transmission chain:</strong> Oil → diesel <span class="value">+38%</span> (US $3.89→$5.37/gal) → food/transport/manufacturing costs. Oil → urea <span class="value">+75%</span> → food production → food CPI <span class="value">+2pp</span>. Oil → natural gas → chemicals → packaging → consumer goods across every sector. IMF April 2026 WEO formally models this transmission; Fed holding rates despite the pressure. Non-PD BI gap: clients with fixed-price contracts face margin compression without a physical damage trigger. Review BI policy wording for "increased cost of working" extensions and contingent covers.
+          </div>
+          <div class="intel-card-footer">IMF WEO Apr 2026 / CNBC / PBS — 19 Apr 2026</div>
+        </div>
+
                                   </section>
 
   <!-- LINE-BY-LINE CARDS -->
@@ -1608,6 +1619,10 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
         <div class="card-row-label">Coal Extension</div>
         <div class="card-row-value"><span class="amber-text">Hidden gap exposure.</span> Five APAC markets have lifted coal plant caps or restarted decommissioned units — Japan (old plants now at 100%, previously capped at 50%), South Korea (&gt;80% capacity unlocked), Philippines, Thailand (Mae Moh restart), and India (max output ordered). Machinery breakdown and BI policies priced for limited operation may now be materially underinsured. (CNA / CSIS, 3 Apr 2026)</div>
       </div>
+      <div class="card-row">
+        <div class="card-row-label">Non-PD BI — Crude Chemistry Incompatibility</div>
+        <div class="card-row-value">Asia's refinery configurations are engineered for <strong>heavy, sour Gulf crude</strong> (Arab Heavy, Kuwait Export, Iranian Heavy). US Light Sweet (WTI) and other available alternates are not drop-in substitutes — this is a chemistry and configuration constraint, not a price issue. IEA April 2026 reports ~<strong>4 mb/d</strong> of regional processing capacity facing shutdown or operational restrictions due to feedstock incompatibility. The BI exposure is non-physical-damage: the insured refinery suffers production loss and margin collapse without any damage to plant or equipment. Standard BI policies triggered by physical damage do not respond. Review client wordings for contingent BI, supply disruption extensions, and non-damage BI triggers. (IEA Oil Market Report, Apr 2026 / MDD Forensic)</div>
+      </div>
       <div class="card-triggers">
         <div class="card-triggers-title">Immediate Triggers</div>
         <ul class="trigger-list">
@@ -1643,7 +1658,21 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
       </div>
       <div class="card-row">
         <div class="card-row-label">APAC Impact</div>
-        <div class="card-row-value">Manufacturing hubs (Vietnam, Thailand, Malaysia) with Gulf-origin raw material dependency. Japanese automotive with multi-tier Gulf supply exposure. Any client without mapped Tier 2-3 suppliers is flying blind. <strong>Emerging vector:</strong> Qatar's Ras Laffan LNG shutdown threatens ~65% of South Korea's helium supply &mdash; helium is a critical consumable in semiconductor fab (Samsung, SK Hynix). A sustained Ras Laffan outage propagates tech-sector CBI exposure with no direct Gulf footprint in the policy wording. <strong>Singapore is the highest-exposure hub:</strong> MAS data puts 42% of GDP at risk from supply disruption — wholesale bunkering alone is 19% of GDP, making it the single largest exposed cluster. Downstream sectors (construction, real estate, food &amp; beverage, semiconductors) face indirect energy cost transmission even without direct supply loss.</div>
+        <div class="card-row-value">
+          <p>Manufacturing hubs (Vietnam, Thailand, Malaysia) with Gulf-origin raw material dependency. Japanese automotive with multi-tier Gulf supply exposure. Any client without mapped Tier 2-3 suppliers is flying blind. <strong>Emerging vector:</strong> Qatar's Ras Laffan LNG shutdown threatens ~65% of South Korea's helium supply &mdash; helium is a critical consumable in semiconductor fab (Samsung, SK Hynix) and has no viable substitute in ASML EUV lithography machines — the only tools printing below 7nm. AI hyperscaler capex is now at risk: enterprise HDD prices are up 20–30% and helium spot has surged 40–100%. Motley Fool (18 Apr 2026): "even if the Strait of Hormuz reopens tomorrow, the helium crisis will haunt AI stocks for months."</p>
+
+          <div class="supply-chain-section">
+            <div class="supply-chain-header">Fertiliser & Food Supply Chain</div>
+            <p>30–35% of global seaborne fertiliser trade transits Hormuz — currently blocked. Urea FOB Egypt has jumped to <strong>$700/MT</strong> from $400–490 pre-war (+75%). FAO estimates food-at-home inflation could rise <strong>~2 percentage points</strong> in affected markets. Timing is acute: disruption falls mid-sowing season (Feb–May Northern Hemisphere), meaning supply gaps compound into harvest-season shortfall. APAC exposure: Bangladesh, India, Pakistan, Sri Lanka depend on Gulf-origin urea. CBI chain runs from food producers through processors, packagers and cold-chain operators — most policies were not underwritten with a fertiliser-pathway scenario. (FAO / IFPRI / CNBC, Mar–Apr 2026)</p>
+          </div>
+
+          <div class="supply-chain-section">
+            <div class="supply-chain-header">LNG → Electricity → EV Blind Spot</div>
+            <p>LNG spot prices in Asia are up <strong>+140%</strong>. Singapore sources 42% of its LNG from Qatar; piped gas contracts with Indonesia are expiring, meaning the LNG share rises further. Singapore has launched emergency renewable import approvals (2 GW Indonesia, 1 GW Cambodia, 1 GW Sarawak) but these are 3–5 year infrastructure plays. In the interim, EV adoption provides no hedge: many APAC grids remain 40–60% gas-fired. Any client operating data centres, cold chains, or high-energy manufacturing on-grid faces indirect energy BI exposure without a Hormuz footprint in their policy wording. (Ember / Maxthon / IEA, Apr 2026)</p>
+          </div>
+
+          <p style="margin-top:0.75rem;"><strong>Singapore is the highest-exposure hub:</strong> MAS data puts 42% of GDP at risk from supply disruption — wholesale bunkering alone is 19% of GDP, making it the single largest exposed cluster. Downstream sectors (construction, real estate, food &amp; beverage, semiconductors) face indirect energy cost transmission even without direct supply loss.</p>
+        </div>
       </div>
       <div class="card-triggers">
         <div class="card-triggers-title">Immediate Triggers</div>
@@ -2661,6 +2690,11 @@ if (typeof topojson === 'undefined') { window._geoLibsFailed = true; }
               <div class="supply-card-title">India</div>
               <p>Stated ambition is largest green pivot in the world (500GW renewable by 2030). Reality: coal still ~75% of power generation <span style="font-size:0.78em;color:#636c76;">(IEA / CEA India, 2024)</span>. Solar scaling fast. Gulf crude dependency for transportation + petrochemicals persists a decade.</p>
               <p class="supply-card-impl"><strong>Insurance implication:</strong> solar construction risk (Adani, Tata, NTPC renewables arms) = one of the largest new client opportunities in APAC.</p>
+            </div>
+            <div class="supply-card">
+              <div class="supply-card-title">Singapore</div>
+              <p>Highest Hormuz LNG exposure per capita in APAC — 42% of LNG supply from Qatar (MAS data). Piped gas contracts with Indonesia expiring, increasing LNG dependency. Emergency renewable import strategy: conditional approvals secured for 2 GW (Indonesia), 1 GW (Cambodia), 1 GW (Sarawak) — predominantly solar. Solar generation cost ~US$42bn for equivalent output vs gas at ~$84bn. Timeline: 3–5 years. In the interim, full LNG vulnerability.</p>
+              <p class="supply-card-impl"><strong>Insurance implication:</strong> subsea interconnector construction risk (new specialty class). Solar farm CAR and BI in Indonesia/Cambodia/Sarawak. Political risk on host-government approvals. Feasibility advisory PI. First-mover opportunity — no incumbent has built a Singapore renewable import practice.</p>
             </div>
           </div>
         </div>
