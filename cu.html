@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cu</title>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d;
+  --text: #e6edf3; --muted: #7d8590; --accent: #58a6ff;
+  --green: #3fb950; --red: #f85149; --yellow: #d29922;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'SF Mono','Fira Code','Menlo',monospace; font-size: 13px; min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ── Setup ── */
+#setup { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 14px; padding: 24px; }
+#setup h2 { font-size: 15px; }
+#setup p { color: var(--muted); font-size: 12px; max-width: 340px; text-align: center; line-height: 1.6; }
+.field { display: flex; flex-direction: column; gap: 4px; width: 360px; }
+.field label { font-size: 11px; color: var(--muted); }
+.field input { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 6px; font-size: 13px; font-family: inherit; width: 100%; }
+.field input:focus { outline: none; border-color: var(--accent); }
+.btn { background: var(--accent); color: #0d1117; border: none; padding: 9px 24px; border-radius: 6px; font-size: 13px; font-family: inherit; font-weight: 700; cursor: pointer; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn-sm { background: var(--surface); color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: inherit; cursor: pointer; white-space: nowrap; }
+.btn-sm:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn-sm:disabled { opacity: 0.4; cursor: default; }
+.btn-close { background: var(--surface); color: var(--red); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-family: inherit; cursor: pointer; white-space: nowrap; }
+.btn-close:hover:not(:disabled) { border-color: var(--red); }
+.btn-close:disabled { opacity: 0.4; cursor: default; }
+#err { color: var(--red); font-size: 12px; display: none; }
+
+/* ── App ── */
+#app { display: none; flex-direction: column; min-height: 100dvh; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+header h1 { font-size: 13px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; transition: background 0.3s; }
+.dot.live { background: var(--green); }
+.hdr-r { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.hdr-r span { font-size: 11px; color: var(--muted); }
+
+main { flex: 1; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+
+section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
+
+/* ── Service cards ── */
+.svc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.svc-info { flex: 1; min-width: 0; }
+.svc-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svc-port { font-size: 11px; color: var(--muted); }
+.alive-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.alive-dot.up { background: var(--green); }
+.opening-label { font-size: 11px; color: var(--yellow); white-space: nowrap; animation: blink 1s infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ── Tunnel cards ── */
+.tun-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.tun-name { font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+.tun-row { font-size: 11px; display: flex; align-items: center; gap: 6px; margin-bottom: 7px; min-width: 0; }
+.tun-label { color: var(--muted); width: 66px; flex-shrink: 0; }
+.tun-url { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.badge { border: 1px solid; padding: 1px 6px; border-radius: 10px; font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+.badge-otp  { color: var(--yellow); border-color: rgba(210,153,34,0.4); background: rgba(210,153,34,0.1); }
+.badge-used { color: var(--muted); border-color: var(--border); background: transparent; }
+.tun-footer { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.tun-elapsed { font-size: 11px; color: var(--muted); flex: 1; }
+.empty-tunnels { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 32px 16px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.8; }
+
+#poll-bar { font-size: 11px; color: var(--muted); padding: 6px 16px 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h2>cu</h2>
+  <p>Cloudflare tunnel manager. Enter the tunnel server endpoint and secret. Saved locally — never transmitted elsewhere.</p>
+  <div class="field">
+    <label>Endpoint URL</label>
+    <input id="ep-input" type="url" placeholder="http://100.111.43.30:19100" autocomplete="off"
+           onkeydown="if(event.key==='Enter') connect()">
+  </div>
+  <div class="field">
+    <label>Secret</label>
+    <input id="secret-input" type="password" placeholder="tunnel secret" autocomplete="off"
+           onkeydown="if(event.key==='Enter') connect()">
+  </div>
+  <div id="err">Could not reach endpoint — check URL and secret.</div>
+  <button class="btn" onclick="connect()">Connect</button>
+</div>
+
+<div id="app">
+  <header>
+    <div class="dot" id="dot"></div>
+    <h1>cu — Cloudflare Tunnels</h1>
+    <div class="hdr-r">
+      <span id="hdr-meta">—</span>
+      <button class="btn-sm" onclick="disconnect()">Disconnect</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Services</h2>
+      <div id="services"><div class="empty-tunnels">Loading services…</div></div>
+    </section>
+    <section>
+      <h2>Active Tunnels</h2>
+      <div id="tunnels"><div class="empty-tunnels">No active tunnels.<br>Open one from the services panel.</div></div>
+    </section>
+  </main>
+
+  <div id="poll-bar"></div>
+</div>
+
+<script>
+let endpoint = '', secret = '';
+let pollTimer = null;
+let lastServices = [];
+let lastTunnels  = [];
+const opening    = new Set();       // service_id → opening in progress
+const tokenStore = new Map();       // tunnel_id  → access_url (OTP, this page session only)
+const urlMap     = {};              // key → url for safe onclick copy
+
+function apiUrl(path) {
+  return `${endpoint}${path}?s=${encodeURIComponent(secret)}`;
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyByKey(key, btn) {
+  const text = urlMap[key] || '';
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = orig, 1200);
+  }).catch(() => prompt('Copy this URL:', text));
+}
+
+function elapsed(started_at) {
+  const m = String(started_at).match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+  if (!m) return started_at;
+  const diff = Math.floor((Date.now() - new Date(m[1] + '+08:00')) / 1000);
+  if (diff < 60)   return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ${diff % 60}s ago`;
+  return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m ago`;
+}
+
+async function poll() {
+  try {
+    const [svcR, tunR] = await Promise.all([
+      fetch(apiUrl('/api/services')),
+      fetch(apiUrl('/api/tunnels'))
+    ]);
+    if (svcR.status === 403) { setDisconnected('Auth failed — secret wrong?'); return; }
+    lastServices = await svcR.json();
+    lastTunnels  = await tunR.json();
+    renderServices(lastServices);
+    renderTunnels(lastTunnels);
+    const n = lastTunnels.length;
+    document.getElementById('dot').classList.add('live');
+    document.getElementById('hdr-meta').textContent = `${n} tunnel${n !== 1 ? 's' : ''}`;
+    document.getElementById('poll-bar').textContent =
+      `Live · ${n} active · ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+  } catch(e) {
+    setDisconnected(e.message);
+  }
+  pollTimer = setTimeout(poll, 3000);
+}
+
+function renderServices(services) {
+  document.getElementById('services').innerHTML = services.map(s => {
+    const isOpening = opening.has(s.id);
+    return `<div class="svc-card">
+      <div class="svc-info">
+        <div class="svc-name">${esc(s.name)}</div>
+        <div class="svc-port">:${s.port}</div>
+      </div>
+      <div class="alive-dot ${s.alive ? 'up' : ''}"></div>
+      ${isOpening
+        ? `<span class="opening-label">opening…</span>`
+        : `<button class="btn-sm" onclick="openTunnel('${esc(s.id)}')" ${!s.alive ? 'disabled title="Service not running"' : ''}>Open</button>`
+      }
+    </div>`;
+  }).join('') || '<div class="empty-tunnels">No services configured.</div>';
+}
+
+function renderTunnels(tunnels) {
+  if (!tunnels.length) {
+    document.getElementById('tunnels').innerHTML =
+      '<div class="empty-tunnels">No active tunnels.<br>Open one from the services panel.</div>';
+    return;
+  }
+
+  document.getElementById('tunnels').innerHTML = tunnels.map(t => {
+    const pubKey = `pub_${t.id}`;
+    const accKey = `acc_${t.id}`;
+    urlMap[pubKey] = t.public_url;
+
+    const accessUrl = tokenStore.get(t.id);
+    if (accessUrl) urlMap[accKey] = accessUrl;
+
+    let accessHtml;
+    if (t.otp_used) {
+      accessHtml = `<div class="tun-row">
+        <span class="tun-label">Access</span>
+        <span class="badge badge-used">OTP used — session active</span>
+      </div>`;
+    } else if (accessUrl) {
+      accessHtml = `<div class="tun-row">
+        <span class="tun-label">Access</span>
+        <span class="tun-url" title="${esc(accessUrl)}">${esc(accessUrl)}</span>
+        <span class="badge badge-otp">single-use</span>
+        <button class="btn-sm" onclick="copyByKey('${accKey}', this)">Copy</button>
+      </div>`;
+    } else {
+      accessHtml = `<div class="tun-row">
+        <span class="tun-label">Access</span>
+        <span class="badge badge-used">OTP unavailable — page was reloaded</span>
+      </div>`;
+    }
+
+    return `<div class="tun-card">
+      <div class="tun-name">${esc(t.service_name)}</div>
+      <div class="tun-row">
+        <span class="tun-label">Public URL</span>
+        <span class="tun-url" title="${esc(t.public_url)}">${esc(t.public_url)}</span>
+        <button class="btn-sm" onclick="copyByKey('${pubKey}', this)">Copy</button>
+      </div>
+      ${accessHtml}
+      <div class="tun-footer">
+        <span class="tun-elapsed">${elapsed(t.started_at)}</span>
+        <button class="btn-close" onclick="closeTunnel('${esc(t.id)}', this)">Close</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openTunnel(serviceId) {
+  if (opening.has(serviceId)) return;
+  opening.add(serviceId);
+  renderServices(lastServices);
+
+  try {
+    const r = await fetch(apiUrl('/api/tunnels'), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({service_id: serviceId})
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      alert('Failed to open tunnel: ' + (data.error || r.status));
+    } else if (data.access_url) {
+      tokenStore.set(data.id, data.access_url);
+    }
+  } catch(e) {
+    alert('Failed to open tunnel: ' + e.message);
+  }
+
+  opening.delete(serviceId);
+  clearTimeout(pollTimer);
+  poll();
+}
+
+async function closeTunnel(tunnelId, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Closing…';
+  try {
+    await fetch(apiUrl(`/api/tunnels/${tunnelId}`), {method: 'DELETE'});
+  } catch(e) {}
+  tokenStore.delete(tunnelId);
+  delete urlMap[`pub_${tunnelId}`];
+  delete urlMap[`acc_${tunnelId}`];
+  clearTimeout(pollTimer);
+  poll();
+}
+
+function setDisconnected(reason) {
+  document.getElementById('dot').classList.remove('live');
+  document.getElementById('poll-bar').textContent = `Disconnected: ${reason}`;
+}
+
+async function connect() {
+  const ep  = document.getElementById('ep-input').value.trim().replace(/\/$/, '');
+  const sec = document.getElementById('secret-input').value.trim();
+  document.getElementById('err').style.display = 'none';
+  try {
+    const r = await fetch(`${ep}/api/health?s=${encodeURIComponent(sec)}`);
+    if (!r.ok) throw new Error(r.status);
+    endpoint = ep;
+    secret   = sec;
+    localStorage.setItem('cu_ep', ep);
+    localStorage.setItem('cu_secret', sec);
+    startApp();
+  } catch(e) {
+    document.getElementById('err').style.display = 'block';
+  }
+}
+
+function disconnect() {
+  clearTimeout(pollTimer);
+  localStorage.removeItem('cu_ep');
+  localStorage.removeItem('cu_secret');
+  endpoint = ''; secret = '';
+  document.getElementById('app').style.display   = 'none';
+  document.getElementById('setup').style.display = 'flex';
+}
+
+function startApp() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').style.display   = 'flex';
+  poll();
+}
+
+// Init
+endpoint = localStorage.getItem('cu_ep')     || '';
+secret   = localStorage.getItem('cu_secret') || '';
+if (endpoint && secret) startApp();
+</script>
+</body>
+</html>
