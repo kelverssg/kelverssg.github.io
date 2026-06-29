@@ -1,19 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vault Sim — Kelvers Outpost</title>
+<script>
+  // Apply saved theme before render to avoid flash. App page → dark-first default.
+  (function () {
+    var saved = localStorage.getItem('kelvers-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  })();
+</script>
+<link rel="stylesheet" href="/assets/kelvers-house.css">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #111;
+    background: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     overflow: hidden;
     font-family: monospace;
+    color: var(--ink);
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   /* CRT bezel */
@@ -97,14 +107,37 @@
     border: none;
     font-family: monospace;
     font-size: 10px;
-    color: #555555;
+    color: var(--ink-xsoft);
     cursor: pointer;
     padding: 4px 8px;
     letter-spacing: 0.08em;
     z-index: 10;
     image-rendering: auto;
   }
-  #muteBtn:hover { color: #55FF55; }
+  #muteBtn:hover { color: var(--accent); }
+
+  /* Theme toggle button */
+  #themeBtn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: background 0.15s;
+  }
+  #themeBtn:hover { background: rgba(255,255,255,0.12); }
+  :root[data-theme="dark"] #themeBtn { background: rgba(255,255,255,0.06); }
+  :root[data-theme="dark"] #themeBtn:hover { background: rgba(255,255,255,0.1); }
 
   /* Responsive scaling */
   @media (max-width: 1400px) {
@@ -129,6 +162,8 @@
     <div class="phosphor"></div>
   </div>
 </div>
+
+<button id="themeBtn" onclick="toggleTheme()" title="Toggle dark/light" aria-label="Toggle theme">◑</button>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -2536,6 +2571,13 @@ document.querySelector('.crt-bezel').addEventListener('click', function handler(
   }
 }, { once: false });
 
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('kelvers-theme', next);
+}
 </script>
 </body>
 </html>
