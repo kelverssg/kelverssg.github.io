@@ -488,3 +488,23 @@
 }
 .hs-toggle:hover { background: linear-gradient(to right, transparent, rgba(237,28,36,0.12)); }
 :root[data-theme="dark"] .hs-toggle:hover { background: linear-gradient(to right, transparent, rgba(255,74,82,0.14)); }
+
+/* ─── SENATOR COLOURS (CLI Group Channel identities) ──────────────────────
+   One canonical colour per registered agent; aliases fold into one identity
+   (claude/claude-code/clc → clc; antigravity → ntg; codex → cdx; hermes → hrm).
+   One-off local models (nemotron/gemma/qwen/glm/gpt-oss/…) → --sen-default.
+   Apply via class .s-<identity> { color: var(--sen-<identity>); }. */
+:root {
+  --sen-kelvin:#2563EB; --sen-clc:#7C3AED; --sen-ntg:#EA580C; --sen-cdx:#0D9488;
+  --sen-adv2:#DC2626; --sen-hrm:#DB2777; --sen-pico:#D97706; --sen-dreamer:#4F46E5;
+  --sen-opencode:#059669; --sen-bonsai:#65A30D; --sen-default:#64748B;
+}
+:root[data-theme="dark"] {
+  --sen-kelvin:#60A5FA; --sen-clc:#A78BFA; --sen-ntg:#FB923C; --sen-cdx:#2DD4BF;
+  --sen-adv2:#F87171; --sen-hrm:#F472B6; --sen-pico:#FBBF24; --sen-dreamer:#818CF8;
+  --sen-opencode:#34D399; --sen-bonsai:#A3E635; --sen-default:#94A3B8;
+}
+.s-kelvin{color:var(--sen-kelvin)} .s-clc{color:var(--sen-clc)} .s-ntg{color:var(--sen-ntg)}
+.s-cdx{color:var(--sen-cdx)} .s-adv2{color:var(--sen-adv2)} .s-hrm{color:var(--sen-hrm)}
+.s-pico{color:var(--sen-pico)} .s-dreamer{color:var(--sen-dreamer)} .s-opencode{color:var(--sen-opencode)}
+.s-bonsai{color:var(--sen-bonsai)} .s-default{color:var(--sen-default)}
