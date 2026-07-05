@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event Slot Booker — Demo + Backend Handoff</title>
+<meta name="author" content="clc — Claude Code (vault-side)">
+<meta name="kelvers:handoff-from" content="clc — Claude Code (vault-side)">
+<meta name="kelvers:handoff-to" content="work-side agent (Yann / 同研) — corporate M365/Azure tenant">
+<meta name="kelvers:status" content="design-ready — front-end complete, backend unimplemented (demo authority = localStorage)">
+<meta name="kelvers:spec" content="#agent-build-spec">
+<meta name="kelvers:date" content="2026-07-05">
+<!-- ================================================================
+     AGENT BUILD SPEC — machine-readable handoff for the work-side agent.
+     Parse the JSON in <script id="agent-build-spec">. This page IS both
+     the reference front-end (interact to learn the UX) and the build order
+     for its atomic backend. Implement the API; swap the JS `Store` object.
+     ================================================================ -->
+<script type="application/json" id="agent-build-spec">
+{
+  "schema": "kelvers.agent-handoff/v1",
+  "artifact": "event-slot-booker",
+  "purpose": "Atomic backend for concurrent event-slot booking. The front-end on this page is the reference UX and the integration contract; implement the backend and swap the client-side Store stub for the API.",
+  "handoff": {
+    "from": "clc (Claude Code, Kelvers vault-side)",
+    "to": "work-side agent (e.g. Yann / 同研) with corporate M365 + Azure access",
+    "reason": "vault-side clc has no corporate tenant access; work-side owns Entra/Azure/SharePoint. Division: clc owns design + front-end contract, work-side owns tenant implementation.",
+    "status": "design-ready",
+    "date": "2026-07-05"
+  },
+  "config": { "slots": 7, "cycles": 5, "capacityPerCell": 8, "cellId": "S{slot}_C{cycle}", "clients": 50 },
+  "invariants": [
+    { "id": "cap",          "rule": "<= 8 bookings per (slot,cycle) cell",                              "enforce_via": "atomic seat claim (row lock)",        "reason_code": "full"  },
+    { "id": "one_per_cycle","rule": "<= 1 booking per (client,cycle) — cannot attend two events at once","enforce_via": "unique index (clientId,cycle)",       "reason_code": "cycle" },
+    { "id": "no_repeat",    "rule": "<= 1 booking per (client,slot) — no rewatching an event",          "enforce_via": "unique index (clientId,slot)",        "reason_code": "slot"  }
+  ],
+  "concurrency": {
+    "requirement": "Every book/release is ONE atomic transaction that (re)validates all invariants at commit. The read-then-write in the demo Store.book() is single-browser only and RACES on the last seat across users — it must not ship.",
+    "recommended_pattern": "pre-seeded seat tokens",
+    "seat_token_pattern": "Pre-create 8 seat rows per cell (seatId, cell, slot, cycle, clientId=NULL). Book = UPDATE TOP(1) seats SET clientId=@c, cm=@cm, ts=now WHERE cell=@cell AND clientId IS NULL; if @@ROWCOUNT=0 -> reason 'full'. The row lock is the serialization point, so there is no COUNT race at all. The two unique indexes enforce the client-level rules and surface as unique-violation -> map to reason 'cycle' / 'slot'.",
+    "sql_alt_if_count_based": "SERIALIZABLE txn: IF (SELECT COUNT(*) FROM bk WHERE cell=@cell) < 8 AND NOT EXISTS(cycle clash) AND NOT EXISTS(slot repeat) INSERT; ELSE return the matching reason_code."
+  },
+  "api": {
+    "GET /api/state":   { "returns": "[{cell,slot,cycle,clientId,clientName,cm,ts}]", "use": "front-end auto-load feed — replaces fetch('./bookings.jsonl')" },
+    "POST /api/book":   { "body": {"slot":"int","cycle":"int","clientId":"string"}, "cm_source": "server-side from auth token, never client body", "ok": {"ok":true,"booking":{}}, "err": {"ok":false,"reason":"full|cycle|slot"}, "http": "200 ok / 409 conflict+reason" },
+    "POST /api/release":{ "body": {"slot":"int","cycle":"int","clientId":"string"}, "note": "release is also concurrency-sensitive (frees a seat token atomically: UPDATE ... SET clientId=NULL WHERE ...)", "authz": "only the booking CM or an admin" }
+  },
+  "auth": { "identity": "Entra ID", "mechanism": "Azure Static Web Apps built-in auth (X-MS-CLIENT-PRINCIPAL header); derive cm from token for audit; authenticate all client managers." },
+  "data_model": {
+    "seats": "seatId PK, cell, slot, cycle, clientId NULL, cm, ts; FILTERED UNIQUE(clientId,cycle) WHERE clientId IS NOT NULL; FILTERED UNIQUE(clientId,slot) WHERE clientId IS NOT NULL",
+    "clients": "clientId PK, name — import the real 50-client roster; demo uses Client 001..050"
+  },
+  "deployment_options": {
+    "recommended": "Azure Static Web Apps (hosts this HTML) + managed Azure Functions API + Azure SQL. Serverless, in-tenant, Entra auth built-in. Seat-token pattern above.",
+    "alternative": "Power Automate (concurrency control = 1, serialized) + SharePoint List. No servers, full M365 governance; trade-offs: ~1-3s latency per booking, and the flow MUST be serialized or two runs both pass the count check."
+  },
+  "frontend_integration": {
+    "file": "event-booker/index.html (this page)",
+    "swap_point": "the JS `Store` object — replace load()/book()/release() bodies with fetch() to the API. Reason codes (full|cycle|slot) already map to the existing toasts; grid/dimming/roster/export are backend-agnostic and stay unchanged.",
+    "audit_path": "keep the Export JSONL / Export CSV buttons as the human-facing Excel audit view; /api/state can also emit them."
+  },
+  "acceptance_tests": [
+    "cap: 8 distinct clients -> cell S1_C1 all ok; 9th -> 'full'",
+    "one_per_cycle: client S3_C2 then S5_C2 -> 2nd rejected 'cycle'",
+    "no_repeat: client S3_C2 then S3_C4 -> 2nd rejected 'slot'",
+    "valid: client S3_C2 then S6_C4 -> both ok",
+    "CONCURRENCY (the decisive one): N parallel POST /api/book on the last free seat of one cell -> exactly ONE ok, rest 'full'. No overbooking. This is precisely the test a file-on-OneDrive store fails."
+  ]
+}
+</script>
+<style>
+  /* ---- House style, light mode only ---- */
+  :root{
+    --paper:#f7f5f0;        /* warm background */
+    --surface:#ffffff;
+    --ink:#20242a;          /* near-black */
+    --muted:#6b7280;
+    --line:#e4e0d8;         /* hairline */
+    --accent:#0f5c57;       /* deep teal */
+    --accent-ink:#0b423e;
+    --free:#e8f2ec;  --free-b:#3f9d7f;   /* available */
+    --fill:#fdf3e2;  --fill-b:#c98a1e;   /* filling up */
+    --full:#f3e7e7;  --full-b:#b04a44;   /* full */
+    --chip:#eef1f0;
+    --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:22px 28px;border-bottom:1px solid var(--line);background:var(--surface);
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;
+  }
+  header h1{font:600 20px/1.2 Georgia,"Times New Roman",serif;margin:0;letter-spacing:.2px}
+  header .sub{color:var(--muted);font-size:13px}
+  .demo-banner{
+    background:#fff8e6;border:1px solid #e7cf8a;color:#7a5b12;
+    font-size:12.5px;padding:8px 28px;
+  }
+  .wrap{padding:22px 28px;display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+  /* toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:18px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  select,input[type=text]{
+    font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--surface);min-width:170px;color:var(--ink)
+  }
+  button{
+    font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);
+    padding:8px 14px;border-radius:8px;color:var(--ink);transition:background .12s,border-color .12s
+  }
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{background:var(--accent-ink)}
+  button.ghost{background:transparent}
+
+  /* grid */
+  table{border-collapse:separate;border-spacing:8px;width:100%}
+  th{font:600 12px/1 -apple-system,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px}
+  th.slot{text-align:right;padding-right:10px}
+  td.rowlabel{font-weight:600;text-align:right;padding-right:10px;color:var(--ink);white-space:nowrap;font-size:13px}
+  .cell{
+    background:var(--free);border:1px solid var(--free-b);border-left-width:4px;
+    border-radius:var(--radius);padding:9px 10px;min-width:96px;cursor:pointer;
+    box-shadow:var(--shadow);transition:transform .06s
+  }
+  .cell:active{transform:scale(.98)}
+  .cell.fill{background:var(--fill);border-color:var(--fill-b)}
+  .cell.full{background:var(--full);border-color:var(--full-b);cursor:not-allowed}
+  .cell.blocked{opacity:.35;cursor:not-allowed}
+  .cell.mine{outline:2px solid var(--accent);outline-offset:1px}
+  .cell .count{font:600 15px/1 -apple-system,sans-serif}
+  .cell .bar{height:4px;border-radius:3px;background:#0000000f;margin-top:7px;overflow:hidden}
+  .cell .bar > i{display:block;height:100%;background:var(--free-b)}
+  .cell.fill .bar > i{background:var(--fill-b)}
+  .cell.full .bar > i{background:var(--full-b)}
+  .cell .who{margin-top:7px;display:flex;flex-wrap:wrap;gap:3px}
+  .cell .who span{font-size:10.5px;background:#ffffffcc;border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+
+  /* roster */
+  aside{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  aside h2{font:600 13px/1 -apple-system,sans-serif;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 12px}
+  .roster{max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .ritem{display:flex;justify-content:space-between;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:13px}
+  .ritem:hover{background:var(--chip)}
+  .ritem.sel{background:var(--free);outline:1px solid var(--free-b)}
+  .ritem .n{color:var(--muted);font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .foot{color:var(--muted);font-size:12px;margin-top:18px;padding:0 28px 28px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .status{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Event Slot Booker</h1>
+  <span class="sub">7 events × 5 cycles · 8 seats each · one per cycle · no repeat events · first-come-first-served</span>
+</header>
+<div class="demo-banner">
+  ⚠ <strong>Demo backend (this browser only).</strong> Bookings are stored locally and are <em>not</em> multi-user safe —
+  production requires an atomic API (Azure Function / serialized Power Automate) so two managers can’t both take the last seat.
+</div>
+
+<div class="wrap">
+  <main>
+    <div class="toolbar">
+      <div class="field">
+        <label for="cm">Client manager</label>
+        <input type="text" id="cm" placeholder="Your name" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="client">Client to book</label>
+        <select id="client"></select>
+      </div>
+      <div class="status" id="status">Loading…</div>
+      <div style="flex:1"></div>
+      <button class="ghost" id="importBtn" title="Manual failsafe: load a bookings .jsonl">Import JSONL</button>
+      <button class="ghost" id="exportJsonl">Export JSONL</button>
+      <button class="ghost" id="exportCsv">Export CSV</button>
+      <input type="file" id="file" accept=".jsonl,.json,.txt" hidden>
+    </div>
+
+    <div id="grid"></div>
+
+    <div class="legend">
+      <span><i style="background:var(--free-b)"></i>Available</span>
+      <span><i style="background:var(--fill-b)"></i>Filling (6–7)</span>
+      <span><i style="background:var(--full-b)"></i>Full (8)</span>
+      <span>Click a booked chip to release it.</span>
+    </div>
+  </main>
+
+  <aside>
+    <h2>Clients — <span id="placed">0</span>/<span id="total">0</span> placed</h2>
+    <div class="roster" id="roster"></div>
+  </aside>
+</div>
+
+<div class="foot">
+  Select a client manager and a client, then click a slot to book. Auto-loads current state on launch; if that
+  fails (e.g. opened as a bare file), use <strong>Import JSONL</strong> as the manual failsafe. Export any time for Excel audit.
+</div>
+<section style="margin:8px 28px 40px;padding:20px 24px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);box-shadow:var(--shadow);max-width:900px">
+  <h2 style="font:600 15px/1.2 Georgia,serif;margin:0 0 4px">Backend Build Spec — work-side handoff</h2>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 14px">
+    From <strong>clc</strong> (vault-side) → <strong>work-side agent (Yann / 同研)</strong>. Machine-readable copy in
+    <code>&lt;script id="agent-build-spec"&gt;</code> (view source / parse the JSON). This page is both the reference front-end and its build order.
+  </p>
+  <p style="font-size:13.5px;margin:0 0 12px"><strong>Why a backend at all:</strong> booking has a <em>contended invariant</em> (8 seats, fastest-fingers). A shared file on OneDrive/SharePoint has no atomic compare-and-set — two managers can both take the last seat. The demo above uses <code>localStorage</code> and is single-browser only.</p>
+
+  <p style="font-size:13px;font-weight:600;margin:12px 0 4px">Three invariants — all enforced server-side, atomically</p>
+  <ul style="font-size:13px;margin:0 0 12px;padding-left:20px;line-height:1.7">
+    <li><strong>≤ 8 per cell</strong> (capacity) → reason <code>full</code> — via atomic seat-token claim (row lock, no count race)</li>
+    <li><strong>≤ 1 per cycle</strong> (no double-booking a timeslot) → reason <code>cycle</code> — via unique index (clientId, cycle)</li>
+    <li><strong>≤ 1 per slot</strong> (no repeat events) → reason <code>slot</code> — via unique index (clientId, slot)</li>
+  </ul>
+
+  <p style="font-size:13px;font-weight:600;margin:12px 0 4px">Recommended shape</p>
+  <p style="font-size:13px;margin:0 0 6px"><strong>Azure Static Web App</strong> (hosts this HTML) + <strong>Functions API</strong> + <strong>Azure SQL</strong>, Entra auth built in. Pre-seed 8 seat rows per cell; book = <code>UPDATE TOP(1) … WHERE clientId IS NULL</code> → rowcount 0 means full. Alternative: Power Automate (serialized, concurrency = 1) + SharePoint List.</p>
+  <p style="font-size:13px;margin:6px 0 0"><strong>Integration:</strong> implement <code>GET /api/state</code>, <code>POST /api/book</code>, <code>POST /api/release</code>; then swap the JS <code>Store</code> object’s three methods for <code>fetch()</code> calls. Everything else on this page stays.</p>
+</section>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------------- config ---------------- */
+const SLOTS  = 7;
+const CYCLES = 5;
+const CAP    = 8;
+const N_CLIENTS = 50;
+const LS_KEY = "esb.bookings.v1";
+
+/* deterministic mock roster: Client 001 … 050 */
+const CLIENTS = Array.from({length:N_CLIENTS},(_,i)=>({
+  id:"C"+String(i+1).padStart(3,"0"),
+  name:"Client "+String(i+1).padStart(3,"0")
+}));
+
+const cellId = (s,c)=>`S${s}_C${c}`;
+const parseCell = id => { const m=id.match(/^S(\d+)_C(\d+)$/); return {slot:+m[1], cycle:+m[2]}; };
+
+/* ---------------- state ---------------- */
+let bookings = [];      // {id, cell, clientId, clientName, cm, ts}
+let selectedClient = null;
+
+/* ---------------- data layer (STUB) ----------------
+   In production, book()/release()/load() call the atomic API instead of
+   localStorage. book() MUST be a server-side check-and-insert:
+   INSERT ... WHERE (SELECT count(*) FROM bookings WHERE cell=?) < CAP.
+   The read-then-write below is only atomic within one browser — it is
+   exactly the race a shared file cannot win.                          */
+const Store = {
+  async load(){
+    // 1) try a served sibling file (works over http/https)
+    try{
+      const r = await fetch("./bookings.jsonl",{cache:"no-store"});
+      if(r.ok){ return parseJSONL(await r.text()); }
+    }catch(_){/* file:// or missing → fall through */}
+    // 2) local cache (demo authority)
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ try{ return JSON.parse(raw); }catch(_){ } }
+    // 3) caller shows manual-import failsafe
+    return null;
+  },
+  persist(){ localStorage.setItem(LS_KEY, JSON.stringify(bookings)); },
+  book(cell, client, cm){
+    const {slot,cycle} = parseCell(cell);
+    const mine = bookings.filter(b=>b.clientId===client.id);
+    // client-level invariants (a client's bookings are non-attacking rooks)
+    if(mine.some(b=>b.cycle===cycle)) return {ok:false, reason:"cycle"}; // busy at that time
+    if(mine.some(b=>b.slot===slot))   return {ok:false, reason:"slot"};  // already saw this event
+    // capacity invariant (the contended one — READ then COMMIT)
+    const count = bookings.filter(b=>b.cell===cell).length;
+    if(count >= CAP) return {ok:false, reason:"full"};
+    bookings.push({                                              // COMMIT
+      id: cell+"|"+client.id,
+      cell, slot, cycle, clientId:client.id, clientName:client.name,
+      cm: cm||"(unnamed)", ts: new Date().toISOString()
+    });
+    this.persist();
+    return {ok:true};
+  },
+  release(cell, clientId){
+    const before = bookings.length;
+    bookings = bookings.filter(b=>!(b.cell===cell && b.clientId===clientId));
+    if(bookings.length!==before) this.persist();
+  }
+};
+
+/* ---------------- helpers ---------------- */
+const parseJSONL = t => t.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>JSON.parse(l));
+function toast(msg){
+  const el=document.getElementById("toast");
+  el.textContent=msg; el.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),1900);
+}
+function download(name, text, type){
+  const b=new Blob([text],{type}); const u=URL.createObjectURL(b);
+  const a=document.createElement("a"); a.href=u; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(u),500);
+}
+function csvCell(v){ v=String(v??""); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+
+/* ---------------- render ---------------- */
+function render(){
+  // grid
+  let h="<table><thead><tr><th></th>";
+  for(let c=1;c<=CYCLES;c++) h+=`<th>Cycle ${c}</th>`;
+  h+="</tr></thead><tbody>";
+  for(let s=1;s<=SLOTS;s++){
+    h+=`<tr><td class="rowlabel">Slot ${s}</td>`;
+    for(let c=1;c<=CYCLES;c++){
+      const id=cellId(s,c);
+      const here=bookings.filter(b=>b.cell===id);
+      const n=here.length;
+      let cls = n>=CAP?"full":(n>=6?"fill":"");
+      // dim cells the selected client cannot use (time clash / repeat event / full)
+      if(selectedClient){
+        const mine=bookings.filter(b=>b.clientId===selectedClient.id);
+        const hereMine=here.some(b=>b.clientId===selectedClient.id);
+        if(hereMine) cls+=" mine";
+        else if(mine.some(b=>b.cycle===c) || mine.some(b=>b.slot===s) || n>=CAP) cls+=" blocked";
+      }
+      const chips = here.map(b=>`<span title="${b.cm}" data-rel="${id}|${b.clientId}">${b.clientName.replace("Client ","#")}</span>`).join("");
+      h+=`<td><div class="cell ${cls}" data-cell="${id}">
+            <div class="count">${n}/${CAP}</div>
+            <div class="bar"><i style="width:${n/CAP*100}%"></i></div>
+            <div class="who">${chips}</div>
+          </div></td>`;
+    }
+    h+="</tr>";
+  }
+  h+="</tbody></table>";
+  document.getElementById("grid").innerHTML=h;
+
+  // roster
+  const counts={}; bookings.forEach(b=>counts[b.clientId]=(counts[b.clientId]||0)+1);
+  const placed = Object.keys(counts).length;
+  document.getElementById("placed").textContent=placed;
+  document.getElementById("total").textContent=N_CLIENTS;
+  document.getElementById("roster").innerHTML = CLIENTS.map(cl=>{
+    const n=counts[cl.id]||0;
+    const sel = selectedClient&&selectedClient.id===cl.id ? "sel":"";
+    return `<div class="ritem ${sel}" data-client="${cl.id}">
+      <span>${cl.name}</span><span class="n">${n?("×"+n):"—"}</span></div>`;
+  }).join("");
+
+  // client dropdown
+  const sel=document.getElementById("client");
+  if(sel.options.length!==CLIENTS.length+1){
+    sel.innerHTML='<option value="">— pick a client —</option>'+
+      CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+  }
+  document.getElementById("status").textContent =
+    `${bookings.length} booking(s) · ${SLOTS*CYCLES*CAP} seats total`;
+}
+
+/* ---------------- interactions ---------------- */
+function selectClient(id){
+  selectedClient = CLIENTS.find(c=>c.id===id)||null;
+  document.getElementById("client").value = id||"";
+  render();
+}
+document.getElementById("client").addEventListener("change",e=>selectClient(e.target.value));
+document.getElementById("roster").addEventListener("click",e=>{
+  const it=e.target.closest("[data-client]"); if(it) selectClient(it.dataset.client);
+});
+document.getElementById("grid").addEventListener("click",e=>{
+  const rel=e.target.closest("[data-rel]");
+  if(rel){ const [cell,cid]=rel.dataset.rel.split("|"); Store.release(cell,cid); render(); toast("Released"); return; }
+  const cellEl=e.target.closest("[data-cell]");
+  if(!cellEl) return;
+  if(!selectedClient){ toast("Pick a client first"); return; }
+  const cell=cellEl.dataset.cell;
+  // toggle: clicking a slot the selected client is already in removes them
+  if(bookings.some(b=>b.cell===cell && b.clientId===selectedClient.id)){
+    Store.release(cell, selectedClient.id); render(); toast(`Removed ${selectedClient.name}`); return;
+  }
+  const cm=document.getElementById("cm").value.trim();
+  const res=Store.book(cell, selectedClient, cm);
+  if(res.ok){ render(); toast(`Booked ${selectedClient.name}`); }
+  else if(res.reason==="full")  toast("Slot is full — fastest fingers lost");
+  else if(res.reason==="cycle") toast("Client is already booked in that cycle — can't be two places at once");
+  else if(res.reason==="slot")  toast("Client has already attended that event — no repeats");
+});
+
+// export / import
+document.getElementById("exportJsonl").onclick=()=>
+  download("bookings.jsonl", bookings.map(b=>JSON.stringify(b)).join("\n")+"\n","application/x-ndjson");
+document.getElementById("exportCsv").onclick=()=>{
+  const cols=["cell","clientId","clientName","cm","ts"];
+  const rows=[cols.join(",")].concat(bookings.map(b=>cols.map(k=>csvCell(b[k])).join(",")));
+  download("bookings.csv", rows.join("\n"),"text/csv");
+};
+document.getElementById("importBtn").onclick=()=>document.getElementById("file").click();
+document.getElementById("file").onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ bookings=parseJSONL(await f.text()); Store.persist(); render(); toast("Imported "+bookings.length+" booking(s)"); }
+  catch(err){ toast("Import failed — not valid JSONL"); }
+};
+
+/* ---------------- self-test (non-trivial logic: the cap) ---------------- */
+function runSelfTest(){
+  const snap=bookings.slice(); bookings=[];
+  // capacity: fill S1_C1 with 8 distinct clients, 9th rejected
+  let ok=0; for(let i=0;i<CAP;i++){ if(Store.book(cellId(1,1),{id:"F"+i,name:"x"},"t").ok) ok++; }
+  const ninth = Store.book(cellId(1,1),{id:"C999",name:"x"},"t");
+  // client rules: a fresh client booked into S3_C2
+  const cl={id:"CT1",name:"x"};
+  const base  = Store.book(cellId(3,2),cl,"t");           // ok
+  const clash = Store.book(cellId(5,2),cl,"t");           // same cycle 2 → reject "cycle"
+  const rep   = Store.book(cellId(3,4),cl,"t");           // same slot 3 → reject "slot"
+  const good  = Store.book(cellId(6,4),cl,"t");           // new slot+cycle → ok
+  const pass = ok===CAP && ninth.reason==="full"
+            && base.ok && clash.reason==="cycle" && rep.reason==="slot" && good.ok;
+  console.assert(pass, "[self-test] invariant FAILED", {ok,ninth,clash,rep,good});
+  console.log(`[self-test] ${pass?"ALL PASS":"FAIL"} — cap=8/9th-${ninth.reason}, cycle-clash=${clash.reason}, slot-repeat=${rep.reason}`);
+  bookings=snap; Store.persist();
+}
+
+/* ---------------- boot ---------------- */
+(async function init(){
+  const loaded = await Store.load();
+  if(loaded){ bookings=loaded; }
+  else { document.getElementById("status").textContent="No auto state — book fresh, or Import JSONL (failsafe)."; }
+  render();
+  runSelfTest();
+})();
+</script>
+</body>
+</html>
