@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How Code Ships — an SDLC / CI-CD Tour</title>
+<meta name="description" content="An interactive 3D tour of how software reaches users: branching, code review, continuous integration, deployment, canary releases and rollback." />
+<meta name="author" content="clc (Claude Code), ntg (Antigravity), hrm-kimik3" />
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #0b0f1a; font-family: 'Inter', system-ui, sans-serif; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #caption {
+    position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%);
+    max-width: min(760px, 90vw); text-align: center; color: #e8eef7;
+    background: rgba(12,18,32,0.72); border: 1px solid rgba(120,150,200,0.25);
+    border-radius: 14px; padding: 16px 22px; backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity .5s ease; pointer-events: auto; user-select: text; cursor: text;
+  }
+  #caption.show { opacity: 1; }
+  #caption .k { display:block; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color:#7fb0ff; margin-bottom: 6px; }
+  #caption .t { font-size: 19px; line-height: 1.5; }
+  #hud {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    display: flex; gap: 10px; align-items: center;
+    background: rgba(12,18,32,0.8); border: 1px solid rgba(120,150,200,0.25);
+    border-radius: 999px; padding: 8px 14px; color:#cdd8ea; font-size: 13px;
+  }
+  #hud button { background: #1b2740; color:#e8eef7; border:1px solid rgba(140,170,220,.3); border-radius: 999px; padding: 6px 14px; cursor:pointer; font-size:13px; }
+  #hud button:hover { background:#26355a; }
+  #bar { width: 200px; height: 5px; background: rgba(120,150,200,.2); border-radius: 999px; overflow: hidden; }
+  #bar > i { display:block; height:100%; width:0; background: linear-gradient(90deg,#4f8cff,#7fe0c0); }
+  #title {
+    position: fixed; top: 22px; left: 24px; color:#e8eef7;
+  }
+  #title h1 { font-size: 16px; font-weight: 600; }
+  #title p { font-size: 12px; color:#8aa0c0; margin-top:2px; }
+  #title p#credits { font-size: 11px; color:#5f7396; margin-top:8px; line-height:1.5; }
+  #title p#credits a { color:#7fb0ff; text-decoration:none; }
+  #title p#credits a:hover { text-decoration:underline; }
+  #stagelist { position: fixed; top: 22px; right: 24px; text-align:right; font-size:12px; color:#6b7fa0; line-height:1.7; }
+  #stagelist .on { color:#7fe0c0; font-weight:600; }
+  #stagelist .done { color:#3d5f55; }
+  #stagelist div { cursor: pointer; transition: color .15s; }
+  #stagelist div:hover { color:#cdd8ea; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="title">
+  <h1>How Code Ships</h1>
+  <p>a tour of SDLC &amp; CI/CD — press ▶ or drag to look around</p>
+  <p id="credits">Built by <strong>clc</strong> (Claude Code) &middot; reviewed by <strong>ntg</strong> (Antigravity)<br>visual elevation by <strong>hrm-kimik3</strong> &middot; <a href="/">kelverssg</a></p>
+</div>
+<div id="stagelist"></div>
+<div id="caption" role="status" aria-live="polite"><span class="k"></span><span class="t"></span></div>
+<div id="hud">
+  <button id="prev" aria-label="Previous stage" title="Previous (←)">◀</button>
+  <button id="play" aria-label="Pause tour" title="Play / Pause (space)">❚❚ Pause</button>
+  <button id="next" aria-label="Next stage" title="Next (→)">▶</button>
+  <div id="bar" role="progressbar" aria-label="Stage progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+  <span id="clock">1 / 1</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- ═══════════════ SHARED CONTRACT (owned by clc / integrator) ═══════════════
+ The world is a single "mainline" running along +X at y=0, z=0, from x=0 to x=90,
+ ending at PROD (a small city) near x=98. Feature work happens on the +Z side.
+
+ Each module is a global function on window.SDLC_MODULES with this signature:
+
+   window.SDLC_MODULES.<name> = function build(THREE, scene, seg) {
+     // seg = { x0, x1 }  -> the module OWNS this X-range; keep geometry inside it.
+     // Create ONE THREE.Group, add it to `scene`, start it .visible = true
+     //   (objects may start with scale/opacity 0 and animate in via stages).
+     return {
+       group,                    // THREE.Group you created
+       stages: [                 // ordered; concatenated into the master timeline
+         {
+           caption: { k: "STAGE LABEL", t: "One sentence explaining the idea." },
+           duration: 6,          // seconds this stage holds
+           camera: { position:[x,y,z], target:[x,y,z] },  // world coords, aim inside seg
+           onEnter(ctx) {},      // called once when stage begins
+           onUpdate(ctx, p) {},  // p = 0..1 progress through THIS stage's duration
+           onExit(ctx) {}        // called once when leaving (fwd or back)
+         }, ...
+       ]
+     }
+   }
+
+ Shared helpers on window.SDLC (colors, tube, label) are provided below — use them
+ so all three modules look like one scene. ctx.THREE, ctx.scene, ctx.t (elapsed s)
+ are available in callbacks. Keep everything inside your seg.x0..seg.x1.
+════════════════════════════════════════════════════════════════════════════ -->
+<script>
+window.SDLC = {
+  COL: {
+    main:   0x4f8cff,   // mainline / trunk (blue)
+    branch: 0x7fe0c0,   // feature branch (teal)
+    ok:     0x59d98e,   // pass / green
+    warn:   0xffcf5c,   // review / amber
+    bad:    0xff6b6b,   // fail / rollback (red)
+    prod:   0xc9a6ff,   // prod (violet)
+    dim:    0x2a3550
+  },
+  // a glowing tube between two Vec3-likes
+  tube(THREE, a, b, r, color, seg) {
+    const path = new THREE.LineCurve3(new THREE.Vector3(...a), new THREE.Vector3(...b));
+    const g = new THREE.TubeGeometry(path, seg||20, r, 12, false);
+    const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .35, roughness:.4, metalness:.1 });
+    return new THREE.Mesh(g, m);
+  },
+  node(THREE, pos, color, s) {
+    const g = new THREE.SphereGeometry(s||0.55, 24, 24);
+    const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity:.5, roughness:.3 });
+    const mesh = new THREE.Mesh(g, m); mesh.position.set(...pos); return mesh;
+  },
+  // floating text sprite (canvas texture) — keeps typography consistent
+  label(THREE, text, color) {
+    const cv = document.createElement('canvas'); cv.width=512; cv.height=128;
+    const cx = cv.getContext('2d');
+    cx.fillStyle = '#e8eef7'; cx.font = '600 46px Inter, system-ui, sans-serif';
+    cx.textAlign='center'; cx.textBaseline='middle';
+    if (color!==undefined){ cx.fillStyle = '#'+color.toString(16).padStart(6,'0'); }
+    cx.fillText(text, 256, 64);
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy=4;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent:true, depthWrite:false }));
+    sp.scale.set(6, 1.5, 1); return sp;
+  },
+  // soft additive glow sprite — white gradient tinted via material.color (re-tintable)
+  halo(THREE, color, size) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const cx = cv.getContext('2d');
+    const g = cx.createRadialGradient(64,64,0,64,64,64);
+    g.addColorStop(0, 'rgba(255,255,255,0.75)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.22)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.fillStyle = g; cx.fillRect(0,0,128,128);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.CanvasTexture(cv), color, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false }));
+    sp.scale.set(size, size, 1); return sp;
+  }
+};
+window.SDLC_MODULES = {};
+</script>
+
+<!-- ── module slots: three <script> tags injected by the fleet build ── -->
+<script>
+// LUNA — branching & merge (built by clc as fleet fallback)
+window.SDLC_MODULES.luna = function(THREE, scene, seg){
+  const C = window.SDLC.COL;
+  const group = new THREE.Group(); scene.add(group);
+  const smooth = p => p*p*(3-2*p);
+  const xB = seg.x0+3, xM = seg.x1-2, z = 8;              // branch off / merge / depth
+  function ftube(pts, r, color){
+    const curve = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
+    const geo = new THREE.TubeGeometry(curve, 40, r, 10, false);
+    const mat = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:.4, roughness:.4, transparent:true, opacity:0});
+    return new THREE.Mesh(geo, mat);
+  }
+  // branch path: peel off main, run parallel at z, merge back
+  const branch = ftube([[xB,0,0],[xB+4,0,z*0.55],[xB+7,0,z],[xM-7,0,z],[xM-4,0,z*0.55],[xM,0,0]], 0.13, C.branch);
+  group.add(branch);
+  // commits along the branch run
+  const commits = [];
+  for (let i=0;i<3;i++){
+    const n = window.SDLC.node(THREE,[xB+9+i*4,0,z],C.branch,0.5); n.scale.setScalar(0); group.add(n); commits.push(n);
+  }
+  // PR review gate near merge
+  const gate = new THREE.Mesh(new THREE.BoxGeometry(2.2,2.6,0.3),
+     new THREE.MeshStandardMaterial({color:C.warn, emissive:C.warn, emissiveIntensity:.3, roughness:.4, transparent:true, opacity:0}));
+  gate.position.set(xM-4, 1.3, z*0.55); group.add(gate);
+  const check = window.SDLC.label(THREE,'✓ review',C.ok); check.position.set(xM-4,3.4,z*0.55); check.scale.set(4,1,1); check.material.opacity=0; group.add(check);
+  const lbl = window.SDLC.label(THREE,'feature branch',C.branch); lbl.position.set(xB+9,2.2,z); lbl.scale.set(7,1.6,1); lbl.material.opacity=0; group.add(lbl);
+  const safe = window.SDLC.label(THREE,'PROD untouched',C.prod); safe.position.set(xB+8,3.4,-3); safe.scale.set(7,1.6,1); safe.material.opacity=0; group.add(safe);
+
+  return { group, stages: [
+    { caption:{k:'BRANCH OFF', t:'A feature branch is a private, throwaway copy of main. Prod is sacred — a branch is a free sandbox to try an idea.'},
+      duration:6, camera:{position:[seg.x0-4,9,26], target:[xB+6,1,4]},
+      onUpdate(ctx,p){ branch.material.opacity = smooth(Math.min(1,p*1.6))*0.9; lbl.material.opacity = smooth(Math.max(0,(p-.5)*2)); } },
+    { caption:{k:'COMMIT FREELY', t:'Experiment, break things, commit as you go — users never see any of it. The mainline keeps running the whole time.'},
+      duration:6.5, camera:{position:[xB+4,7,24], target:[xB+11,1,z]},
+      onEnter(){ branch.material.opacity=0.9; lbl.material.opacity=1; },
+      onUpdate(ctx,p){ commits.forEach((n,i)=>{ const q=Math.min(1,Math.max(0,(p-i*0.25)*3)); n.scale.setScalar(smooth(q)*0.5); }); safe.material.opacity = smooth(Math.max(0,(p-.4)*1.6))*0.85; } },
+    { caption:{k:'OPEN A PULL REQUEST', t:'Before anything can merge, a human reviews the diff. This is the quality gate — the amber checkpoint between your idea and main.'},
+      duration:6, camera:{position:[xM-9,6,20], target:[xM-4,1.5,z*0.55]},
+      onEnter(){ commits.forEach(n=>n.scale.setScalar(0.5)); },
+      onUpdate(ctx,p){ gate.material.opacity=smooth(Math.min(1,p*2))*0.9; check.material.opacity=smooth(Math.max(0,(p-.5)*2)); gate.material.color.setHex(p>.6?C.ok:C.warn); gate.material.emissive.setHex(p>.6?C.ok:C.warn); } },
+    { caption:{k:'MERGE BACK', t:'Approved. The branch folds back into main and your commits become part of the code everyone runs — safely, on purpose.'},
+      duration:6.5, camera:{position:[xM-2,8,22], target:[xM,1,3]},
+      onEnter(){ gate.material.opacity=0; check.material.opacity=0; },
+      onUpdate(ctx,p){ const e=smooth(p); commits.forEach(n=>{ n.position.z = z*(1-e); n.material.color.lerpColors(new THREE.Color(C.branch), new THREE.Color(C.main), e); n.material.emissive.copy(n.material.color); }); branch.material.opacity = 0.9*(1-e*0.7); lbl.material.opacity=(1-e); safe.material.opacity=(1-e)*0.85; } }
+  ]};
+};
+</script>
+<script>
+// TERRA — continuous integration (built by clc as fleet fallback)
+window.SDLC_MODULES.terra = function(THREE, scene, seg){
+  const C = window.SDLC.COL;
+  const group = new THREE.Group(); scene.add(group);
+  const smooth = p => p*p*(3-2*p);
+  const y = 3.2;                          // conveyor height above mainline
+  const x0 = seg.x0+3, x1 = seg.x1-3;
+  // conveyor belt
+  const belt = new THREE.Mesh(new THREE.BoxGeometry(x1-x0, 0.3, 3),
+     new THREE.MeshStandardMaterial({color:C.dim, emissive:C.dim, emissiveIntensity:.2, roughness:.7}));
+  belt.position.set((x0+x1)/2, y, 0); group.add(belt);
+  // three stations: build / test / lint
+  const names = ['BUILD','TEST','LINT'];
+  const stations = names.map((nm,i)=>{
+    const sx = x0 + (i+0.7)*(x1-x0)/3.4;
+    const box = new THREE.Mesh(new THREE.BoxGeometry(2,2,2),
+       new THREE.MeshStandardMaterial({color:C.dim, emissive:C.dim, emissiveIntensity:.3, roughness:.5}));
+    box.position.set(sx, y+1.4, 0); group.add(box);
+    const l = window.SDLC.label(THREE, nm); l.position.set(sx, y+3.2, 0); l.scale.set(3.4,0.9,1); group.add(l);
+    return {box, sx};
+  });
+  // the commit token moving down the line
+  const token = window.SDLC.node(THREE,[x0-1,y+1,0],C.branch,0.55); token.scale.setScalar(0); group.add(token);
+  const tkHalo = window.SDLC.halo(THREE, C.branch, 3.2); token.add(tkHalo);
+  // gate toward the mainline
+  const gate = new THREE.Mesh(new THREE.BoxGeometry(0.4,3,3),
+     new THREE.MeshStandardMaterial({color:C.bad, emissive:C.bad, emissiveIntensity:.4, roughness:.4, transparent:true, opacity:0}));
+  gate.position.set(x1+0.5, 1.6, 0); group.add(gate);
+  const ttl = window.SDLC.label(THREE,'CI pipeline'); ttl.position.set((x0+x1)/2, y+4.4, 0); ttl.scale.set(5,1.3,1); ttl.material.opacity=0; group.add(ttl);
+  const reset = ()=>stations.forEach(s=>{ s.box.material.color.setHex(C.dim); s.box.material.emissive.setHex(C.dim); });
+
+  return { group, stages: [
+    { caption:{k:'PUSH TRIGGERS CI', t:'Every push automatically kicks off the pipeline — no human presses a button. Integration happens continuously.'},
+      duration:5.5, camera:{position:[x0-6,7,20], target:[x0+4,y,0]},
+      onEnter(){ reset(); },
+      onUpdate(ctx,p){ token.scale.setScalar(smooth(Math.min(1,p*2))*0.55); token.position.x = x0-1 + smooth(p)*3; ttl.material.opacity=smooth(p); } },
+    { caption:{k:'BUILD → TEST → LINT', t:'The machine compiles the code, runs the tests, and checks the style — the same way, every single time. Consistency humans cannot match.'},
+      duration:8, camera:{position:[(x0+x1)/2,8,22], target:[(x0+x1)/2,y+1,0]},
+      onEnter(){ reset(); ttl.material.opacity=1; },
+      onUpdate(ctx,p){
+        token.position.x = x0-1 + smooth(p)*(x1-(x0-1));
+        stations.forEach((s,i)=>{ const passed = token.position.x > s.sx; const col = passed?C.ok:C.dim;
+          s.box.material.color.setHex(col); s.box.material.emissive.setHex(col);
+          s.box.position.y = y+1.4 + (Math.abs(token.position.x-s.sx)<1.2? Math.sin(ctx.t*6)*0.15:0); });
+        token.material.color.setHex(C.branch); token.material.emissive.setHex(C.branch);
+      } },
+    { caption:{k:'GREEN GATES THE MERGE', t:'Red blocks the merge; only green may reach main. A failing test is the safety net catching the bug before your users do.'},
+      duration:7.5, camera:{position:[x1-4,6,18], target:[x1,1.6,0]},
+      onEnter(){ stations.forEach(s=>{s.box.material.color.setHex(C.ok);s.box.material.emissive.setHex(C.ok);}); },
+      onUpdate(ctx,p){
+        // first half: TEST flashes red + gate shut; second half: turns green + gate opens
+        const fail = p<0.5;
+        const t2 = stations[1];
+        t2.box.material.color.setHex(fail? C.bad : C.ok); t2.box.material.emissive.setHex(fail? C.bad : C.ok);
+        gate.material.opacity = fail? 0.9 : 0.9*(1-smooth((p-0.5)*2));
+        gate.material.color.setHex(fail?C.bad:C.ok); gate.material.emissive.setHex(fail?C.bad:C.ok);
+        token.material.color.setHex(fail?C.bad:C.ok); token.material.emissive.setHex(fail?C.bad:C.ok);
+        tkHalo.material.color.setHex(fail?C.bad:C.ok);
+        token.position.x = x1 + (fail?0: smooth((p-0.5)*2)*3);
+      } }
+  ]};
+};
+</script>
+<script>
+// SOL — continuous delivery: promote, canary, blue-green, rollback (built by clc as fleet fallback)
+window.SDLC_MODULES.sol = function(THREE, scene, seg){
+  const C = window.SDLC.COL;
+  const group = new THREE.Group(); scene.add(group);
+  const smooth = p => p*p*(3-2*p);
+  const envs = [['DEV',seg.x0+3],['STAGING',(seg.x0+seg.x1)/2],['PROD',seg.x1-2]];
+  const pads = envs.map(([nm,x])=>{
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(2,2,0.4,24),
+      new THREE.MeshStandardMaterial({color:C.dim, emissive:C.dim, emissiveIntensity:.25, roughness:.6}));
+    pad.position.set(x,0.2,0); group.add(pad);
+    const l = window.SDLC.label(THREE, nm); l.position.set(x,3.4,0); l.scale.set(3.4,0.9,1); group.add(l);
+    return {x, pad};
+  });
+  // the immutable build artifact
+  const art = new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),
+     new THREE.MeshStandardMaterial({color:C.ok, emissive:C.ok, emissiveIntensity:.4, roughness:.4}));
+  art.position.set(envs[0][1],1.2,0); art.scale.setScalar(0); group.add(art);
+  art.add(window.SDLC.halo(THREE, C.ok, 3));
+  // blue (current) + green (new) prod stacks
+  function stack(x,z,color){ const g=new THREE.Group();
+    for(let i=0;i<3;i++){ const h=1.4+i*0.6; const b=new THREE.Mesh(new THREE.BoxGeometry(1,h,1),
+      new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:.25, roughness:.5}));
+      b.position.set(x+(i-1)*1.2, h/2, z); g.add(b);} group.add(g); return g; }
+  const blue = stack(seg.x1-2,-3.2,C.main), green = stack(seg.x1-2,3.2,C.ok);
+  green.visible=false;
+  // canary traffic particles
+  const dots = []; for(let i=0;i<12;i++){ const d=window.SDLC.node(THREE,[seg.x1-6,0.6,0],C.ok,0.16); d.visible=false; group.add(d); dots.push(d); }
+  // feature-flag toggle
+  const flag = new THREE.Mesh(new THREE.TorusGeometry(0.7,0.22,12,24),
+     new THREE.MeshStandardMaterial({color:C.warn, emissive:C.warn, emissiveIntensity:.4, roughness:.4, transparent:true, opacity:0}));
+  flag.position.set(seg.x1-2,4.4,0); group.add(flag);
+  const flbl = window.SDLC.label(THREE,'feature flag',C.warn); flbl.position.set(seg.x1-2,5.6,0); flbl.scale.set(4.5,1.1,1); flbl.material.opacity=0; group.add(flbl);
+
+  return { group, stages: [
+    { caption:{k:'PROMOTE THROUGH ENVIRONMENTS', t:'The exact same build is promoted DEV → STAGING → PROD — never rebuilt. What you tested is precisely what ships.'},
+      duration:8, camera:{position:[seg.x0-4,7,22], target:[(seg.x0+seg.x1)/2,1,0]},
+      onEnter(){ green.visible=false; blue.visible=true; },
+      onUpdate(ctx,p){ art.scale.setScalar(smooth(Math.min(1,p*2)));
+        const leg = Math.min(1.999, p*2.2); const i=Math.floor(leg); const f=smooth(leg-i);
+        const a=envs[Math.min(i,2)][1], b=envs[Math.min(i+1,2)][1];
+        art.position.x = a+(b-a)*f; art.position.y = 1.2 + Math.sin(f*Math.PI)*1.2;
+        pads.forEach((pd,k)=>{ const on=k<=i+ (f>.5?1:0); pd.pad.material.color.setHex(on?C.ok:C.dim); pd.pad.material.emissive.setHex(on?C.ok:C.dim); }); } },
+    { caption:{k:'CANARY RELEASE', t:'Send the new version to 1% of users first. Watch the metrics; if it stays healthy, widen the rollout. Small blast radius by design.'},
+      duration:7, camera:{position:[seg.x1-8,5,16], target:[seg.x1-2,1,0]},
+      onEnter(){ art.position.set(envs[2][1],1.2,0); art.scale.setScalar(1); dots.forEach(d=>d.visible=true); },
+      onUpdate(ctx,p){ dots.forEach((d,i)=>{ const active = i < Math.ceil(p*dots.length); d.visible=active;
+        const ph=(ctx.t*0.8+i/dots.length)%1; d.position.set(seg.x1-6+ph*4, 0.6+Math.sin(ph*6)*0.2, -3.2+ (i%2?6.4:0)*ph); }); } },
+    { caption:{k:'BLUE-GREEN SWAP', t:'Stand the new version (green) up beside the live one (blue), then flip all traffic at once. Zero downtime, and the old one stays warm for instant undo.'},
+      duration:7, camera:{position:[seg.x1-7,5,18], target:[seg.x1-2,1.5,0]},
+      onEnter(){ green.visible=true; dots.forEach(d=>d.visible=false); },
+      onUpdate(ctx,p){ const e=smooth(p); blue.position.z = -e*1.5; blue.children.forEach(b=>b.material.emissiveIntensity=.25*(1-e*0.8));
+        green.position.z = 1.5-e*1.5; green.children.forEach(b=>b.material.emissiveIntensity=.25+e*0.3); } },
+    { caption:{k:'ROLLBACK & FEATURE FLAGS', t:'Something breaks in prod → flip straight back to the healthy version in seconds. And a feature flag turns a feature off with no redeploy at all. Deploy ≠ release; undo is first-class.'},
+      duration:8, camera:{position:[seg.x1-6,5,17], target:[seg.x1-2,2.5,0]},
+      onEnter(){ green.visible=true; },
+      onUpdate(ctx,p){
+        const bad = p<0.45;
+        green.children.forEach(b=>{ const c=bad?C.bad:C.ok; b.material.color.setHex(c); b.material.emissive.setHex(c); });
+        // rollback progress 0..1 — smoothly continues from stage-3's end (blue z=-1.5, green z=0)
+        const e = smooth(Math.min(1, Math.max(0,(p-0.45)/0.3)));
+        blue.position.z  = -1.5*(1-e);   // -1.5 (behind) -> 0 (front): traffic returns to healthy blue
+        green.position.z =  1.5*e;       //  0 (front)   -> +1.5 (recedes): bad version pulled out
+        blue.children.forEach(b=>b.material.emissiveIntensity = .1 + e*0.4);          // dim behind -> bright when it takes traffic
+        green.children.forEach(b=>b.material.emissiveIntensity = .25 + (1-e)*0.25);
+        // feature flag toggles on in the last third
+        const fp = Math.max(0,(p-0.6)/0.4);
+        flag.material.opacity = smooth(fp)*0.95; flbl.material.opacity = smooth(fp);
+        flag.rotation.y = fp*Math.PI*2; const fc=fp>0.5?C.dim:C.warn; flag.material.color.setHex(fc); flag.material.emissive.setHex(fc);
+      } }
+  ]};
+};
+</script>
+
+<script>
+// ═══════════════ DIRECTOR (owned by clc) ═══════════════
+(function () {
+  const THREE = window.THREE;
+  const canvas = document.getElementById('c');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b0f1a);
+  scene.fog = new THREE.Fog(0x0b0f1a, 40, 160);
+
+  const camera = new THREE.PerspectiveCamera(52, innerWidth/innerHeight, 0.1, 500);
+  camera.position.set(-8, 10, 22);
+
+  // minimal built-in orbit (no OrbitControls dependency): drag to look around
+  let userControlling = false;
+  const controls = { target: new THREE.Vector3(20,1,0), update(){ camera.lookAt(this.target); } };
+  let dragging=false, px=0, py=0;
+  canvas.addEventListener('pointerdown', e=>{ dragging=true; userControlling=true; px=e.clientX; py=e.clientY; });
+  addEventListener('pointerup', ()=> dragging=false);
+  addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=(e.clientX-px)/220, dy=(e.clientY-py)/220; px=e.clientX; py=e.clientY;
+    const off = camera.position.clone().sub(controls.target);
+    const sph = new THREE.Spherical().setFromVector3(off);
+    sph.theta -= dx; sph.phi = Math.max(0.12, Math.min(Math.PI-0.12, sph.phi - dy));
+    off.setFromSpherical(sph); camera.position.copy(controls.target).add(off);
+  });
+
+  // lights
+  scene.add(new THREE.AmbientLight(0x8aa0c0, 0.5));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(20, 40, 20); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x4f8cff, 0.5); rim.position.set(-30, 10, -20); scene.add(rim);
+
+  // ground grid
+  const grid = new THREE.GridHelper(240, 60, 0x1c2740, 0x141c2e);
+  grid.position.y = -0.02; scene.add(grid);
+
+  // shared mainline 0..90 + PROD city marker
+  scene.add(window.SDLC.tube(THREE, [0,0,0], [92,0,0], 0.16, window.SDLC.COL.main, 90));
+  const prodCity = new THREE.Group();
+  for (let i=0;i<7;i++){
+    const h = 1.5 + Math.random()*3.5;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, h, 1.1),
+      new THREE.MeshStandardMaterial({ color: window.SDLC.COL.prod, emissive: window.SDLC.COL.prod, emissiveIntensity:.25, roughness:.5 }));
+    b.position.set(95 + (i%3)*1.5, h/2, -1.5 + Math.floor(i/3)*1.5); prodCity.add(b);
+  }
+  const prodLabel = window.SDLC.label(THREE, 'PRODUCTION', window.SDLC.COL.prod); prodLabel.position.set(96,7,0); prodLabel.scale.set(8,2,1);
+  scene.add(prodCity); scene.add(prodLabel);
+  const cityHalo = window.SDLC.halo(THREE, window.SDLC.COL.prod, 18);
+  cityHalo.position.set(96, 2.5, -2); scene.add(cityHalo);
+
+  // starfield backdrop — upper dome, fog-exempt so distant stars stay visible
+  (function addStars(){
+    const N = 420, pos = new Float32Array(N*3);
+    for (let i=0;i<N;i++){
+      const r = 130 + Math.random()*90, th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+      pos[i*3]   = 45 + r*Math.sin(ph)*Math.cos(th);
+      pos[i*3+1] = Math.abs(r*Math.cos(ph))*0.7 + 2;
+      pos[i*3+2] = r*Math.sin(ph)*Math.sin(th);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    const scv = document.createElement('canvas'); scv.width = scv.height = 32;
+    const scx = scv.getContext('2d');
+    const sg = scx.createRadialGradient(16,16,0,16,16,16);
+    sg.addColorStop(0,'rgba(255,255,255,1)'); sg.addColorStop(0.6,'rgba(255,255,255,0.6)'); sg.addColorStop(1,'rgba(255,255,255,0)');
+    scx.fillStyle = sg; scx.fillRect(0,0,32,32);
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+      color:0x8aa0c0, size:1.6, sizeAttenuation:true, transparent:true,
+      map:new THREE.CanvasTexture(scv), alphaTest:0.05,
+      opacity:0.55, fog:false, depthWrite:false })));
+  })();
+
+  // build modules against their segments
+  const ctx = { THREE, scene, t: 0 };
+  const order = [
+    ['luna',  { x0: 2,  x1: 30 }],
+    ['terra', { x0: 32, x1: 60 }],
+    ['sol',   { x0: 62, x1: 90 }],
+  ];
+  let stages = [{
+    caption: { k:'THE MAINLINE', t:'This blue line is main — the code your users run. Everything to the right ends in Production. The whole game is changing it without ever breaking it.' },
+    duration: 6, camera: { position:[-6,12,26], target:[20,1,0] }
+  }];
+  for (const [name, seg] of order) {
+    const mod = window.SDLC_MODULES[name];
+    if (!mod) { console.warn('missing module', name); continue; }
+    try {
+      const built = mod(THREE, scene, seg);
+      if (built && built.stages) stages = stages.concat(built.stages);
+    } catch(e){ console.error('module failed', name, e); }
+  }
+  stages.push({
+    caption: { k:'THE WHOLE LOOP', t:'Branch → CI → review → merge → deploy → watch → roll back if needed. Prod stayed safe the entire time. That is SDLC: change flowing to users, guarded at every step.' },
+    duration: 8, camera: { position:[45,40,70], target:[48,2,0] }
+  });
+
+  // ── caption + stage-list UI ──
+  const capEl = document.getElementById('caption'), capK = capEl.querySelector('.k'), capT = capEl.querySelector('.t');
+  const listEl = document.getElementById('stagelist');
+  listEl.innerHTML = stages.map((s,i)=>`<div data-i="${i}">${(s.caption&&s.caption.k)||('Stage '+(i+1))}</div>`).join('');
+  listEl.addEventListener('click', e=>{ const d=e.target.closest('[data-i]'); if(d) enter(parseInt(d.dataset.i,10)); });
+  const clockEl = document.getElementById('clock'), barEl = document.querySelector('#bar > i'), barWrap = document.getElementById('bar');
+
+  // ── playback state machine ──
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let idx = -1, tStage = 0, playing = !reduced, camFrom = null, camTgtFrom = null, camBlend = 1;
+  const tmpTarget = new THREE.Vector3(20,1,0);
+  function enter(i){
+    const prev = stages[idx]; if (prev && prev.onExit) try{prev.onExit(ctx)}catch(e){}
+    idx = (i + stages.length) % stages.length; tStage = 0;
+    const s = stages[idx];
+    capK.textContent = (s.caption&&s.caption.k)||''; capT.textContent = (s.caption&&s.caption.t)||'';
+    capEl.classList.add('show');
+    [...listEl.children].forEach((c,ci)=>{ c.classList.toggle('on', ci===idx); c.classList.toggle('done', ci<idx); });
+    clockEl.textContent = (idx+1)+' / '+stages.length;
+    if (s.camera){ camFrom = camera.position.clone(); camTgtFrom = tmpTarget.clone(); camBlend = 0; }
+    if (s.onEnter) try{ s.onEnter(ctx) }catch(e){ console.error(e); }
+    userControlling = false;
+  }
+  document.getElementById('next').onclick = ()=> enter(idx+1);
+  document.getElementById('prev').onclick = ()=> enter(idx-1);
+  const playBtn = document.getElementById('play');
+  const setPlayUI = ()=>{ playBtn.textContent = playing?'❚❚ Pause':'▶ Play'; playBtn.setAttribute('aria-label', playing?'Pause tour':'Play tour'); };
+  playBtn.onclick = ()=>{ playing=!playing; setPlayUI(); };
+  setPlayUI();
+  addEventListener('keydown', e=>{ if(e.key==='ArrowRight')enter(idx+1); if(e.key==='ArrowLeft')enter(idx-1); if(e.key===' '){e.preventDefault();playBtn.onclick();} });
+  addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+  const clock = new THREE.Clock();
+  function tick(){
+    const dt = Math.min(clock.getDelta(), 0.05); ctx.t += dt;
+    const s = stages[idx] || stages[0];
+    // camera tween
+    if (s && s.camera && camBlend < 1 && !userControlling){
+      camBlend = Math.min(1, camBlend + dt/1.4);
+      const e = camBlend<.5 ? 2*camBlend*camBlend : 1-Math.pow(-2*camBlend+2,2)/2; // easeInOut
+      camera.position.lerpVectors(camFrom, new THREE.Vector3(...s.camera.position), e);
+      tmpTarget.lerpVectors(camTgtFrom, new THREE.Vector3(...s.camera.target), e);
+    }
+    if (!userControlling){ controls.target.copy(tmpTarget); }
+    // stage progress
+    if (playing && idx>=0){
+      tStage += dt; const p = Math.min(1, tStage/(s.duration||6));
+      if (s.onUpdate) try{ s.onUpdate(ctx, p) }catch(e){}
+      barEl.style.width = (p*100)+'%'; barWrap.setAttribute('aria-valuenow', Math.round(p*100));
+      if (tStage >= (s.duration||6)) enter(idx+1);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  enter(0); tick();
+})();
+</script>
+</body>
+</html>
